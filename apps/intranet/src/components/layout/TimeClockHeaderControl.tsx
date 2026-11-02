@@ -51,7 +51,7 @@ export function TimeClockHeaderControl({ className }: { className?: string }) {
             >
               <Icon className="size-3.5" />
               {status === "working" && (
-                <span className="absolute right-0 top-0 size-1.5 animate-pulse rounded-full bg-ok" />
+                <span className="absolute right-0 top-0 size-1.5 rounded-full bg-ok" />
               )}
             </span>
             <span className="relative z-10 min-w-0 leading-tight">

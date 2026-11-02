@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 
 import { api } from "@advantis/convex/api";
 import { berlinDate, berlinInstant, TIME_ZONE } from "@advantis/convex/time";
@@ -9,6 +9,7 @@ import { ConvexError } from "convex/values";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { useNow as useLiveNow } from "@/hooks/use-now";
 import { reportClientError } from "@/lib/errors";
 
 /**
@@ -17,14 +18,10 @@ import { reportClientError } from "@/lib/errors";
  * matches what the server books and the 18:00 rule uses.
  */
 
-/** Ticks every `ms` so running entries count up without re-querying. */
+/** Ticks every `ms` so running entries count up without re-querying.
+ *  Pauses while the tab is hidden (see hooks/use-now). */
 export function useNow(ms = 30_000): number {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const id = window.setInterval(() => setNow(Date.now()), ms);
-    return () => window.clearInterval(id);
-  }, [ms]);
-  return now;
+  return useLiveNow(true, ms);
 }
 
 /** Today's Berlin date, re-read every minute so it rolls over at midnight. */
