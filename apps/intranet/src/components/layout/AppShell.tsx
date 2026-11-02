@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { Suspense, useEffect, useRef, useState } from "react";
 
+import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
@@ -10,10 +11,8 @@ import { useMutation, useQuery } from "convex/react";
 
 import { AiDock, AiDockButton } from "@/components/ai/AiDock";
 import { AskProvider } from "@/components/ai/ask-subject";
-import { AskPanel } from "@/components/ai/AskPanel";
 import { PostHogIdentify } from "@/components/analytics/PostHogIdentify";
 import { CommandPalette } from "@/components/CommandPalette";
-import { useSmoothScroll } from "@/components/effects/SmoothScrolling";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { FileViewerProvider } from "@/components/file-viewer/FileViewerProvider";
 import { AccountMenu } from "@/components/layout/AccountMenu";
@@ -41,14 +40,11 @@ import { Link } from "@/components/Link";
 import { MarkLogo } from "@/components/Logo";
 import { BrowserNotificationBridge } from "@/components/notifications/BrowserNotificationBridge";
 import { PushSubscriptionSync } from "@/components/notifications/PushSubscriptionSync";
-import { OnboardingPanel } from "@/components/onboarding/OnboardingPanel";
 import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
 import { OnboardingTrigger } from "@/components/onboarding/OnboardingTrigger";
 import { useIsAdmin } from "@/components/providers/current-user";
 import { hasPreviousVisit, recordVisit } from "@/lib/nav-history";
-import { TourCompletionScreen } from "@/components/tour/TourCompletionScreen";
 import { TourOverlay } from "@/components/tour/TourOverlay";
-import { TourPopout } from "@/components/tour/TourPopout";
 import { TourProgressChip } from "@/components/tour/TourProgressChip";
 import { TourProvider, useTour } from "@/components/tour/TourProvider";
 import { TourSpotlight } from "@/components/tour/TourSpotlight";
@@ -57,6 +53,23 @@ import { UpdateBanner } from "@/components/updates/UpdateBanner";
 import { isArchived, isMaintenanceLocked } from "@/lib/maintenance";
 import { START_PAGES } from "@/lib/startPages";
 import { cn } from "@/lib/utils";
+
+// Rarely-open panels: loaded as their own chunk after the shell renders
+// instead of being parsed on every page load (older laptops).
+const AskPanel = dynamic(() => import("@/components/ai/AskPanel").then((m) => m.AskPanel), {
+  ssr: false,
+});
+const OnboardingPanel = dynamic(
+  () => import("@/components/onboarding/OnboardingPanel").then((m) => m.OnboardingPanel),
+  { ssr: false },
+);
+const TourPopout = dynamic(() => import("@/components/tour/TourPopout").then((m) => m.TourPopout), {
+  ssr: false,
+});
+const TourCompletionScreen = dynamic(
+  () => import("@/components/tour/TourCompletionScreen").then((m) => m.TourCompletionScreen),
+  { ssr: false },
+);
 
 /**
  * Honors the "start page" preference: the first time this session lands on
@@ -173,10 +186,6 @@ function AppShellInner({ children }: { children: ReactNode }) {
   // no smooth scroll translating it, and no bottom nav over its composer.
   const fillPage = useFillPagePresent();
 
-  // Sitewide smooth scrolling on the real scroll container (see
-  // `useSmoothScroll` for why this can't be marketing's `<ReactLenis root>`).
-  const lenisRef = useSmoothScroll(mainRef, mainContentRef, !immersive && !fillPage);
-
   // The main pane is the scroll container (not the window), so browser history
   // cannot restore its position for us. Keep one position per route for this
   // session: returning to a long feed, directory, or report should resume
@@ -194,10 +203,10 @@ function AppShellInner({ children }: { children: ReactNode }) {
       // Private browsing or a full storage quota should not affect navigation.
     }
 
-    const restore = () => {
-      if (lenisRef.current) lenisRef.current.scrollTo(target, { immediate: true });
-      else main.scrollTo({ top: target });
-    };
+    // Native scrolling only: the former Lenis smooth scroll ran a
+    // requestAnimationFrame loop on every visible page and cost noticeable
+    // idle CPU on older laptops.
+    const restore = () => main.scrollTo({ top: target });
     // Let the new route commit before restoring, so a cached page can restore
     // its full scroll range instead of being clamped to the outgoing page.
     const frame = requestAnimationFrame(restore);
@@ -222,7 +231,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
         // See the read guard above.
       }
     };
-  }, [pathname, immersive, lenisRef]);
+  }, [pathname, immersive]);
 
   useEffect(() => {
     const hash = window.location.hash.slice(1);
@@ -363,10 +372,10 @@ function AppShellInner({ children }: { children: ReactNode }) {
           {immersive ? (
             <ErrorBoundary key={pathname}>{pageContent}</ErrorBoundary>
           ) : (
-            // Lenis needs a single content element inside the scroller to
-            // translate. Only rendered off the immersive branch — those routes
-            // size themselves to the viewport through <main>, and an extra div
-            // would break their `h-full` chain.
+            // Single content element inside the scroller; the scroll-restore
+            // ResizeObserver watches it. Only rendered off the immersive branch
+            // — those routes size themselves to the viewport through <main>,
+            // and an extra div would break their `h-full` chain.
             <div ref={mainContentRef} className={fillPage ? "h-full" : undefined}>
               <ErrorBoundary key={pathname}>{pageContent}</ErrorBoundary>
             </div>
