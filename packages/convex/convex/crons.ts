@@ -209,17 +209,20 @@ if (process.env.DISABLE_CRONS !== "true") {
     internal.time.jobs.vacationYear,
     {},
   );
-  // IONOS has no push; two minutes keeps "new mail" timely without hammering it.
-  crons.interval(
+  // IONOS has no push. Each poll calls apps/api on Vercel (IMAP login, TLS,
+  // parsing) and costs Fluid Active CPU, so only poll during office hours.
+  // UTC 05:00-18:59 Mon-Fri = Berlin 06:00-19:59 (winter) / 07:00-20:59 (summer).
+  // Mail arriving outside these hours is picked up by the first run next morning.
+  crons.cron(
     "mail: check IONOS inboxes for new mail",
-    { minutes: 2 },
+    "*/10 5-18 * * 1-5",
     internal.mail.poll.run,
     {},
   );
-  // Applications arrive one mail each (Indeed); five minutes is plenty.
-  crons.interval(
+  // Applications arrive one mail each (Indeed); every 15 min in office hours.
+  crons.cron(
     "hr: import applications from the HR mailbox",
-    { minutes: 5 },
+    "*/15 5-18 * * 1-5",
     internal.hr.mailbox.runPoll,
     {},
   );
