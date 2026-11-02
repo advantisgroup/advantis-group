@@ -289,7 +289,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
         {!immersive && !isUpdatesReading && <UpdateBanner />}
         <header
           data-tour="tour-header"
-          className="sticky top-0 z-30 flex h-12 items-center gap-1 border-b border-border/70 bg-background/70 px-2.5 backdrop-blur-xl print:hidden md:h-16 md:px-4"
+          className="sticky top-0 z-30 flex h-12 items-center gap-1 border-b border-border/70 bg-background px-2.5 print:hidden md:h-16 md:px-4"
         >
           {isUpdatesReading ? (
             <Link
