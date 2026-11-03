@@ -23,6 +23,10 @@ import {
   setMilestone,
   suggestFollowUp,
   validateStatusConfig,
+  isClosedStatus,
+  nextNotReachedStreak,
+  suggestUnreachable,
+  withBuiltins,
 } from "./lib/onboarding";
 
 describe("onboarding helpers", () => {
@@ -119,6 +123,8 @@ describe("onboarding helpers", () => {
       "notReached",
       "case",
       "cancel",
+      "refused",
+      "fakeData",
     ]);
   });
 
@@ -156,6 +162,26 @@ describe("onboarding helpers", () => {
     expect(followUpBucket("2026-11-03", "2026-10-27")).toBe("week");
     expect(followUpBucket("2026-11-04", "2026-10-27")).toBe("later");
     expect(followUpBucket(undefined, "2026-10-27")).toBe("none");
+  });
+});
+
+describe("feedback 03.11. helpers", () => {
+  test("new closed lists, not-reached streak and built-in situations", () => {
+    for (const s of ["done", "winback", "refused", "fakeData", "unreachable"]) {
+      expect(isClosedStatus(s)).toBe(true);
+    }
+    expect(isClosedStatus("step2")).toBe(false);
+    let streak = 0;
+    for (let i = 0; i < 11; i++) streak = nextNotReachedStreak(streak, "notReached");
+    expect(streak).toBe(11);
+    expect(suggestUnreachable(10)).toBe(false);
+    expect(suggestUnreachable(streak)).toBe(true);
+    expect(nextNotReachedStreak(streak, "case")).toBe(0);
+    // A tree saved before the new situations gets them appended.
+    const old = { outcomes: DEFAULT_STATUS_CONFIG.outcomes.slice(0, 5) };
+    expect(withBuiltins(old).outcomes.map((o) => o.id)).toEqual(
+      expect.arrayContaining(["refused", "fakeData"]),
+    );
   });
 });
 
@@ -615,5 +641,137 @@ describe("onboarding cockpit", () => {
     await expect(
       as("melina").query(api.performance.onboarding.list, { asUserId: ids.doreen }),
     ).rejects.toThrow();
+  });
+  test("feedback 03.11.: closing situations, unreachable, IT, flag, mood, milestones in the form", async () => {
+    const { as } = await setup();
+    const admin = as("admin");
+    await importReport(admin, [
+      { customerNumber: "1" },
+      { customerNumber: "2" },
+      { customerNumber: "3" },
+      { customerNumber: "4" },
+    ]);
+    const byNo = async () =>
+      Object.fromEntries(
+        (await admin.query(api.performance.onboarding.list, {})).map((c) => [c.customerNumber, c]),
+      );
+    let c = await byNo();
+
+    await admin.mutation(api.performance.onboarding.setOutcome, {
+      caseId: c["1"]._id,
+      path: ["refused"],
+    });
+    await admin.mutation(api.performance.onboarding.setOutcome, {
+      caseId: c["2"]._id,
+      path: ["fakeData"],
+    });
+    // Eleven times not reached → the card suggests crossing off.
+    for (let i = 0; i < 11; i++) {
+      await admin.mutation(api.performance.onboarding.setOutcome, {
+        caseId: c["3"]._id,
+        path: ["notReached"],
+      });
+    }
+    c = await byNo();
+    expect(c["1"].status).toBe("refused");
+    expect(c["2"].status).toBe("fakeData");
+    expect(c["3"].notReachedStreak).toBe(11);
+    await admin.mutation(api.performance.onboarding.update, {
+      caseId: c["3"]._id,
+      status: "unreachable",
+    });
+    // Nothing is lost: closed cases stay in the list and can be reopened.
+    c = await byNo();
+    expect(c["3"].status).toBe("unreachable");
+    await admin.mutation(api.performance.onboarding.update, { caseId: c["1"]._id, status: "open" });
+    expect((await byNo())["1"].status).toBe("step1");
+
+    // IT case + milestones ticked from the contact form.
+    await admin.mutation(api.performance.onboarding.setOutcome, {
+      caseId: c["4"]._id,
+      path: ["case", "case.it"],
+      milestones: ["fuel"],
+    });
+    c = await byNo();
+    expect(c["4"]).toMatchObject({ status: "step3", milestones: ["cards", "fuel"] });
+    expect(c["4"].itOpenSince).not.toBeNull();
+    await admin.mutation(api.performance.onboarding.update, {
+      caseId: c["4"]._id,
+      itDone: true,
+      flag: { note: "Rückfrage Limit" },
+      mood: 4,
+    });
+    const detail = await admin.query(api.performance.onboarding.get, { caseId: c["4"]._id });
+    expect(detail).toMatchObject({
+      itOpenSince: null,
+      flagged: true,
+      flagNote: "Rückfrage Limit",
+      mood: 4,
+    });
+    await expect(
+      admin.mutation(api.performance.onboarding.update, { caseId: c["4"]._id, mood: 7 }),
+    ).rejects.toThrow();
+  });
+
+  test("feedback 03.11.: handover needs the colleague to accept or decline", async () => {
+    vi.stubEnv("ONBOARDING_MODE", "live");
+    const { as, ids } = await setup();
+    const admin = as("admin");
+    await admin.mutation(api.performance.onboarding.saveSettings, {
+      memberUserIds: [ids.melina, ids.doreen],
+      pausedUserIds: [],
+    });
+    await importReport(admin, [{ customerNumber: "10" }, { customerNumber: "20" }]);
+    const all = await admin.query(api.performance.onboarding.list, {});
+    await admin.mutation(api.performance.onboarding.assignMany, {
+      caseIds: all.map((x) => x._id),
+      assigneeUserId: ids.melina,
+    });
+    const melina = as("melina");
+    const doreen = as("doreen");
+    await expect(
+      melina.mutation(api.performance.onboarding.requestTransfer, {
+        caseId: all[0]._id,
+        toUserId: ids.doreen,
+        note: " ",
+      }),
+    ).rejects.toThrow();
+    for (const x of all) {
+      await melina.mutation(api.performance.onboarding.requestTransfer, {
+        caseId: x._id,
+        toUserId: ids.doreen,
+        note: "Kunde spricht nur Türkisch",
+      });
+    }
+    // Still Melina's until accepted.
+    expect(await melina.query(api.performance.onboarding.list, {})).toHaveLength(2);
+    const incoming = await doreen.query(api.performance.onboarding.transfers, {});
+    expect(incoming.map((x) => x.fromName)).toEqual(["Melina Test", "Melina Test"]);
+
+    await doreen.mutation(api.performance.onboarding.answerTransfer, {
+      caseId: all[0]._id,
+      accept: true,
+    });
+    await expect(
+      doreen.mutation(api.performance.onboarding.answerTransfer, {
+        caseId: all[1]._id,
+        accept: false,
+      }),
+    ).rejects.toThrow();
+    await doreen.mutation(api.performance.onboarding.answerTransfer, {
+      caseId: all[1]._id,
+      accept: false,
+      reason: "Bin ab morgen im Urlaub",
+    });
+    expect((await doreen.query(api.performance.onboarding.list, {})).map((x) => x._id)).toEqual([
+      all[0]._id,
+    ]);
+    const mine = await melina.query(api.performance.onboarding.list, {});
+    expect(mine).toHaveLength(1);
+    expect(mine[0]).toMatchObject({
+      transferToUserId: null,
+      transferDeclined: { byName: "Doreen Test", reason: "Bin ab morgen im Urlaub" },
+    });
+    expect(await doreen.query(api.performance.onboarding.transfers, {})).toHaveLength(0);
   });
 });

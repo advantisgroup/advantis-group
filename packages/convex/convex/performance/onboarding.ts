@@ -26,16 +26,19 @@ import { displayName } from "../lib/users";
 import { onboardingOutcomeValidator } from "../tables/performance";
 import {
   activeChildren,
+  CLOSING_KINDS,
   customerKey,
   DEFAULT_STATUS_CONFIG,
   isClosedStatus,
   isContactAttempt,
+  isItPath,
   isQuarterHour,
   MAX_REPORT_FIELDS,
   type Milestone,
   MILESTONES,
   milestonesForStatus,
   milestonesOf,
+  nextNotReachedStreak,
   pathLabel,
   phaseFor,
   resolvePath,
@@ -43,6 +46,7 @@ import {
   type StatusConfig,
   statusFromReport,
   validateStatusConfig,
+  withBuiltins,
 } from "./lib/onboarding";
 
 type Ctx = QueryCtx | MutationCtx;
@@ -191,7 +195,7 @@ const isoDate = (value: string, label: string): string => {
 
 async function loadStatusConfig(ctx: Ctx): Promise<StatusConfig> {
   const row = await ctx.db.query("onboardingStatusConfig").first();
-  return { outcomes: row?.outcomes ?? DEFAULT_STATUS_CONFIG.outcomes };
+  return withBuiltins({ outcomes: row?.outcomes ?? DEFAULT_STATUS_CONFIG.outcomes });
 }
 
 const STATUS_NAMES: Record<string, string> = {
@@ -201,7 +205,18 @@ const STATUS_NAMES: Record<string, string> = {
   step3: "Getankt",
   done: "Abgeschlossen",
   winback: "Winback",
+  refused: "Nicht gesprächsbereit",
+  fakeData: "Fake Data",
+  unreachable: "Nicht erreichbar",
 };
+
+/** Clears a pending handover (on closing or any reassignment). */
+const CLEAR_TRANSFER = {
+  transferToUserId: undefined,
+  transferFromUserId: undefined,
+  transferNote: undefined,
+  transferAt: undefined,
+} as const;
 
 /** "In Kontakt" / "Abgeschlossen" … for the log. */
 function statusName(status: string): string {
@@ -233,6 +248,7 @@ async function setStatus(
     patch.closedAt = Date.now();
     patch.nextFollowUp = undefined;
     patch.nextFollowUpTime = undefined;
+    Object.assign(patch, CLEAR_TRANSFER);
   } else {
     patch.closedAt = undefined;
   }
@@ -269,8 +285,51 @@ function caseFields(r: Doc<"onboardingCases">) {
     inReport: r.inReport,
     manual: !!r.manual,
     archived: !!r.archivedAt,
+    notReachedStreak: r.notReachedStreak ?? 0,
+    itOpenSince: r.itOpenSince ?? null,
+    flagged: r.flaggedAt !== undefined,
+    flagNote: r.flagNote ?? null,
+    transferToUserId: r.transferToUserId ?? null,
+    transferNote: r.transferNote ?? null,
+    transferAt: r.transferAt ?? null,
+    transferDeclined: r.transferDeclined ?? null,
   };
 }
+
+/**
+ * Sets the milestone ticks to `wanted` (normalized along the ladder: a
+ * later tick implies the earlier ones), logs each change and moves the
+ * phase – unless the case is closed other than "done".
+ */
+async function applyMilestones(
+  ctx: MutationCtx,
+  access: CockpitAccess,
+  row: Doc<"onboardingCases">,
+  patch: Partial<Doc<"onboardingCases">>,
+  wanted: Milestone[],
+): Promise<Milestone[]> {
+  const current = milestonesOf(row);
+  const top = Math.max(-1, ...wanted.map((m) => MILESTONES.indexOf(m)));
+  const next = MILESTONES.filter((_, k) => k <= top);
+  if (next.join() === current.join()) return current;
+  for (const m of MILESTONES) {
+    if (current.includes(m) !== next.includes(m)) {
+      await log(ctx, access, row._id, {
+        kind: "milestone",
+        fromValue: m,
+        toValue: next.includes(m) ? "1" : "0",
+      });
+    }
+  }
+  patch.milestonesDone = next;
+  const status = patch.status ?? row.status;
+  if (status === "done" || !isClosedStatus(status)) {
+    await setStatus(ctx, access, row, phaseFor(next, true), patch);
+  }
+  return next;
+}
+
+const milestoneValidator = v.union(v.literal("cards"), v.literal("fuel"), v.literal("twoMonth"));
 
 // ------------------------------------------------------------------ reads
 
@@ -283,6 +342,7 @@ export const me = userQuery({
       access: !!access,
       canManage: access?.canManage ?? false,
       isAdmin: access?.isAdmin ?? false,
+      userId: access?.userId ?? null,
       live: onboardingIsLive(),
     };
   },
@@ -338,6 +398,12 @@ export const get = userQuery({
       ...caseFields(row),
       reportFields: row.reportFields ?? [],
       assigneeName: assignee ? displayName(assignee) : null,
+      mood: row.mood ?? null,
+      moodAt: row.moodAt ?? null,
+      moodByName: row.moodByName ?? null,
+      transferToName: row.transferToUserId
+        ? displayName(await ctx.db.get(row.transferToUserId))
+        : null,
       canManage: access.canManage,
       contacts: contacts.map((c) => ({
         _id: c._id,
@@ -451,14 +517,20 @@ export const imports = userQuery({
 export const update = userMutation({
   args: {
     caseId: v.id("onboardingCases"),
-    /** "winback" / "done" close the case, "open" reopens it in its phase. */
-    status: v.optional(v.union(v.literal("winback"), v.literal("done"), v.literal("open"))),
-    milestone: v.optional(
-      v.object({
-        key: v.union(v.literal("cards"), v.literal("fuel"), v.literal("twoMonth")),
-        done: v.boolean(),
-      }),
+    /** "winback" / "done" / "unreachable" close the case, "open" reopens
+     * it in its phase. */
+    status: v.optional(
+      v.union(v.literal("winback"), v.literal("done"), v.literal("unreachable"), v.literal("open")),
     ),
+    milestone: v.optional(v.object({ key: milestoneValidator, done: v.boolean() })),
+    /** The IT has dealt with the case ("IT erledigt"). */
+    itDone: v.optional(v.boolean()),
+    /** Own marker with a short reason; `null` removes it. */
+    flag: v.optional(v.union(v.object({ note: v.string() }), v.null())),
+    /** Customer mood 1–5; `null` clears it. */
+    mood: v.optional(v.union(v.number(), v.null())),
+    /** Hides the note about a declined handover. */
+    dismissDecline: v.optional(v.boolean()),
     assigneeUserId: v.optional(v.union(v.id("users"), v.null())),
     prio: v.optional(v.boolean()),
     nextFollowUp: v.optional(v.union(v.string(), v.null())),
@@ -474,23 +546,42 @@ export const update = userMutation({
 
     if (args.milestone) {
       const { key, done } = args.milestone;
-      const next = setMilestone(milestones, key, done);
-      for (const m of MILESTONES) {
-        if (milestones.includes(m) !== next.includes(m)) {
-          await log(ctx, access, row._id, {
-            kind: "milestone",
-            fromValue: m,
-            toValue: next.includes(m) ? "1" : "0",
-          });
+      milestones = await applyMilestones(
+        ctx,
+        access,
+        row,
+        patch,
+        setMilestone(milestones, key, done),
+      );
+    }
+    if (args.itDone && row.itOpenSince !== undefined) {
+      patch.itOpenSince = undefined;
+      await log(ctx, access, row._id, { kind: "it", toValue: "done" });
+    }
+    if (args.flag !== undefined) {
+      if (args.flag === null) {
+        if (row.flaggedAt !== undefined) {
+          patch.flaggedAt = undefined;
+          patch.flagNote = undefined;
+          await log(ctx, access, row._id, { kind: "flag", toValue: "0" });
         }
-      }
-      milestones = next;
-      patch.milestonesDone = next;
-      // A winback case keeps its place; everything else follows the ticks.
-      if (row.status !== "winback") {
-        await setStatus(ctx, access, row, phaseFor(next, true), patch);
+      } else {
+        const note = args.flag.note.trim().slice(0, 500);
+        if (!note) throw invalid("Bitte kurz den Grund für die Flagge eintragen.");
+        patch.flaggedAt = Date.now();
+        patch.flagNote = note;
+        await log(ctx, access, row._id, { kind: "flag", toValue: "1", note });
       }
     }
+    if (args.mood !== undefined) {
+      if (args.mood !== null && ![1, 2, 3, 4, 5].includes(args.mood)) {
+        throw invalid("Stimmung von 1 bis 5.");
+      }
+      patch.mood = args.mood ?? undefined;
+      patch.moodAt = args.mood === null ? undefined : Date.now();
+      patch.moodByName = args.mood === null ? undefined : access.name;
+    }
+    if (args.dismissDecline) patch.transferDeclined = undefined;
     if (args.status === "open") {
       if (isClosedStatus(row.status)) {
         const phase = phaseFor(milestones, true);
@@ -510,6 +601,7 @@ export const update = userMutation({
         const user = next ? await ctx.db.get(next) : null;
         if (next && (!user || user.status !== "active")) throw invalid("Person nicht gefunden.");
         patch.assigneeUserId = next;
+        Object.assign(patch, CLEAR_TRANSFER);
         const before = row.assigneeUserId ? await ctx.db.get(row.assigneeUserId) : null;
         await log(ctx, access, row._id, {
           kind: "assign",
@@ -544,21 +636,33 @@ export const addContact = userMutation({
     nextFollowUpTime: v.optional(v.union(v.string(), v.null())),
     /** Closes the case in the same step. */
     status: v.optional(v.union(v.literal("winback"), v.literal("done"))),
+    /** Milestone ticks after this contact (the whole set). */
+    milestones: v.optional(v.array(milestoneValidator)),
   },
   handler: async (ctx, args) => {
     const access = await requireAccess(ctx);
     const row = await loadCase(ctx, access, args.caseId);
     const note = args.note?.trim().slice(0, 4000) || undefined;
-    if (args.kind === "note" && !note) throw invalid("Bitte eine Notiz eintragen.");
+    // A bare note needs text – unless it only ticks milestones.
+    if (args.kind === "note" && !note && !args.milestones) {
+      throw invalid("Bitte eine Notiz eintragen.");
+    }
 
     const now = Date.now();
-    await log(ctx, access, row._id, { kind: args.kind, note });
+    if (args.kind !== "note" || note) await log(ctx, access, row._id, { kind: args.kind, note });
     const patch: Partial<Doc<"onboardingCases">> = { updatedAt: now };
+    if (args.milestones) await applyMilestones(ctx, access, row, patch, args.milestones);
     if (isContactAttempt(args.kind)) {
       patch.lastContactAt = now;
       patch.lastContactKind = args.kind;
       patch.contactAttempts = (row.contactAttempts ?? 0) + 1;
-      if (row.status === "fresh") await setStatus(ctx, access, row, "step1", patch);
+      patch.notReachedStreak = nextNotReachedStreak(
+        row.notReachedStreak ?? 0,
+        args.kind === "not_reached" ? "notReached" : "reached",
+      );
+      if ((patch.status ?? row.status) === "fresh") {
+        await setStatus(ctx, access, row, "step1", patch);
+      }
     }
     if (args.status !== undefined) await setStatus(ctx, access, row, args.status, patch);
     await applyFollowUp(ctx, access, row, patch, args.nextFollowUp, args.nextFollowUpTime);
@@ -582,6 +686,8 @@ export const setOutcome = userMutation({
     channel: v.optional(v.union(v.literal("phone"), v.literal("email"))),
     nextFollowUp: v.optional(v.union(v.string(), v.null())),
     nextFollowUpTime: v.optional(v.union(v.string(), v.null())),
+    /** Milestone ticks after this contact (the whole set). */
+    milestones: v.optional(v.array(milestoneValidator)),
   },
   handler: async (ctx, args) => {
     const access = await requireAccess(ctx);
@@ -618,11 +724,166 @@ export const setOutcome = userMutation({
         args.channel === "email" ? "email" : kind === "notReached" ? "not_reached" : "reached";
       patch.contactAttempts = (row.contactAttempts ?? 0) + 1;
     }
-    if (kind === "cancel") await setStatus(ctx, access, row, "winback", patch);
-    else if (row.status === "fresh") await setStatus(ctx, access, row, "step1", patch);
+    patch.notReachedStreak = nextNotReachedStreak(row.notReachedStreak ?? 0, kind);
+    if (isItPath(args.path) && row.itOpenSince === undefined) patch.itOpenSince = now;
+    if (args.milestones) await applyMilestones(ctx, access, row, patch, args.milestones);
+    const closeTo = CLOSING_KINDS[kind];
+    if (closeTo) await setStatus(ctx, access, row, closeTo, patch);
+    else if ((patch.status ?? row.status) === "fresh") {
+      await setStatus(ctx, access, row, "step1", patch);
+    }
     await applyFollowUp(ctx, access, row, patch, args.nextFollowUp, args.nextFollowUpTime);
     await ctx.db.patch(row._id, patch);
     return { status: patch.status ?? row.status };
+  },
+});
+
+// ---------------------------------------------------------------- handover
+//
+// Feedback 03.11.2026: a consultant hands a case to a colleague with a short
+// note; the colleague accepts or declines (with a reason). Until accepted
+// the case stays with the sender. Managers keep reassigning directly.
+
+/** Handovers waiting for the caller (or, for managers, `asUserId`). */
+export const transfers = userQuery({
+  args: { asUserId: v.optional(v.id("users")) },
+  handler: async (ctx, args) => {
+    const access = await requireAccess(ctx);
+    if (args.asUserId && !access.canManage) throw forbidden();
+    const me = args.asUserId ?? access.userId;
+    const rows = await ctx.db
+      .query("onboardingCases")
+      .withIndex("by_transferTo", (q) => q.eq("transferToUserId", me))
+      .collect();
+    const config = await loadStatusConfig(ctx);
+    const out = [];
+    for (const r of rows) {
+      const from = r.transferFromUserId ? await ctx.db.get(r.transferFromUserId) : null;
+      out.push({
+        caseId: r._id,
+        customerNumber: r.customerNumber,
+        status: r.status,
+        prio: r.prio,
+        situation: r.outcomePath?.length ? pathLabel(config, r.outcomePath) : null,
+        fromName: from ? displayName(from) : null,
+        note: r.transferNote ?? null,
+        at: r.transferAt ?? null,
+      });
+    }
+    return out.sort((a, b) => (a.at ?? 0) - (b.at ?? 0));
+  },
+});
+
+/** Colleagues a case can be handed to: the team and its leads. */
+export const transferTargets = userQuery({
+  args: {},
+  handler: async (ctx) => {
+    const access = await requireAccess(ctx);
+    const settings = await loadSettings(ctx);
+    const ids = [
+      ...new Set([...(settings?.memberUserIds ?? []), ...(settings?.leadUserIds ?? [])]),
+    ];
+    const out = [];
+    for (const id of ids) {
+      if (id === access.userId) continue;
+      const user = await ctx.db.get(id);
+      if (user && user.status === "active") out.push({ userId: id, name: displayName(user) });
+    }
+    return out.sort((a, b) => a.name.localeCompare(b.name, "de"));
+  },
+});
+
+/** Asks a colleague to take over a case (replaces a pending request). */
+export const requestTransfer = userMutation({
+  args: {
+    caseId: v.id("onboardingCases"),
+    toUserId: v.id("users"),
+    note: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const access = await requireAccess(ctx);
+    const row = await loadCase(ctx, access, args.caseId);
+    if (!row.assigneeUserId) throw invalid("Der Fall ist niemandem zugewiesen.");
+    if (args.toUserId === row.assigneeUserId) throw invalid("Der Fall liegt schon dort.");
+    const settings = await loadSettings(ctx);
+    const allowed = new Set([...(settings?.memberUserIds ?? []), ...(settings?.leadUserIds ?? [])]);
+    const user = await ctx.db.get(args.toUserId);
+    if (!user || user.status !== "active" || !allowed.has(args.toUserId)) {
+      throw invalid("Nur an Kolleginnen aus dem Onboarding-Team.");
+    }
+    const note = args.note.trim().slice(0, 1000);
+    if (!note) throw invalid("Bitte eine kurze Übergabenotiz schreiben.");
+    await ctx.db.patch(row._id, {
+      transferToUserId: args.toUserId,
+      transferFromUserId: row.assigneeUserId,
+      transferNote: note,
+      transferAt: Date.now(),
+      transferDeclined: undefined,
+      updatedAt: Date.now(),
+    });
+    await log(ctx, access, row._id, {
+      kind: "transfer",
+      fromValue: "request",
+      toValue: displayName(user),
+      note,
+    });
+  },
+});
+
+/** The colleague accepts (case moves to her) or declines with a reason
+ * (case stays, the sender sees why). */
+export const answerTransfer = userMutation({
+  args: {
+    caseId: v.id("onboardingCases"),
+    accept: v.boolean(),
+    reason: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const access = await requireAccess(ctx);
+    const row = await ctx.db.get(args.caseId);
+    if (!row || !row.transferToUserId) throw notFound();
+    if (row.transferToUserId !== access.userId && !access.canManage) throw notFound();
+    const to = await ctx.db.get(row.transferToUserId);
+    const now = Date.now();
+    if (args.accept) {
+      await ctx.db.patch(row._id, {
+        ...CLEAR_TRANSFER,
+        assigneeUserId: row.transferToUserId,
+        transferDeclined: undefined,
+        updatedAt: now,
+      });
+      await log(ctx, access, row._id, {
+        kind: "transfer",
+        fromValue: "accept",
+        toValue: to ? displayName(to) : undefined,
+      });
+      return;
+    }
+    const reason = args.reason?.trim().slice(0, 500) ?? "";
+    if (!reason) throw invalid("Bitte kurz begründen, warum du ablehnst.");
+    await ctx.db.patch(row._id, {
+      ...CLEAR_TRANSFER,
+      transferDeclined: { byName: access.name, reason, at: now },
+      updatedAt: now,
+    });
+    await log(ctx, access, row._id, {
+      kind: "transfer",
+      fromValue: "decline",
+      toValue: to ? displayName(to) : undefined,
+      note: reason,
+    });
+  },
+});
+
+/** Takes back a pending handover. */
+export const cancelTransfer = userMutation({
+  args: { caseId: v.id("onboardingCases") },
+  handler: async (ctx, args) => {
+    const access = await requireAccess(ctx);
+    const row = await loadCase(ctx, access, args.caseId);
+    if (!row.transferToUserId) return;
+    await ctx.db.patch(row._id, { ...CLEAR_TRANSFER, updatedAt: Date.now() });
+    await log(ctx, access, row._id, { kind: "transfer", fromValue: "cancel" });
   },
 });
 
@@ -635,7 +896,8 @@ export const statusConfig = userQuery({
     await requireAccess(ctx);
     const row = await ctx.db.query("onboardingStatusConfig").first();
     return {
-      outcomes: row?.outcomes ?? DEFAULT_STATUS_CONFIG.outcomes,
+      outcomes: withBuiltins({ outcomes: row?.outcomes ?? DEFAULT_STATUS_CONFIG.outcomes })
+        .outcomes,
       custom: !!row?.outcomes,
       updatedAt: row?.outcomes ? row.updatedAt : null,
       updatedByName: row?.outcomes ? row.updatedByName : null,
@@ -733,7 +995,7 @@ export const assignMany = userMutation({
       const row = await ctx.db.get(id);
       if (!row || row.assigneeUserId === next) continue;
       const before = row.assigneeUserId ? await ctx.db.get(row.assigneeUserId) : null;
-      await ctx.db.patch(id, { assigneeUserId: next, updatedAt: Date.now() });
+      await ctx.db.patch(id, { assigneeUserId: next, ...CLEAR_TRANSFER, updatedAt: Date.now() });
       await log(ctx, access, id, {
         kind: "assign",
         fromValue: before ? displayName(before) : undefined,
@@ -849,7 +1111,7 @@ export const reassign = userMutation({
     const now = Date.now();
     for (const [k, row] of rows.entries()) {
       const to = targets.length ? targets[k % targets.length] : undefined;
-      await ctx.db.patch(row._id, { assigneeUserId: to, updatedAt: now });
+      await ctx.db.patch(row._id, { assigneeUserId: to, ...CLEAR_TRANSFER, updatedAt: now });
       await log(ctx, access, row._id, {
         kind: "assign",
         fromValue: from ? displayName(from) : undefined,

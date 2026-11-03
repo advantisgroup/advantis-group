@@ -11,7 +11,10 @@
     "step2": "Cards ordered",
     "step3": "Fuelled",
     "done": "Done",
-    "winback": "Winback"
+    "winback": "Winback",
+    "refused": "Not willing to talk",
+    "fakeData": "Fake data",
+    "unreachable": "Unreachable"
   },
   "contactKind": {
     "reached": "Phone · reached",
@@ -23,7 +26,10 @@
     "step": "Step",
     "created": "Created by hand",
     "followUp": "Follow-up changed",
-    "outcome": "Outcome"
+    "outcome": "Outcome",
+    "transfer": "Handover",
+    "it": "IT",
+    "flag": "Flag"
   },
   "tabs": {
     "cases": "Cases",
@@ -279,14 +285,17 @@
   },
   "archiveTabs": {
     "winback": "Winback",
-    "archived": "Archived"
+    "archived": "Archived",
+    "refused": "Not willing to talk",
+    "fakeData": "Fake data",
+    "unreachable": "Unreachable"
   },
   "copyNumber": "Copy customer number",
   "copied": "{number} copied.",
   "copyFailed": "Couldn't copy.",
   "winbackIntro": "Cases with “will cancel”: closed, with reason – for winning them back.",
   "editor": {
-    "intro": "Adjust the situations and their reasons here (e.g. case opened › credit problem › deposit). The type decides what happens: “Will cancel” closes the case onto the winback list, everything else only changes the situation. The phases (New → In contact → Cards ordered → Fuelled → Done) are fixed. Saved entries can only be hidden, not deleted.",
+    "intro": "Adjust the situations and their reasons here (e.g. case opened › credit problem › deposit). The type decides what happens: “Will cancel”, “Not willing to talk” and “Fake data” close the case into the matching archive list; everything else only changes the situation. The phases (New → In contact → Cards ordered → Fuelled → Done) are fixed. Saved entries can only be hidden, not deleted.",
     "stage": "Stage",
     "milestone": "Milestone (tick)",
     "milestoneHint": "e.g. cards ordered – empty = none",
@@ -312,7 +321,9 @@
       "followUp": "Follow-up",
       "case": "Case / problem",
       "cancel": "Will cancel → winback",
-      "other": "Other"
+      "other": "Other",
+      "refused": "Not willing to talk → archive",
+      "fakeData": "Fake data → archive"
     }
   },
   "phase": {
@@ -328,7 +339,12 @@
       "fuel": "Fuelled – schedule the two-month check?",
       "contact": "Follow-up in 2 days?"
     },
-    "milestones": "Milestones"
+    "milestones": "Milestones",
+    "itOpen": "IT case open since {date} – check whether IT has handled it.",
+    "itDone": "IT done",
+    "itDoneSaved": "Marked as handled by IT.",
+    "itCount": "of which IT: {count}",
+    "itBadge": "IT"
   },
   "situation": {
     "title": "Situation",
@@ -347,6 +363,80 @@
       "phone": "Phone",
       "email": "Email",
       "note": "Note only"
-    }
-  }
+    },
+    "closesTo": "Saving closes the case and moves it to the archive list “{list}”.",
+    "closed": "Saved – case is closed: {status}.",
+    "progress": "Progress",
+    "progressHint": "Tick or untick – saved with the contact."
+  },
+  "closedIntro": {
+    "winback": "Cases marked “will cancel”: closed, with a reason – for winning them back.",
+    "refused": "Customers who don't want to talk to us: closed, nothing deleted – “Reopen” in the case.",
+    "fakeData": "Wrong or unknown numbers: closed, nothing deleted – “Reopen” in the case.",
+    "unreachable": "Customers not reached too often: closed, nothing deleted – “Reopen” in the case."
+  },
+  "unreachable": {
+    "hint": "Not reached {count} times in a row. Cross off as unreachable?",
+    "action": "Cross off",
+    "done": "The case is now in the archive under “Unreachable”."
+  },
+  "mood": {
+    "label": "Mood",
+    "1": "annoyed",
+    "2": "unhappy",
+    "3": "neutral",
+    "4": "satisfied",
+    "5": "happy",
+    "clear": "Clear mood",
+    "by": "{name}, {date}",
+    "hint": "Only for the team – so you know what to expect in the next call."
+  },
+  "flag": {
+    "set": "Flag",
+    "remove": "Remove flag",
+    "placeholder": "Why? e.g. question about the limit",
+    "save": "Flag",
+    "cancel": "Cancel",
+    "label": "Flagged",
+    "filter": "Flagged",
+    "required": "Please add a short reason.",
+    "logOn": "Flagged",
+    "logOff": "Flag removed"
+  },
+  "transfer": {
+    "button": "Hand over",
+    "title": "Hand the case to a colleague",
+    "to": "To",
+    "choose": "Choose colleague",
+    "note": "Handover note",
+    "notePlaceholder": "What does she need to know?",
+    "send": "Request handover",
+    "cancelForm": "Cancel",
+    "sent": "Handover requested – the case stays with you until she accepts.",
+    "pending": "Handover to {name} is waiting to be accepted.",
+    "pendingShort": "Handover pending",
+    "cancel": "Withdraw",
+    "cancelled": "Handover withdrawn.",
+    "inboxTitle": "Handovers to you",
+    "from": "from {name}",
+    "accept": "Accept",
+    "decline": "Decline",
+    "declineReason": "Reason for declining",
+    "declineSend": "Decline",
+    "accepted": "Case taken over.",
+    "declined": "Handover declined.",
+    "declinedBy": "{name} declined the handover: {reason}",
+    "dismiss": "Dismiss",
+    "noTargets": "No colleagues set up in the team yet.",
+    "required": "Please choose a colleague and write a note.",
+    "reasonRequired": "Please give a short reason.",
+    "outgoingTitle": "Your handovers",
+    "logRequest": "Handover requested to {name}",
+    "logAccept": "Handover accepted by {name}",
+    "logDecline": "Handover declined by {name}",
+    "logCancel": "Handover withdrawn",
+    "readOnly": "View only while viewing as someone else."
+  },
+  "itLog": "IT done",
+  "kpiLine": "Open {open} · Prio open {prio} · Follow-up due {due}"
 }

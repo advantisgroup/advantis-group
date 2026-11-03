@@ -2,7 +2,11 @@
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
-import { MILESTONES, suggestFollowUp } from "@advantis/convex/performance/onboarding";
+import {
+  isClosedStatus,
+  MILESTONES,
+  suggestFollowUp,
+} from "@advantis/convex/performance/onboarding";
 import { useMutation, useQuery } from "convex/react";
 import { CalendarPlus, Flag, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -25,6 +29,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatDateTime, formatIsoDate } from "@/lib/format";
 
+import { CaseBanners, FlagControl, MoodPicker, TransferButton } from "./CaseActions";
 import { CaseStatus } from "./CaseStatus";
 import { ContactForm } from "./ContactForm";
 import { CustomerNumber, TimeSelect, useStatusName } from "./shared";
@@ -102,6 +107,15 @@ function CaseBody({
         step: (MILESTONES as readonly string[]).includes(key) ? t(`steps.${key as "cards"}`) : key,
       });
     }
+    if (c.kind === "transfer") {
+      const name = c.toValue ?? "–";
+      if (c.fromValue === "request") return t("transfer.logRequest", { name });
+      if (c.fromValue === "accept") return t("transfer.logAccept", { name });
+      if (c.fromValue === "decline") return t("transfer.logDecline", { name });
+      return t("transfer.logCancel");
+    }
+    if (c.kind === "flag") return c.toValue === "1" ? t("flag.logOn") : t("flag.logOff");
+    if (c.kind === "it") return t("itLog");
     if (c.kind === "outcome") {
       const via =
         c.fromValue === "email" ? t("situation.channel.email") : t("situation.channel.phone");
@@ -121,6 +135,8 @@ function CaseBody({
       ? t(`contactKind.${c.kind as "note"}`)
       : c.kind;
   };
+
+  const closed = isClosedStatus(data.status);
 
   return (
     <>
@@ -145,9 +161,25 @@ function CaseBody({
             {t("case.closeDate")}: {data.closeDate ? formatIsoDate(data.closeDate, locale) : "–"}
           </span>
         </SheetDescription>
+        <div className="pt-2">
+          <MoodPicker
+            caseId={caseId}
+            mood={data.mood}
+            moodAt={data.moodAt}
+            moodByName={data.moodByName}
+          />
+        </div>
       </div>
 
       <div className="flex-1 space-y-6 overflow-y-auto px-6 py-6">
+        <CaseBanners data={{ ...data, open: !closed }} />
+        <div className="flex flex-wrap items-start gap-2">
+          <FlagControl caseId={caseId} flagged={data.flagged} flagNote={data.flagNote} />
+          {!closed && data.assigneeUserId && !data.transferToUserId && (
+            <TransferButton caseId={caseId} />
+          )}
+        </div>
+
         <CaseStatus data={data} />
 
         <section className="grid gap-4 sm:grid-cols-2">
@@ -184,15 +216,15 @@ function CaseBody({
                 id="ob-follow"
                 type="date"
                 value={data.nextFollowUp ?? ""}
-                disabled={data.status === "done" || data.status === "winback"}
+                disabled={closed}
                 onChange={(e) => void save({ nextFollowUp: e.target.value || null })}
               />
               <TimeSelect
                 value={data.nextFollowUpTime ?? ""}
-                disabled={data.status === "done" || !data.nextFollowUp}
+                disabled={closed || !data.nextFollowUp}
                 onChange={(time) => void save({ nextFollowUpTime: time || null })}
               />
-              {!data.nextFollowUp && data.status !== "done" && data.status !== "winback" && (
+              {!data.nextFollowUp && !closed && (
                 <Button
                   variant="outline"
                   size="icon"
@@ -245,7 +277,12 @@ function CaseBody({
           </div>
         </section>
 
-        <ContactForm caseId={caseId} closed={data.status === "done" || data.status === "winback"} />
+        <ContactForm
+          key={data.milestones.join()}
+          caseId={caseId}
+          closed={closed}
+          milestones={data.milestones}
+        />
 
         <section className="space-y-2">
           <h3 className="text-sm font-semibold">{t("case.log")}</h3>

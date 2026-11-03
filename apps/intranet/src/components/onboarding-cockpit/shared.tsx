@@ -60,7 +60,31 @@ export function workOrder(today: string) {
 }
 
 /** Phase and closed states in display order. */
-export const STATUS_ORDER = ["fresh", "step1", "step2", "step3", "done", "winback"] as const;
+export const STATUS_ORDER = [
+  "fresh",
+  "step1",
+  "step2",
+  "step3",
+  "done",
+  "winback",
+  "refused",
+  "fakeData",
+  "unreachable",
+] as const;
+
+/** The phase ladder (Neu → … → Abgeschlossen). */
+export const LADDER = ["fresh", "step1", "step2", "step3", "done"] as const;
+
+/** Closed lists in the archive besides "done" (feedback 03.11.). */
+export const CLOSED_LISTS = ["winback", "refused", "fakeData", "unreachable"] as const;
+export type ClosedList = (typeof CLOSED_LISTS)[number];
+
+/** Open case with an IT case not checked off yet. */
+export const itOpen = (c: { status: string; itOpenSince: number | null }) =>
+  !isClosedStatus(c.status) && c.itOpenSince !== null;
+
+/** Customer mood 1–5 as emoji (annoyed → happy). */
+export const MOOD_EMOJI: Record<number, string> = { 1: "😠", 2: "🙁", 3: "😐", 4: "🙂", 5: "😄" };
 
 // ------------------------------------------------------- situation tree
 
@@ -121,6 +145,9 @@ const STATUS_VARIANT: Record<
   step3: "muted",
   done: "success",
   winback: "destructive",
+  refused: "destructive",
+  fakeData: "muted",
+  unreachable: "muted",
 };
 
 export function StatusBadge({ status }: { status: string }) {
