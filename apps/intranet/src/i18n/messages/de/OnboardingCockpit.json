@@ -11,7 +11,10 @@
     "step2": "Karten bestellt",
     "step3": "Getankt",
     "done": "Abgeschlossen",
-    "winback": "Winback"
+    "winback": "Winback",
+    "refused": "Nicht gesprächsbereit",
+    "fakeData": "Fake Data",
+    "unreachable": "Nicht erreichbar"
   },
   "contactKind": {
     "reached": "Telefon · erreicht",
@@ -23,7 +26,10 @@
     "step": "Schritt",
     "created": "Von Hand angelegt",
     "followUp": "Wiedervorlage geändert",
-    "outcome": "Ergebnis"
+    "outcome": "Ergebnis",
+    "transfer": "Übergabe",
+    "it": "IT",
+    "flag": "Flagge"
   },
   "tabs": {
     "cases": "Fälle",
@@ -279,14 +285,17 @@
   },
   "archiveTabs": {
     "winback": "Winback",
-    "archived": "Archiviert"
+    "archived": "Archiviert",
+    "refused": "Nicht gesprächsbereit",
+    "fakeData": "Fake Data",
+    "unreachable": "Nicht erreichbar"
   },
   "copyNumber": "Kundennummer kopieren",
   "copied": "{number} kopiert.",
   "copyFailed": "Kopieren nicht möglich.",
   "winbackIntro": "Fälle mit „will cancel“: geschlossen, mit Grund – für die Rückgewinnung.",
   "editor": {
-    "intro": "Hier passt du die Lagen mit ihren Gründen an (z. B. Case eröffnet › credit problem › Deposit). Die Art bestimmt, was passiert: „Wird kündigen“ schließt den Fall auf die Winback-Liste, alle anderen ändern nur die Lage. Die Phasen (Neu → In Kontakt → Karten bestellt → Getankt → Abgeschlossen) sind fest. Gespeicherte Einträge lassen sich nur ausblenden, nicht löschen.",
+    "intro": "Hier passt du die Lagen mit ihren Gründen an (z. B. Case eröffnet › credit problem › Deposit). Die Art bestimmt, was passiert: „Wird kündigen“, „Nicht gesprächsbereit“ und „Fake Data“ schließen den Fall in die passende Archiv-Liste, alle anderen ändern nur die Lage. Die Phasen (Neu → In Kontakt → Karten bestellt → Getankt → Abgeschlossen) sind fest. Gespeicherte Einträge lassen sich nur ausblenden, nicht löschen.",
     "stage": "Stufe",
     "milestone": "Zwischenstatus (Haken)",
     "milestoneHint": "z. B. Karten bestellt – leer = keiner",
@@ -312,7 +321,9 @@
       "followUp": "Follow-up",
       "case": "Case / Problem",
       "cancel": "Wird kündigen → Winback",
-      "other": "Sonstiges"
+      "other": "Sonstiges",
+      "refused": "Nicht gesprächsbereit → Archiv",
+      "fakeData": "Fake Data → Archiv"
     }
   },
   "phase": {
@@ -328,7 +339,12 @@
       "fuel": "Getankt – 2-Monats-Check vormerken?",
       "contact": "Wiedervorlage in 2 Tagen?"
     },
-    "milestones": "Haken"
+    "milestones": "Haken",
+    "itOpen": "IT-Case offen seit {date} – prüfen, ob die IT ihn bearbeitet hat.",
+    "itDone": "IT erledigt",
+    "itDoneSaved": "Als von der IT erledigt markiert.",
+    "itCount": "davon IT: {count}",
+    "itBadge": "IT"
   },
   "situation": {
     "title": "Lage",
@@ -347,6 +363,80 @@
       "phone": "Telefon",
       "email": "E-Mail",
       "note": "Nur Notiz"
-    }
-  }
+    },
+    "closesTo": "Nach dem Speichern wird der Fall geschlossen und landet im Archiv unter „{list}“.",
+    "closed": "Gespeichert – Fall ist geschlossen: {status}.",
+    "progress": "Fortschritt",
+    "progressHint": "Haken setzen oder zurücknehmen – wird mit dem Kontakt gespeichert."
+  },
+  "closedIntro": {
+    "winback": "Fälle mit „wird kündigen“: geschlossen, mit Grund – für die Rückgewinnung.",
+    "refused": "Kunden, die nicht mit uns sprechen wollen: geschlossen, nichts gelöscht – im Fall „Wieder öffnen“.",
+    "fakeData": "Falsche oder unbekannte Nummern: geschlossen, nichts gelöscht – im Fall „Wieder öffnen“.",
+    "unreachable": "Kunden, die zu oft nicht erreicht wurden: geschlossen, nichts gelöscht – im Fall „Wieder öffnen“."
+  },
+  "unreachable": {
+    "hint": "{count}× in Folge nicht erreicht. Als nicht erreichbar wegstreichen?",
+    "action": "Wegstreichen",
+    "done": "Fall liegt jetzt im Archiv unter „Nicht erreichbar“."
+  },
+  "mood": {
+    "label": "Stimmung",
+    "1": "genervt",
+    "2": "unzufrieden",
+    "3": "neutral",
+    "4": "zufrieden",
+    "5": "glücklich",
+    "clear": "Stimmung entfernen",
+    "by": "{name}, {date}",
+    "hint": "Nur fürs Team – damit ihr euch aufs nächste Gespräch einstellen könnt."
+  },
+  "flag": {
+    "set": "Flagge setzen",
+    "remove": "Flagge entfernen",
+    "placeholder": "Warum? z. B. Rückfrage zum Limit",
+    "save": "Flaggen",
+    "cancel": "Abbrechen",
+    "label": "Geflaggt",
+    "filter": "Geflaggt",
+    "required": "Bitte kurz den Grund eintragen.",
+    "logOn": "Flagge gesetzt",
+    "logOff": "Flagge entfernt"
+  },
+  "transfer": {
+    "button": "Übertragen",
+    "title": "Fall an eine Kollegin übertragen",
+    "to": "An",
+    "choose": "Kollegin wählen",
+    "note": "Übergabenotiz",
+    "notePlaceholder": "Was muss sie wissen?",
+    "send": "Übergabe anfragen",
+    "cancelForm": "Abbrechen",
+    "sent": "Übergabe angefragt – der Fall bleibt bei dir, bis sie annimmt.",
+    "pending": "Übergabe an {name} wartet auf Annahme.",
+    "pendingShort": "Übergabe läuft",
+    "cancel": "Zurückziehen",
+    "cancelled": "Übergabe zurückgezogen.",
+    "inboxTitle": "Übergaben an dich",
+    "from": "von {name}",
+    "accept": "Annehmen",
+    "decline": "Ablehnen",
+    "declineReason": "Grund fürs Ablehnen",
+    "declineSend": "Ablehnen",
+    "accepted": "Fall übernommen.",
+    "declined": "Übergabe abgelehnt.",
+    "declinedBy": "{name} hat die Übergabe abgelehnt: {reason}",
+    "dismiss": "Ausblenden",
+    "noTargets": "Noch keine Kolleginnen im Team hinterlegt.",
+    "required": "Bitte Kollegin und Übergabenotiz eintragen.",
+    "reasonRequired": "Bitte kurz begründen.",
+    "outgoingTitle": "Deine Übergaben",
+    "logRequest": "Übergabe angefragt an {name}",
+    "logAccept": "Übergabe angenommen von {name}",
+    "logDecline": "Übergabe abgelehnt von {name}",
+    "logCancel": "Übergabe zurückgezogen",
+    "readOnly": "In der Ansicht als … nur zum Ansehen."
+  },
+  "itLog": "IT erledigt",
+  "kpiLine": "Offen {open} · Prio offen {prio} · Wiedervorlage fällig {due}"
 }

@@ -4,7 +4,12 @@ import { useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
-import { suggestFollowUp } from "@advantis/convex/performance/onboarding";
+import {
+  type Milestone,
+  MILESTONES,
+  setMilestone,
+  suggestFollowUp,
+} from "@advantis/convex/performance/onboarding";
 import { useMutation } from "convex/react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -18,6 +23,13 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 import { cn } from "@/lib/utils";
 
 import { TimeSelect, useStatusConfig, useStatusName } from "./shared";
+
+/** Where a closing situation sends the case (archive list). */
+const CLOSES_TO: Record<string, string> = {
+  cancel: "winback",
+  refused: "refused",
+  fakeData: "fakeData",
+};
 
 type Channel = "phone" | "email" | "note";
 const activeChildren = (n: Node): Node[] => (n.children ?? []).filter((c) => !c.archived);
@@ -33,16 +45,20 @@ type Node = {
 
 /**
  * "Kontakt festhalten": how (phone / e-mail / just a note), the situation
- * with its reason ("Lage"), a note, and the next follow-up – already filled
+ * with its reason ("Lage"), the milestone ticks (feedback 03.11.: ticked
+ * here, only shown above), a note, and the next follow-up – already filled
  * in for two days from now on the next quarter hour (weekends → Monday),
- * created when saving unless unticked.
+ * one week after "Karten bestellt", two months after "Getankt"; created
+ * when saving unless unticked.
  */
 export function ContactForm({
   caseId,
   closed,
+  milestones: current,
 }: {
   caseId: Id<"onboardingCases">;
   closed: boolean;
+  milestones: string[];
 }) {
   const t = useTranslations("OnboardingCockpit");
   const handleError = useErrorHandler();
@@ -52,6 +68,8 @@ export function ContactForm({
   const addContact = useMutation(api.performance.onboarding.addContact);
 
   const fresh = () => suggestFollowUp(new Date(), "contact");
+  const start = MILESTONES.filter((m) => current.includes(m));
+  const [ticks, setTicks] = useState<Milestone[]>(start);
   const [channel, setChannel] = useState<Channel>("phone");
   const [path, setPath] = useState<string[]>([]);
   const [freetext, setFreetext] = useState("");
@@ -75,7 +93,22 @@ export function ContactForm({
   const complete = channel === "note" || (!!last && activeChildren(last).length === 0);
   const kind = chosen[0]?.kind ?? null;
   const needsFreetext = channel !== "note" && complete && !!last?.freetext;
-  const cancel = kind === "cancel";
+  const closesTo = channel !== "note" && kind ? CLOSES_TO[kind] : undefined;
+  const ticksChanged = ticks.join() !== start.join();
+
+  const toggleTick = (m: Milestone, on: boolean) => {
+    const next = setMilestone(ticks, m, on);
+    setTicks(next);
+    // Newly reached "Karten bestellt" / "Getankt": move the follow-up to
+    // 1 week / 2 months (Vahan, 28.10.).
+    const top = [...next].reverse().find((x) => !start.includes(x));
+    if (top === "cards" || top === "fuel") {
+      setFollowUp(suggestFollowUp(new Date(), top));
+      setWithFollowUp(true);
+    } else if (!on) {
+      setFollowUp(fresh());
+    }
+  };
 
   const reset = () => {
     setPath([]);
@@ -91,25 +124,32 @@ export function ContactForm({
       toast.error(t("situation.textRequired"));
       return;
     }
-    if (channel === "note" && !note.trim()) {
+    if (channel === "note" && !note.trim() && !ticksChanged) {
       toast.error(t("case.noteRequired"));
       return;
     }
     const follow =
-      withFollowUp && !cancel && followUp.date
+      withFollowUp && !closesTo && followUp.date
         ? { nextFollowUp: followUp.date, nextFollowUpTime: followUp.time || null }
         : {};
     setBusy(true);
     try {
+      const withTicks = ticksChanged ? { milestones: ticks } : {};
       if (channel === "note") {
-        await addContact({ caseId, kind: "note", note: note.trim(), ...follow });
+        await addContact({
+          caseId,
+          kind: "note",
+          note: note.trim() || undefined,
+          ...follow,
+          ...withTicks,
+        });
         toast.success(t("case.saved"));
       } else {
         const text = [freetext.trim(), note.trim()].filter(Boolean).join("\n") || undefined;
-        const result = await setOutcome({ caseId, path, text, channel, ...follow });
+        const result = await setOutcome({ caseId, path, text, channel, ...follow, ...withTicks });
         toast.success(
-          result.status === "winback"
-            ? t("situation.toWinback")
+          Object.values(CLOSES_TO).includes(result.status)
+            ? t("situation.closed", { status: statusName(result.status) })
             : t("situation.saved", { status: statusName(result.status) }),
         );
       }
@@ -169,7 +209,8 @@ export function ContactForm({
                   className={cn(
                     "h-8",
                     path[i] !== o.id &&
-                      o.kind === "cancel" &&
+                      !!o.kind &&
+                      o.kind in CLOSES_TO &&
                       "border-destructive/40 text-destructive",
                     path[i] !== o.id && o.kind === "reached" && "border-ok/40 text-ok",
                   )}
@@ -184,6 +225,28 @@ export function ContactForm({
             </div>
           </div>
         ))}
+
+      <div className="space-y-1.5">
+        <Label className="text-xs text-muted-foreground">{t("situation.progress")}</Label>
+        <div className="flex flex-wrap gap-2">
+          {MILESTONES.map((m) => {
+            const on = ticks.includes(m);
+            return (
+              <label
+                key={m}
+                className={cn(
+                  "flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-1.5 text-sm transition-colors",
+                  on ? "border-ok/40 bg-ok/10 text-ok" : "border-border/70 hover:bg-muted/50",
+                )}
+              >
+                <Checkbox checked={on} onCheckedChange={(v) => toggleTick(m, v === true)} />
+                {t(`steps.${m}`)}
+              </label>
+            );
+          })}
+        </div>
+        <p className="text-xs text-muted-foreground">{t("situation.progressHint")}</p>
+      </div>
 
       {needsFreetext && (
         <div className="space-y-1.5">
@@ -207,8 +270,10 @@ export function ContactForm({
         />
       </div>
 
-      {cancel ? (
-        <p className="text-xs text-destructive">{t("situation.willWinback")}</p>
+      {closesTo ? (
+        <p className="text-xs text-destructive">
+          {t("situation.closesTo", { list: statusName(closesTo) })}
+        </p>
       ) : (
         <div className="flex flex-wrap items-center gap-2">
           <label className="flex items-center gap-2 text-sm">

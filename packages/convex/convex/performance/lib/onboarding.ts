@@ -30,12 +30,19 @@
 export const PHASES = ["fresh", "step1", "step2", "step3"] as const;
 export type Phase = (typeof PHASES)[number];
 
-/** Closed states after the phases. */
-export const CLOSED_STATUSES = ["done", "winback"] as const;
+/** Closed states after the phases. Besides "done" each one is its own
+ * list in the archive (feedback 03.11.2026): nothing is deleted, every
+ * closed case can be reopened and exported.
+ *   winback      – will cancel
+ *   refused      – not willing to talk to us
+ *   fakeData     – number wrong / unknown
+ *   unreachable  – crossed off after too many "not reached" */
+export const CLOSED_STATUSES = ["done", "winback", "refused", "fakeData", "unreachable"] as const;
+export type ClosedStatus = (typeof CLOSED_STATUSES)[number];
 
 /** Closed cases drop out of open counts, prio and follow-ups. */
 export function isClosedStatus(status: string): boolean {
-  return status === "done" || status === "winback";
+  return (CLOSED_STATUSES as readonly string[]).includes(status);
 }
 
 export function isValidStatus(status: string): boolean {
@@ -118,6 +125,8 @@ export const OUTCOME_KINDS = [
   "followUp",
   "case",
   "cancel",
+  "refused",
+  "fakeData",
   "other",
 ] as const;
 export type OutcomeKind = (typeof OUTCOME_KINDS)[number];
@@ -203,8 +212,55 @@ export const DEFAULT_STATUS_CONFIG: StatusConfig = {
         { id: "cancel.other", label: "other (freetext)", freetext: true },
       ],
     },
+    { id: "refused", label: "nicht gesprächsbereit", kind: "refused" },
+    { id: "fakeData", label: "Fake Data (Nummer falsch/unbekannt)", kind: "fakeData" },
   ],
 };
+
+/** Situations that close the case, and where it goes. */
+export const CLOSING_KINDS: Partial<Record<OutcomeKind, ClosedStatus>> = {
+  cancel: "winback",
+  refused: "refused",
+  fakeData: "fakeData",
+};
+
+/**
+ * The stored tree plus any built-in situation it doesn't have yet (a tree
+ * saved before "nicht gesprächsbereit" / "Fake Data" existed gets them
+ * appended), so new built-ins show up without anyone editing the tree.
+ */
+export function withBuiltins(config: StatusConfig): StatusConfig {
+  const ids = new Set(config.outcomes.map((o) => o.id));
+  const missing = DEFAULT_STATUS_CONFIG.outcomes.filter((o) => !ids.has(o.id));
+  return missing.length ? { outcomes: [...config.outcomes, ...missing] } : config;
+}
+
+/** Entry of the tree that means "case opened with the IT". */
+export const IT_NODE_ID = "case.it";
+
+/** Whether a situation path is a case for the IT (cockpit marker "IT"). */
+export function isItPath(path: string[]): boolean {
+  return path.includes(IT_NODE_ID);
+}
+
+/** "Nicht erreicht" in a row after which the card suggests crossing the
+ * customer off as unreachable (more than 10, Vahan 03.11.). */
+export const UNREACHABLE_AFTER = 10;
+
+export function suggestUnreachable(streak: number): boolean {
+  return streak > UNREACHABLE_AFTER;
+}
+
+/** The "not reached" streak after a contact of `kind`: not reached counts
+ * up, anything that reached the customer starts again at 0. */
+export function nextNotReachedStreak(current: number, kind: string): number {
+  if (kind === "notReached") return current + 1;
+  if (kind === "other" || kind === "fakeData") return current;
+  return 0;
+}
+
+/** Customer mood scale: 1 annoyed … 5 happy. */
+export const MOODS = [1, 2, 3, 4, 5] as const;
 
 /** The nodes along `path`, or null when the path doesn't exist. */
 export function resolvePath(config: StatusConfig, path: string[]): AnyNode[] | null {
@@ -342,6 +398,9 @@ export const ONBOARDING_CONTACT_KINDS = [
   "assign",
   "created",
   "followUp",
+  "transfer",
+  "it",
+  "flag",
 ] as const;
 export type OnboardingContactKind = (typeof ONBOARDING_CONTACT_KINDS)[number];
 

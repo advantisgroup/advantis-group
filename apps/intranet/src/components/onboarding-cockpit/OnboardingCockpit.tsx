@@ -12,7 +12,18 @@ import {
   type StatusConfig,
 } from "@advantis/convex/performance/onboarding";
 import { useMutation, useQuery } from "convex/react";
-import { Archive, ArchiveRestore, Download, Eye, Flag, Inbox, Plus, Rocket } from "lucide-react";
+import {
+  Archive,
+  ArchiveRestore,
+  ArrowRightLeft,
+  Bookmark,
+  Download,
+  Eye,
+  Flag,
+  Inbox,
+  Plus,
+  Rocket,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
@@ -52,9 +63,13 @@ import { FollowUpCalendar } from "./FollowUpCalendar";
 import { ImportPanel } from "./ImportPanel";
 import { PhaseBar } from "./StageOverview";
 import { StatusEditor } from "./StatusEditor";
+import { TransferInbox } from "./Transfers";
 import {
   type CaseRow,
   caseDate,
+  CLOSED_LISTS,
+  type ClosedList,
+  itOpen,
   FollowUpDate,
   followUpDue,
   isOpen,
@@ -110,7 +125,7 @@ export function OnboardingCockpit() {
   );
   const assignees = useQuery(api.performance.onboarding.assignees, realManage ? {} : "skip");
   const statusConfig = useQuery(api.performance.onboarding.statusConfig, allowed ? {} : "skip");
-  const [archiveView, setArchiveView] = useState<"archived" | "winback">("winback");
+  const [archiveView, setArchiveView] = useState<ClosedList | "archived">("winback");
   const viewAsName = viewAs ? assignees?.find((a) => a.userId === viewAs)?.name : null;
 
   const today = todayIso();
@@ -148,11 +163,19 @@ export function OnboardingCockpit() {
           {
             value: "archive" as const,
             label: t("tabs.archive"),
-            count: (cases ?? []).filter((c) => c.status === "winback").length,
+            count: (cases ?? []).filter((c) =>
+              (CLOSED_LISTS as readonly string[]).includes(c.status),
+            ).length,
           },
         ]
       : []),
   ];
+  const closedList = (s: string) =>
+    (cases ?? [])
+      .filter((c) => c.status === s)
+      .sort((a, b) => (b.closedAt ?? 0) - (a.closedAt ?? 0));
+  /** Whose handovers the box shows: the person viewed as, else the caller. */
+  const me = viewAs ?? access.userId;
 
   return (
     <StatusConfigProvider config={statusConfig ? { outcomes: statusConfig.outcomes } : undefined}>
@@ -211,6 +234,13 @@ export function OnboardingCockpit() {
             </Button>
           </div>
         )}
+        {tab === "cases" && (
+          <TransferInbox
+            asUserId={viewAs}
+            cases={(cases ?? []).filter((c) => c.assigneeUserId === me)}
+            onOpen={setOpenId}
+          />
+        )}
         <CountTabs tabs={tabs} value={tab} onChange={setTab} />
 
         {tab === "cases" && (
@@ -242,11 +272,11 @@ export function OnboardingCockpit() {
           <section className="space-y-3">
             <CountTabs
               tabs={[
-                {
-                  value: "winback" as const,
-                  label: t("archiveTabs.winback"),
-                  count: (cases ?? []).filter((c) => c.status === "winback").length,
-                },
+                ...CLOSED_LISTS.map((s) => ({
+                  value: s,
+                  label: t(`archiveTabs.${s}`),
+                  count: closedList(s).length,
+                })),
                 {
                   value: "archived" as const,
                   label: t("archiveTabs.archived"),
@@ -256,18 +286,16 @@ export function OnboardingCockpit() {
               value={archiveView}
               onChange={setArchiveView}
             />
-            {archiveView === "winback" ? (
+            {archiveView !== "archived" ? (
               <>
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-sm text-muted-foreground">{t("winbackIntro")}</p>
-                  <ExportButton rows={(cases ?? []).filter((c) => c.status === "winback")} />
+                  <p className="text-sm text-muted-foreground">{t(`closedIntro.${archiveView}`)}</p>
+                  <ExportButton rows={closedList(archiveView)} />
                 </div>
                 <CaseTable
-                  rows={(cases ?? [])
-                    .filter((c) => c.status === "winback")
-                    .sort((a, b) => (b.closedAt ?? 0) - (a.closedAt ?? 0))}
+                  rows={closedList(archiveView)}
                   onOpen={setOpenId}
-                  empty={t("empty.winback")}
+                  empty={archiveView === "winback" ? t("empty.winback") : t("empty.filtered")}
                 />
               </>
             ) : (
@@ -384,6 +412,8 @@ function CasesView({
   const [status, setStatus] = useState(ALL);
   const [outcome, setOutcome] = useState<string | null>(null);
   const [assignee, setAssignee] = useState(ALL);
+  const [onlyIt, setOnlyIt] = useState(false);
+  const [onlyFlagged, setOnlyFlagged] = useState(false);
   const today = todayIso();
   const config = useStatusConfig();
 
@@ -401,6 +431,8 @@ function CasesView({
   const rows = cases
     .filter((c) => {
       if (!matchesKpi(c, kpi, today, config)) return false;
+      if (onlyIt && !itOpen(c)) return false;
+      if (onlyFlagged && !c.flagged) return false;
       if (status !== ALL && c.status !== status) return false;
       if (outcome === NO_SITUATION && c.outcomePath.length > 0) return false;
       if (outcome && outcome !== NO_SITUATION && c.outcomePath[0] !== outcome) return false;
@@ -408,46 +440,106 @@ function CasesView({
         assignee === NOBODY ? c.assigneeUserId : assignee !== ALL && c.assigneeUserId !== assignee
       )
         return false;
-      return matchesSearch(query, c.customerNumber, c.assigneeName, c.reportOwner, c.note);
+      return matchesSearch(
+        query,
+        c.customerNumber,
+        c.assigneeName,
+        c.reportOwner,
+        c.note,
+        c.flagNote,
+      );
     })
     .sort(workOrder(today));
 
   const toggleKpi = (f: KpiFilter) => setKpi(kpi === f ? "all" : f);
-  const filtered = query || kpi !== "open" || status !== ALL || outcome || assignee !== ALL;
+  const filtered =
+    query ||
+    kpi !== "open" ||
+    status !== ALL ||
+    outcome ||
+    assignee !== ALL ||
+    onlyIt ||
+    onlyFlagged;
+  const flaggedCount = cases.filter((c) => c.flagged && isOpen(c)).length;
 
   return (
     <div className="space-y-4">
       <PhaseBar
         cases={cases}
+        large={!canManage}
         active={status === ALL ? null : status}
         onPick={(phase) => {
           setStatus(phase ?? ALL);
           setKpi(phase ? "all" : "open");
+          setOnlyIt(false);
+        }}
+        itActive={onlyIt}
+        onPickIt={(on) => {
+          setOnlyIt(on);
+          setStatus(ALL);
+          setKpi("open");
         }}
       />
 
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-        <KpiButton
-          label={t("kpi.open")}
-          value={count("open")}
-          active={kpi === "open"}
-          onClick={() => toggleKpi("open")}
-        />
-        <KpiButton
-          label={t("kpi.prio")}
-          value={count("prio")}
-          tone="critical"
-          active={kpi === "prio"}
-          onClick={() => toggleKpi("prio")}
-        />
-        <KpiButton
-          label={t("kpi.followUpDue")}
-          value={count("due")}
-          tone="warn"
-          active={kpi === "due"}
-          onClick={() => toggleKpi("due")}
-        />
-        {canManage && (
+      {/* Consultants (feedback 03.11.): the phases up front, the figures
+          only as a small line below. */}
+      {!canManage ? (
+        <div className="flex flex-wrap items-center gap-1.5 text-xs">
+          {(
+            [
+              ["open", t("kpi.open"), "neutral"],
+              ["prio", t("kpi.prio"), "critical"],
+              ["due", t("kpi.followUpDue"), "warn"],
+            ] as const
+          ).map(([f, label, tone]) => {
+            const n = count(f);
+            return (
+              <button
+                key={f}
+                type="button"
+                aria-pressed={kpi === f}
+                onClick={() => toggleKpi(f)}
+                className={cn(
+                  "rounded-full border border-border/70 px-2.5 py-1 text-muted-foreground transition-colors hover:bg-muted/60",
+                  kpi === f && "border-foreground/40 bg-muted text-foreground",
+                )}
+              >
+                {label}{" "}
+                <span
+                  className={cn(
+                    "font-semibold tabular-nums text-foreground",
+                    n > 0 && tone === "warn" && "text-warn",
+                    n > 0 && tone === "critical" && "text-destructive",
+                  )}
+                >
+                  {n}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+          <KpiButton
+            label={t("kpi.open")}
+            value={count("open")}
+            active={kpi === "open"}
+            onClick={() => toggleKpi("open")}
+          />
+          <KpiButton
+            label={t("kpi.prio")}
+            value={count("prio")}
+            tone="critical"
+            active={kpi === "prio"}
+            onClick={() => toggleKpi("prio")}
+          />
+          <KpiButton
+            label={t("kpi.followUpDue")}
+            value={count("due")}
+            tone="warn"
+            active={kpi === "due"}
+            onClick={() => toggleKpi("due")}
+          />
           <KpiButton
             label={t("kpi.unassigned")}
             value={count("unassigned")}
@@ -455,9 +547,9 @@ function CasesView({
             active={kpi === "unassigned"}
             onClick={() => toggleKpi("unassigned")}
           />
-        )}
-      </div>
-      <p className="text-xs text-muted-foreground">{t("kpi.filterHint")}</p>
+        </div>
+      )}
+      {canManage && <p className="text-xs text-muted-foreground">{t("kpi.filterHint")}</p>}
 
       {canManage && (
         <ConsultantTable
@@ -510,11 +602,23 @@ function CasesView({
             </SelectContent>
           </Select>
         )}
+        <Button
+          variant={onlyFlagged ? "default" : "outline"}
+          size="sm"
+          className="h-9"
+          aria-pressed={onlyFlagged}
+          onClick={() => setOnlyFlagged(!onlyFlagged)}
+        >
+          <Bookmark className="mr-1.5 h-3.5 w-3.5" />
+          {t("flag.filter")} {flaggedCount}
+        </Button>
         {filtered && (
           <Button
             variant="ghost"
             size="sm"
             onClick={() => {
+              setOnlyIt(false);
+              setOnlyFlagged(false);
               setQuery("");
               setKpi("open");
               setStatus(ALL);
@@ -894,6 +998,24 @@ function CaseTable({
                       <Flag className="h-2.5 w-2.5" />
                       {t("prioBadge")}
                     </Badge>
+                  )}
+                  {c.flagged && (
+                    <span title={c.flagNote ?? undefined} aria-label={t("flag.label")}>
+                      <Bookmark className="h-3.5 w-3.5 fill-warn text-warn" />
+                    </span>
+                  )}
+                  {itOpen(c) && (
+                    <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
+                      {t("phase.itBadge")}
+                    </Badge>
+                  )}
+                  {c.transferToUserId && (
+                    <span
+                      title={t("transfer.pendingShort")}
+                      aria-label={t("transfer.pendingShort")}
+                    >
+                      <ArrowRightLeft className="h-3.5 w-3.5 text-primary" />
+                    </span>
                   )}
                 </div>
                 {c.note && (

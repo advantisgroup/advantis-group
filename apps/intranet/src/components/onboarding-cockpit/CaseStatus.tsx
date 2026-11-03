@@ -4,24 +4,18 @@ import { useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
-import {
-  type FollowUpReason,
-  type Milestone,
-  MILESTONES,
-  suggestFollowUp,
-} from "@advantis/convex/performance/onboarding";
+import { isClosedStatus, MILESTONES } from "@advantis/convex/performance/onboarding";
 import { useMutation } from "convex/react";
-import { ArrowRight, CalendarPlus, Check, RotateCcw } from "lucide-react";
+import { ArrowRight, Check, RotateCcw, Wrench } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { formatDateTime, formatIsoDate } from "@/lib/format";
+import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-import { STATUS_ORDER, TimeSelect, useOutcomeLabel, useStatusName } from "./shared";
+import { LADDER, useOutcomeLabel, useStatusName } from "./shared";
 
 interface CaseStatusData {
   _id: Id<"onboardingCases">;
@@ -31,21 +25,15 @@ interface CaseStatusData {
   outcomeAt: number | null;
   outcomeByName: string | null;
   milestones: string[];
-  nextFollowUp: string | null;
+  itOpenSince: number | null;
 }
 
-/** Which follow-up to suggest after ticking a milestone. */
-const SUGGEST_AFTER: Partial<Record<Milestone, FollowUpReason>> = {
-  cards: "cards",
-  fuel: "fuel",
-};
-
 /**
- * Where the case stands: the phase ladder (Neu → In Kontakt → Karten
- * bestellt → Getankt → Abgeschlossen) driven by the three milestone ticks,
- * the situation of the last contact, and – after ticking "Karten bestellt"
- * or "Getankt" – the matching follow-up (1 week / 2 months) ready to
- * create with one click.
+ * Where the case stands – display only (feedback 03.11.): the phase ladder
+ * (Neu → In Kontakt → Karten bestellt → Getankt → Abgeschlossen), the three
+ * milestones (ticked below in "Kontakt festhalten"), an open IT case with
+ * "IT erledigt", and the situation of the last contact. A closed case can
+ * be reopened here.
  */
 export function CaseStatus({ data }: { data: CaseStatusData }) {
   const t = useTranslations("OnboardingCockpit");
@@ -54,55 +42,31 @@ export function CaseStatus({ data }: { data: CaseStatusData }) {
   const statusName = useStatusName();
   const outcomeLabel = useOutcomeLabel();
   const update = useMutation(api.performance.onboarding.update);
-  const [suggestion, setSuggestion] = useState<{
-    reason: FollowUpReason;
-    date: string;
-    time: string;
-  } | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const save = async (patch: Omit<Parameters<typeof update>[0], "caseId">) => {
+  const save = async (patch: Omit<Parameters<typeof update>[0], "caseId">, done?: string) => {
     setBusy(true);
     try {
       await update({ caseId: data._id, ...patch });
-      return true;
+      if (done) toast.success(done);
     } catch (e) {
       handleError(e, t("case.saveError"));
-      return false;
     } finally {
       setBusy(false);
     }
   };
 
-  const toggle = async (key: Milestone, done: boolean) => {
-    const ok = await save({ milestone: { key, done } });
-    const reason = SUGGEST_AFTER[key];
-    if (ok && done && reason) setSuggestion({ reason, ...suggestFollowUp(new Date(), reason) });
-    else setSuggestion(null);
-  };
-
-  const createSuggested = async () => {
-    if (!suggestion) return;
-    const ok = await save({
-      nextFollowUp: suggestion.date,
-      nextFollowUpTime: suggestion.time || null,
-    });
-    if (ok) {
-      toast.success(t("phase.followUpCreated"));
-      setSuggestion(null);
-    }
-  };
-
   const current = outcomeLabel(data);
-  const winback = data.status === "winback";
-  const ladder = STATUS_ORDER.filter((s) => s !== "winback");
-  const here = ladder.indexOf(data.status as (typeof ladder)[number]);
+  const closed = isClosedStatus(data.status);
+  /** Closed in one of the archive lists (not "done"). */
+  const offLadder = closed && data.status !== "done";
+  const here = LADDER.indexOf(data.status as (typeof LADDER)[number]);
 
   return (
     <section className="space-y-4 rounded-xl border border-border/70 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-sm font-semibold">{t("phase.title")}</h3>
-        {winback ? (
+        {closed ? (
           <Button
             variant="outline"
             size="sm"
@@ -117,87 +81,69 @@ export function CaseStatus({ data }: { data: CaseStatusData }) {
 
       {/* The ladder */}
       <ol className="flex flex-wrap items-center gap-1.5 text-xs">
-        {ladder.map((s, i) => (
+        {LADDER.map((s, i) => (
           <li key={s} className="flex items-center gap-1.5">
             <span
               className={cn(
                 "rounded-full border px-2.5 py-1",
-                !winback && i === here && "border-foreground bg-foreground text-background",
-                !winback && i < here && "border-ok/30 bg-ok/10 text-ok",
-                (winback || i > here) && "border-border/70 text-muted-foreground",
+                !offLadder && i === here && "border-foreground bg-foreground text-background",
+                !offLadder && i < here && "border-ok/30 bg-ok/10 text-ok",
+                (offLadder || i > here) && "border-border/70 text-muted-foreground",
               )}
             >
               {statusName(s)}
             </span>
-            {i < ladder.length - 1 && <ArrowRight className="h-3 w-3 text-muted-foreground" />}
+            {i < LADDER.length - 1 && <ArrowRight className="h-3 w-3 text-muted-foreground" />}
           </li>
         ))}
-        {winback && (
+        {offLadder && (
           <li className="ml-1 rounded-full border border-destructive/40 bg-destructive/10 px-2.5 py-1 text-destructive">
-            {statusName("winback")}
+            {statusName(data.status)}
           </li>
         )}
       </ol>
 
-      {/* The three ticks */}
-      <div className="grid gap-2 sm:grid-cols-3">
+      {/* The three milestones – shown here, ticked in the contact form. */}
+      <div className="flex flex-wrap gap-2">
         {MILESTONES.map((m) => {
           const done = data.milestones.includes(m);
           return (
-            <button
+            <span
               key={m}
-              type="button"
-              disabled={busy || winback}
-              onClick={() => void toggle(m, !done)}
               className={cn(
-                "flex items-center gap-2 rounded-lg border px-3 py-2.5 text-left text-sm transition-colors disabled:opacity-60",
-                done ? "border-ok/40 bg-ok/10 text-ok" : "border-border/70 hover:bg-muted/50",
+                "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs",
+                done ? "border-ok/40 bg-ok/10 text-ok" : "border-border/70 text-muted-foreground",
               )}
             >
               <span
                 className={cn(
-                  "flex h-5 w-5 shrink-0 items-center justify-center rounded border",
+                  "flex h-3.5 w-3.5 items-center justify-center rounded-sm border",
                   done ? "border-ok bg-ok text-background" : "border-border",
                 )}
               >
-                {done && <Check className="h-3.5 w-3.5" />}
+                {done && <Check className="h-2.5 w-2.5" />}
               </span>
-              <span className="font-medium">{t(`steps.${m}`)}</span>
-            </button>
+              {t(`steps.${m}`)}
+            </span>
           );
         })}
       </div>
 
-      {suggestion && (
-        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
-          <CalendarPlus className="h-4 w-4 text-primary" />
-          <span className="mr-auto">{t(`phase.suggest.${suggestion.reason}`)}</span>
-          <Input
-            type="date"
-            className="h-8 w-[160px]"
-            value={suggestion.date}
-            onChange={(e) => setSuggestion({ ...suggestion, date: e.target.value })}
-          />
-          <TimeSelect
-            className="h-8"
-            value={suggestion.time}
-            onChange={(time) => setSuggestion({ ...suggestion, time })}
-          />
+      {data.itOpenSince !== null && !closed && (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-sm">
+          <Wrench className="h-4 w-4 text-primary" />
+          <span className="mr-auto">
+            {t("phase.itOpen", { date: formatDateTime(data.itOpenSince, locale) })}
+          </span>
           <Button
             size="sm"
-            disabled={busy || !suggestion.date}
-            onClick={() => void createSuggested()}
+            variant="outline"
+            disabled={busy}
+            onClick={() => void save({ itDone: true }, t("phase.itDoneSaved"))}
           >
-            {t("phase.createFollowUp")}
+            <Check className="mr-1.5 h-3.5 w-3.5" />
+            {t("phase.itDone")}
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setSuggestion(null)}>
-            {t("phase.skip")}
-          </Button>
-          {data.nextFollowUp && (
-            <p className="w-full text-xs text-muted-foreground">
-              {t("phase.replaces", { date: formatIsoDate(data.nextFollowUp, locale) })}
-            </p>
-          )}
         </div>
       )}
 

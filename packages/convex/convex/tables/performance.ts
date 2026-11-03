@@ -21,6 +21,8 @@ export const onboardingOutcomeValidator = v.object({
     v.literal("followUp"),
     v.literal("case"),
     v.literal("cancel"),
+    v.literal("refused"),
+    v.literal("fakeData"),
     v.literal("other"),
   ),
   children: v.optional(v.array(onboardingMid)),
@@ -735,11 +737,35 @@ export const performanceTables = {
     lastContactKind: v.optional(v.string()),
     contactAttempts: v.optional(v.number()),
     archivedAt: v.optional(v.number()),
+    /** "Nicht erreicht" in a row since the last time the customer was
+     * reached; more than 10 suggests closing as "Nicht erreichbar". */
+    notReachedStreak: v.optional(v.number()),
+    /** Case opened with the IT ("Case eröffnet › IT"), not checked off yet. */
+    itOpenSince: v.optional(v.number()),
+    /** The consultant's own marker with a short reason. */
+    flaggedAt: v.optional(v.number()),
+    flagNote: v.optional(v.string()),
+    /** How the customer is doing, 1 (annoyed) … 5 (happy); only for the
+     * team, never in stats or exports. */
+    mood: v.optional(v.number()),
+    moodAt: v.optional(v.number()),
+    moodByName: v.optional(v.string()),
+    /** Handover waiting for the colleague to accept (case stays with the
+     * sender until then). */
+    transferToUserId: v.optional(v.id("users")),
+    transferFromUserId: v.optional(v.id("users")),
+    transferNote: v.optional(v.string()),
+    transferAt: v.optional(v.number()),
+    /** Last declined handover, shown to the sender until dismissed. */
+    transferDeclined: v.optional(
+      v.object({ byName: v.string(), reason: v.string(), at: v.number() }),
+    ),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_key", ["customerKey"])
-    .index("by_assignee", ["assigneeUserId"]),
+    .index("by_assignee", ["assigneeUserId"])
+    .index("by_transferTo", ["transferToUserId"]),
 
   // Contact log of a case: calls, mails and notes people enter, plus
   // system lines for status and assignment changes.
