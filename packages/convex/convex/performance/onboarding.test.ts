@@ -774,4 +774,23 @@ describe("onboarding cockpit", () => {
     });
     expect(await doreen.query(api.performance.onboarding.transfers, {})).toHaveLength(0);
   });
+  test("IT marker: older IT situations count, stay until IT erledigt", async () => {
+    const { t, as } = await setup();
+    const admin = as("admin");
+    await importReport(admin, [{ customerNumber: "77" }]);
+    const [c] = await admin.query(api.performance.onboarding.list, {});
+    // Logged before the marker existed: only the situation is stored.
+    await t.run(async (ctx) => {
+      await ctx.db.patch(c._id, { outcomePath: ["case", "case.it"], outcomeAt: 1000 });
+    });
+    expect((await admin.query(api.performance.onboarding.list, {}))[0].itOpenSince).toBe(1000);
+    // A later contact doesn't drop it.
+    await admin.mutation(api.performance.onboarding.setOutcome, {
+      caseId: c._id,
+      path: ["notReached"],
+    });
+    expect((await admin.query(api.performance.onboarding.list, {}))[0].itOpenSince).toBe(1000);
+    await admin.mutation(api.performance.onboarding.update, { caseId: c._id, itDone: true });
+    expect((await admin.query(api.performance.onboarding.list, {}))[0].itOpenSince).toBeNull();
+  });
 });

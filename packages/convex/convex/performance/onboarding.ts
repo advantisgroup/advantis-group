@@ -286,7 +286,7 @@ function caseFields(r: Doc<"onboardingCases">) {
     manual: !!r.manual,
     archived: !!r.archivedAt,
     notReachedStreak: r.notReachedStreak ?? 0,
-    itOpenSince: r.itOpenSince ?? null,
+    itOpenSince: itOpenSince(r),
     flagged: r.flaggedAt !== undefined,
     flagNote: r.flagNote ?? null,
     transferToUserId: r.transferToUserId ?? null,
@@ -294,6 +294,17 @@ function caseFields(r: Doc<"onboardingCases">) {
     transferAt: r.transferAt ?? null,
     transferDeclined: r.transferDeclined ?? null,
   };
+}
+
+/**
+ * Since when the case waits on the IT: set when "Case eröffnet › IT" is
+ * logged. Cases whose last situation was already IT before the marker
+ * existed count too (from that contact), until "IT erledigt".
+ */
+function itOpenSince(r: Doc<"onboardingCases">): number | null {
+  if (r.itOpenSince !== undefined) return r.itOpenSince;
+  if (r.itCheckedAt !== undefined || !isItPath(r.outcomePath ?? [])) return null;
+  return r.outcomeAt ?? r.updatedAt;
 }
 
 /**
@@ -554,8 +565,9 @@ export const update = userMutation({
         setMilestone(milestones, key, done),
       );
     }
-    if (args.itDone && row.itOpenSince !== undefined) {
+    if (args.itDone && itOpenSince(row) !== null) {
       patch.itOpenSince = undefined;
+      patch.itCheckedAt = Date.now();
       await log(ctx, access, row._id, { kind: "it", toValue: "done" });
     }
     if (args.flag !== undefined) {
@@ -725,7 +737,11 @@ export const setOutcome = userMutation({
       patch.contactAttempts = (row.contactAttempts ?? 0) + 1;
     }
     patch.notReachedStreak = nextNotReachedStreak(row.notReachedStreak ?? 0, kind);
-    if (isItPath(args.path) && row.itOpenSince === undefined) patch.itOpenSince = now;
+    // An IT case stays marked until "IT erledigt", whatever comes next.
+    const itSince = itOpenSince(row);
+    if (row.itOpenSince === undefined && (itSince !== null || isItPath(args.path))) {
+      patch.itOpenSince = itSince ?? now;
+    }
     if (args.milestones) await applyMilestones(ctx, access, row, patch, args.milestones);
     const closeTo = CLOSING_KINDS[kind];
     if (closeTo) await setStatus(ctx, access, row, closeTo, patch);

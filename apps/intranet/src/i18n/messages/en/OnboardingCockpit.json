@@ -343,8 +343,9 @@
     "itOpen": "IT case open since {date} – check whether IT has handled it.",
     "itDone": "IT done",
     "itDoneSaved": "Marked as handled by IT.",
-    "itCount": "of which IT: {count}",
-    "itBadge": "IT"
+    "itCount": "IT: {count}",
+    "itBadge": "IT",
+    "itHint": "Cases with an IT case not yet marked “IT done” – click to show them."
   },
   "situation": {
     "title": "Situation",
