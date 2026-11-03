@@ -742,6 +742,8 @@ export const performanceTables = {
     notReachedStreak: v.optional(v.number()),
     /** Case opened with the IT ("Case eröffnet › IT"), not checked off yet. */
     itOpenSince: v.optional(v.number()),
+    /** "IT erledigt" clicked – keeps an older IT situation from counting. */
+    itCheckedAt: v.optional(v.number()),
     /** The consultant's own marker with a short reason. */
     flaggedAt: v.optional(v.number()),
     flagNote: v.optional(v.string()),

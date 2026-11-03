@@ -1004,11 +1004,6 @@ function CaseTable({
                       <Bookmark className="h-3.5 w-3.5 fill-warn text-warn" />
                     </span>
                   )}
-                  {itOpen(c) && (
-                    <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
-                      {t("phase.itBadge")}
-                    </Badge>
-                  )}
                   {c.transferToUserId && (
                     <span
                       title={t("transfer.pendingShort")}

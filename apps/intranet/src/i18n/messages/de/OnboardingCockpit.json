@@ -343,8 +343,9 @@
     "itOpen": "IT-Case offen seit {date} – prüfen, ob die IT ihn bearbeitet hat.",
     "itDone": "IT erledigt",
     "itDoneSaved": "Als von der IT erledigt markiert.",
-    "itCount": "davon IT: {count}",
-    "itBadge": "IT"
+    "itCount": "IT: {count}",
+    "itBadge": "IT",
+    "itHint": "Fälle mit IT-Case, noch nicht als „IT erledigt“ markiert – anklicken zeigt sie."
   },
   "situation": {
     "title": "Lage",

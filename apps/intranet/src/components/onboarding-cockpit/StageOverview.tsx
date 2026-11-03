@@ -12,7 +12,8 @@ const BAR = [...LADDER, "winback"] as const;
 /**
  * The phases as one bar: Neu → In Kontakt → Karten bestellt → Getankt →
  * Abgeschlossen, plus Winback – with the counts. Under "In Kontakt" a small
- * "davon IT: n" for open cases waiting on the IT. Clicking a phase (or the
+ * "IT: n" (always shown) for open cases waiting on the IT, whatever their
+ * phase. Clicking a phase (or the
  * IT count) filters the list below; clicking it again clears it. `large`
  * makes big tiles (consultants' "Meine Fälle", feedback 03.11.).
  */
@@ -84,13 +85,15 @@ export function PhaseBar({
                   {count}
                 </span>
               </button>
-              {s === "step1" && onPickIt && itCount > 0 && (
+              {s === "step1" && onPickIt && (
                 <button
                   type="button"
                   aria-pressed={itActive}
+                  title={t("phase.itHint")}
                   onClick={() => onPickIt(!itActive)}
                   className={cn(
                     "mx-2 mb-1.5 self-start rounded-full border border-primary/30 bg-primary/5 px-2 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/10",
+                    itCount === 0 && "border-border/70 bg-transparent text-muted-foreground",
                     itActive &&
                       "border-primary bg-primary text-primary-foreground hover:bg-primary",
                   )}
