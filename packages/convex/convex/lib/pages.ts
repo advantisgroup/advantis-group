@@ -391,6 +391,13 @@ export const INTRANET_PAGES: IntranetPage[] = [
     visible: applicants,
   },
   {
+    href: "/hr/archiv",
+    label: "Bewerber-Archiv",
+    description: "Archivierte Bewerber ansehen, filtern und wiederherstellen.",
+    keywords: ["archiv", "archiviert", "wiederherstellen", "absage", "löschung"],
+    visible: applicants,
+  },
+  {
     href: "/hr/files",
     label: "HR-Dateien",
     description: "Die OneDrive-Ordner des HR-Teams (Team/HR).",
