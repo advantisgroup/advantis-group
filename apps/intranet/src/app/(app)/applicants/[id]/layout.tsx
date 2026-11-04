@@ -30,6 +30,7 @@ import { toast } from "sonner";
 
 import { AskButton } from "@/components/ai/AskButton";
 import { ApplicantSidebar } from "@/components/applicants/ApplicantSidebar";
+import { ArchivedRecordBanner } from "@/components/applicants/ArchivedRecordBanner";
 import { HandoffBriefPrint } from "@/components/applicants/HandoffBriefPrint";
 import {
   EmailDialog,
@@ -384,6 +385,13 @@ export default function ApplicantDetailLayout({ children }: { children: ReactNod
             </Button>
           </div>
         </CardContent>
+        {applicant.archivedAt && !applicant.convertedEmployeeProfileId && (
+          <ArchivedRecordBanner
+            applicantId={applicantId}
+            archivedAt={applicant.archivedAt}
+            poolConsentUntil={applicant.poolConsentUntil}
+          />
+        )}
       </Card>
 
       {/* The Akte's own sub-pages, attached to its card and apart from the

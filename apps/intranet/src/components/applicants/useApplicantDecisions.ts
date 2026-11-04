@@ -29,6 +29,7 @@ export function useApplicantDecisions() {
   const convertApplicant = useMutation(api.hr.employees.convertApplicant);
   const revertConversion = useMutation(api.hr.employees.revertConversion);
   const archiveApplicant = useMutation(api.hr.employees.archiveApplicant);
+  const restoreApplicant = useMutation(api.hr.archive.restore);
 
   async function hire(applicant: DecisionTarget): Promise<Id<"employeeProfiles"> | null> {
     // "Hire" reads like "take this one on" — confirm it means the actual hire,
@@ -65,6 +66,7 @@ export function useApplicantDecisions() {
   async function archive(applicant: DecisionTarget): Promise<boolean> {
     const ok = await confirm({
       title: t("archiveApplicantConfirm", { name: applicant.name }),
+      description: t("archiveApplicantConfirmBody"),
       details: [
         ...(applicant.position ? [{ label: t("position"), value: applicant.position }] : []),
         ...(applicant.email ? [{ label: t("email"), value: applicant.email }] : []),
@@ -76,7 +78,19 @@ export function useApplicantDecisions() {
     if (!ok) return false;
     try {
       await archiveApplicant({ applicantId: applicant._id });
-      toast.success(t("applicantArchived"));
+      // Archiving is reversible from the archive, but the toast is where a
+      // misclick gets noticed.
+      toast.success(t("applicantArchived"), {
+        duration: 10_000,
+        action: {
+          label: t("archiveUndo"),
+          onClick: () => {
+            void restoreApplicant({ applicantId: applicant._id })
+              .then(() => toast.success(t("archiveRestored", { name: applicant.name })))
+              .catch(handleError);
+          },
+        },
+      });
       return true;
     } catch (error) {
       handleError(error);

@@ -4,7 +4,15 @@ import type { ReactNode } from "react";
 
 import { usePathname } from "next/navigation";
 
-import { CalendarClock, Mail, ShieldCheck, Sparkles, UserRoundSearch, Users } from "lucide-react";
+import {
+  Archive,
+  CalendarClock,
+  Mail,
+  ShieldCheck,
+  Sparkles,
+  UserRoundSearch,
+  Users,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { RouteTabs } from "@/components/layout/RouteTabs";
@@ -15,7 +23,17 @@ import { useHasApplicantAccess } from "@/components/providers/current-user";
 // applicant id, i.e. a detail route that owns its own chrome entirely
 // (see `[id]/layout.tsx`) and must not also get this layout's header/tabs.
 // `neu` and `pool` are legacy routes that redirect into `list` filters.
-const LIST_TABS = ["list", "employees", "termine", "neu", "pool", "profile", "vorlagen", "access"];
+const LIST_TABS = [
+  "list",
+  "employees",
+  "termine",
+  "archiv",
+  "neu",
+  "pool",
+  "profile",
+  "vorlagen",
+  "access",
+];
 
 /**
  * Access scope for Bewerbermanagement. Gated behind `useHasApplicantAccess()`
@@ -63,6 +81,12 @@ export default function ApplicantsLayout({ children }: { children: ReactNode }) 
       href: "/hr/termine",
       label: t("tabTermine"),
       icon: CalendarClock,
+    },
+    {
+      value: "archiv",
+      href: "/hr/archiv",
+      label: t("tabArchive"),
+      icon: Archive,
     },
     {
       value: "profile",
