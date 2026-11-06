@@ -14,7 +14,8 @@
     "winback": "Winback",
     "refused": "Not willing to talk",
     "fakeData": "Fake data",
-    "unreachable": "Unreachable"
+    "unreachable": "Unreachable",
+    "tollOnly": "Toll boxes only"
   },
   "contactKind": {
     "reached": "Phone · reached",
@@ -288,7 +289,8 @@
     "archived": "Archived",
     "refused": "Not willing to talk",
     "fakeData": "Fake data",
-    "unreachable": "Unreachable"
+    "unreachable": "Unreachable",
+    "tollOnly": "Toll boxes only"
   },
   "copyNumber": "Copy customer number",
   "copied": "{number} copied.",
@@ -368,13 +370,15 @@
     "closesTo": "Saving closes the case and moves it to the archive list “{list}”.",
     "closed": "Saved – case is closed: {status}.",
     "progress": "Progress",
-    "progressHint": "Tick or untick – saved with the contact."
+    "progressHint": "Tick or untick – saved with the contact.",
+    "tollOnlyHint": "Special case: the customer only wants toll boxes. Saving closes the case into the archive list “Toll boxes only”."
   },
   "closedIntro": {
     "winback": "Cases marked “will cancel”: closed, with a reason – for winning them back.",
     "refused": "Customers who don't want to talk to us: closed, nothing deleted – “Reopen” in the case.",
     "fakeData": "Wrong or unknown numbers: closed, nothing deleted – “Reopen” in the case.",
-    "unreachable": "Customers not reached too often: closed, nothing deleted – “Reopen” in the case."
+    "unreachable": "Customers not reached too often: closed, nothing deleted – “Reopen” in the case.",
+    "tollOnly": "Customers who only want toll boxes (special case): closed, nothing deleted – “Reopen” in the case."
   },
   "unreachable": {
     "hint": "Not reached {count} times in a row. Cross off as unreachable?",

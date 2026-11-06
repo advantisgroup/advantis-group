@@ -14,7 +14,8 @@
     "winback": "Winback",
     "refused": "Nicht gesprächsbereit",
     "fakeData": "Fake Data",
-    "unreachable": "Nicht erreichbar"
+    "unreachable": "Nicht erreichbar",
+    "tollOnly": "Nur Mautboxen"
   },
   "contactKind": {
     "reached": "Telefon · erreicht",
@@ -288,7 +289,8 @@
     "archived": "Archiviert",
     "refused": "Nicht gesprächsbereit",
     "fakeData": "Fake Data",
-    "unreachable": "Nicht erreichbar"
+    "unreachable": "Nicht erreichbar",
+    "tollOnly": "Nur Mautboxen"
   },
   "copyNumber": "Kundennummer kopieren",
   "copied": "{number} kopiert.",
@@ -368,13 +370,15 @@
     "closesTo": "Nach dem Speichern wird der Fall geschlossen und landet im Archiv unter „{list}“.",
     "closed": "Gespeichert – Fall ist geschlossen: {status}.",
     "progress": "Fortschritt",
-    "progressHint": "Haken setzen oder zurücknehmen – wird mit dem Kontakt gespeichert."
+    "progressHint": "Haken setzen oder zurücknehmen – wird mit dem Kontakt gespeichert.",
+    "tollOnlyHint": "Sonderfall: Kunde will nur Mautboxen. Beim Speichern wird der Fall geschlossen und landet im Archiv unter „Nur Mautboxen“."
   },
   "closedIntro": {
     "winback": "Fälle mit „wird kündigen“: geschlossen, mit Grund – für die Rückgewinnung.",
     "refused": "Kunden, die nicht mit uns sprechen wollen: geschlossen, nichts gelöscht – im Fall „Wieder öffnen“.",
     "fakeData": "Falsche oder unbekannte Nummern: geschlossen, nichts gelöscht – im Fall „Wieder öffnen“.",
-    "unreachable": "Kunden, die zu oft nicht erreicht wurden: geschlossen, nichts gelöscht – im Fall „Wieder öffnen“."
+    "unreachable": "Kunden, die zu oft nicht erreicht wurden: geschlossen, nichts gelöscht – im Fall „Wieder öffnen“.",
+    "tollOnly": "Kunden, die nur Mautboxen wollen (Sonderfall): geschlossen, nichts gelöscht – im Fall „Wieder öffnen“."
   },
   "unreachable": {
     "hint": "{count}× in Folge nicht erreicht. Als nicht erreichbar wegstreichen?",

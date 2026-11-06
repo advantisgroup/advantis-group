@@ -65,6 +65,7 @@ import { PhaseBar } from "./StageOverview";
 import { StatusEditor } from "./StatusEditor";
 import { TransferInbox } from "./Transfers";
 import {
+  byFollowUp,
   type CaseRow,
   caseDate,
   CLOSED_LISTS,
@@ -132,9 +133,7 @@ export function OnboardingCockpit() {
   const order = useMemo(() => workOrder(today), [today]);
   const open = (cases ?? []).filter(isOpen);
   const prio = open.filter((c) => c.prio).sort(order);
-  const followUps = open
-    .filter((c) => c.nextFollowUp)
-    .sort((a, b) => a.nextFollowUp!.localeCompare(b.nextFollowUp!));
+  const followUps = open.filter((c) => c.nextFollowUp).sort(byFollowUp);
 
   if (access === undefined || (allowed && cases === undefined)) {
     return (

@@ -70,6 +70,8 @@ export function ContactForm({
   const fresh = () => suggestFollowUp(new Date(), "contact");
   const start = MILESTONES.filter((m) => current.includes(m));
   const [ticks, setTicks] = useState<Milestone[]>(start);
+  /** Special case "Nur Mautboxen": closes the case into its archive list. */
+  const [tollOnly, setTollOnly] = useState(false);
   const [channel, setChannel] = useState<Channel>("phone");
   const [path, setPath] = useState<string[]>([]);
   const [freetext, setFreetext] = useState("");
@@ -93,7 +95,9 @@ export function ContactForm({
   const complete = channel === "note" || (!!last && activeChildren(last).length === 0);
   const kind = chosen[0]?.kind ?? null;
   const needsFreetext = channel !== "note" && complete && !!last?.freetext;
-  const closesTo = channel !== "note" && kind ? CLOSES_TO[kind] : undefined;
+  const closesTo =
+    (channel !== "note" && kind ? CLOSES_TO[kind] : undefined) ??
+    (tollOnly ? "tollOnly" : undefined);
   const ticksChanged = ticks.join() !== start.join();
 
   const toggleTick = (m: Milestone, on: boolean) => {
@@ -124,7 +128,7 @@ export function ContactForm({
       toast.error(t("situation.textRequired"));
       return;
     }
-    if (channel === "note" && !note.trim() && !ticksChanged) {
+    if (channel === "note" && !note.trim() && !ticksChanged && !tollOnly) {
       toast.error(t("case.noteRequired"));
       return;
     }
@@ -134,7 +138,10 @@ export function ContactForm({
         : {};
     setBusy(true);
     try {
-      const withTicks = ticksChanged ? { milestones: ticks } : {};
+      const withTicks = {
+        ...(ticksChanged ? { milestones: ticks } : {}),
+        ...(tollOnly ? { status: "tollOnly" as const } : {}),
+      };
       if (channel === "note") {
         await addContact({
           caseId,
@@ -143,12 +150,14 @@ export function ContactForm({
           ...follow,
           ...withTicks,
         });
-        toast.success(t("case.saved"));
+        toast.success(
+          tollOnly ? t("situation.closed", { status: statusName("tollOnly") }) : t("case.saved"),
+        );
       } else {
         const text = [freetext.trim(), note.trim()].filter(Boolean).join("\n") || undefined;
         const result = await setOutcome({ caseId, path, text, channel, ...follow, ...withTicks });
         toast.success(
-          Object.values(CLOSES_TO).includes(result.status)
+          [...Object.values(CLOSES_TO), "tollOnly"].includes(result.status)
             ? t("situation.closed", { status: statusName(result.status) })
             : t("situation.saved", { status: statusName(result.status) }),
         );
@@ -244,6 +253,18 @@ export function ContactForm({
               </label>
             );
           })}
+          <label
+            className={cn(
+              "flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-1.5 text-sm transition-colors",
+              tollOnly
+                ? "border-destructive/60 bg-destructive/15 text-destructive"
+                : "border-destructive/30 bg-destructive/5 text-destructive/80 hover:bg-destructive/10",
+            )}
+            title={t("situation.tollOnlyHint")}
+          >
+            <Checkbox checked={tollOnly} onCheckedChange={(v) => setTollOnly(v === true)} />
+            {t("status.tollOnly")}
+          </label>
         </div>
         <p className="text-xs text-muted-foreground">{t("situation.progressHint")}</p>
       </div>

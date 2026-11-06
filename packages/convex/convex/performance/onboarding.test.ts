@@ -167,7 +167,7 @@ describe("onboarding helpers", () => {
 
 describe("feedback 03.11. helpers", () => {
   test("new closed lists, not-reached streak and built-in situations", () => {
-    for (const s of ["done", "winback", "refused", "fakeData", "unreachable"]) {
+    for (const s of ["done", "winback", "refused", "fakeData", "unreachable", "tollOnly"]) {
       expect(isClosedStatus(s)).toBe(true);
     }
     expect(isClosedStatus("step2")).toBe(false);
@@ -792,5 +792,25 @@ describe("onboarding cockpit", () => {
     expect((await admin.query(api.performance.onboarding.list, {}))[0].itOpenSince).toBe(1000);
     await admin.mutation(api.performance.onboarding.update, { caseId: c._id, itDone: true });
     expect((await admin.query(api.performance.onboarding.list, {}))[0].itOpenSince).toBeNull();
+  });
+  test("Nur Mautboxen closes the case from the contact form", async () => {
+    const { as } = await setup();
+    const admin = as("admin");
+    await importReport(admin, [{ customerNumber: "81" }, { customerNumber: "82" }]);
+    const [a, b] = await admin.query(api.performance.onboarding.list, {});
+    await admin.mutation(api.performance.onboarding.addContact, {
+      caseId: a._id,
+      kind: "note",
+      status: "tollOnly",
+    });
+    await admin.mutation(api.performance.onboarding.setOutcome, {
+      caseId: b._id,
+      path: ["reached"],
+      status: "tollOnly",
+      nextFollowUp: "2030-01-07",
+    });
+    const rows = await admin.query(api.performance.onboarding.list, {});
+    expect(rows.map((r) => r.status)).toEqual(["tollOnly", "tollOnly"]);
+    expect(rows.every((r) => r.nextFollowUp === null)).toBe(true);
   });
 });

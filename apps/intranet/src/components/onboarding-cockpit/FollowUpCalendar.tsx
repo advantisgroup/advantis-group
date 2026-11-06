@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { cn } from "@/lib/utils";
 
-import { type CaseRow, todayIso, useStatusName } from "./shared";
+import { byFollowUp, type CaseRow, todayIso, useStatusName } from "./shared";
 
 /**
  * The follow-ups of the onboarding cockpit as a calendar (week and day
@@ -158,19 +158,17 @@ export function FollowUpCalendar({
             {t("calendar.overdue", { count: overdue.length })}
           </p>
           <div className="flex flex-wrap gap-2">
-            {overdue
-              .sort((a, b) => a.nextFollowUp!.localeCompare(b.nextFollowUp!))
-              .map((c) => (
-                <CaseChip
-                  key={c._id}
-                  c={c}
-                  wide={false}
-                  past
-                  showDate
-                  showAssignee={showAssignee}
-                  onOpen={onOpen}
-                />
-              ))}
+            {overdue.sort(byFollowUp).map((c) => (
+              <CaseChip
+                key={c._id}
+                c={c}
+                wide={false}
+                past
+                showDate
+                showAssignee={showAssignee}
+                onOpen={onOpen}
+              />
+            ))}
           </div>
           <p className="mt-2 text-xs text-muted-foreground">{t("calendar.overdueHint")}</p>
         </div>

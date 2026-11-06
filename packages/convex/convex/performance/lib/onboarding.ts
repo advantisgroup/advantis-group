@@ -36,8 +36,16 @@ export type Phase = (typeof PHASES)[number];
  *   winback      – will cancel
  *   refused      – not willing to talk to us
  *   fakeData     – number wrong / unknown
- *   unreachable  – crossed off after too many "not reached" */
-export const CLOSED_STATUSES = ["done", "winback", "refused", "fakeData", "unreachable"] as const;
+ *   unreachable  – crossed off after too many "not reached"
+ *   tollOnly     – only wants toll boxes, no fuel cards (special case, 06.11.) */
+export const CLOSED_STATUSES = [
+  "done",
+  "winback",
+  "refused",
+  "fakeData",
+  "unreachable",
+  "tollOnly",
+] as const;
 export type ClosedStatus = (typeof CLOSED_STATUSES)[number];
 
 /** Closed cases drop out of open counts, prio and follow-ups. */
