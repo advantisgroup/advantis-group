@@ -2,18 +2,12 @@
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
-import {
-  isClosedStatus,
-  MILESTONES,
-  suggestFollowUp,
-} from "@advantis/convex/performance/onboarding";
+import { isClosedStatus, MILESTONES } from "@advantis/convex/performance/onboarding";
 import { useMutation, useQuery } from "convex/react";
-import { CalendarPlus, Flag, X } from "lucide-react";
+import { Flag } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -25,14 +19,13 @@ import {
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatDateTime, formatIsoDate } from "@/lib/format";
 
 import { CaseBanners, FlagControl, MoodPicker, TransferButton } from "./CaseActions";
 import { CaseStatus } from "./CaseStatus";
 import { ContactForm } from "./ContactForm";
-import { CustomerNumber, TimeSelect, useStatusName } from "./shared";
+import { CustomerNumber, useStatusName } from "./shared";
 
 const NOBODY = "__none";
 
@@ -209,48 +202,6 @@ function CaseBody({
             )}
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="ob-follow">{t("case.followUp")}</Label>
-            <div className="flex gap-2">
-              <Input
-                id="ob-follow"
-                type="date"
-                value={data.nextFollowUp ?? ""}
-                disabled={closed}
-                onChange={(e) => void save({ nextFollowUp: e.target.value || null })}
-              />
-              <TimeSelect
-                value={data.nextFollowUpTime ?? ""}
-                disabled={closed || !data.nextFollowUp}
-                onChange={(time) => void save({ nextFollowUpTime: time || null })}
-              />
-              {!data.nextFollowUp && !closed && (
-                <Button
-                  variant="outline"
-                  size="icon"
-                  aria-label={t("case.suggestFollowUp")}
-                  title={t("case.suggestFollowUp")}
-                  onClick={() => {
-                    const next = suggestFollowUp(new Date(), "contact");
-                    void save({ nextFollowUp: next.date, nextFollowUpTime: next.time });
-                  }}
-                >
-                  <CalendarPlus className="h-4 w-4" />
-                </Button>
-              )}
-              {data.nextFollowUp && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label={t("case.clearFollowUp")}
-                  onClick={() => void save({ nextFollowUp: null })}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          </div>
-
           <div className="flex items-center gap-3">
             <Switch
               id="ob-prio"
@@ -260,21 +211,12 @@ function CaseBody({
             <Label htmlFor="ob-prio">{t("case.prio")}</Label>
           </div>
 
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="ob-standing-note">{t("case.noteTitle")}</Label>
-            <Textarea
-              id="ob-standing-note"
-              key={`note-${data.note ?? ""}`}
-              rows={2}
-              defaultValue={data.note ?? ""}
-              onBlur={(e) => {
-                if (e.target.value.trim() !== (data.note ?? "")) {
-                  void save({ note: e.target.value });
-                }
-              }}
-            />
-            <p className="text-xs text-muted-foreground">{t("case.noteHint")}</p>
-          </div>
+          {data.note && (
+            <div className="space-y-1 sm:col-span-2">
+              <p className="text-xs font-medium text-muted-foreground">{t("case.noteTitle")}</p>
+              <p className="whitespace-pre-wrap text-sm">{data.note}</p>
+            </div>
+          )}
         </section>
 
         <ContactForm

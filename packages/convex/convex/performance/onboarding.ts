@@ -208,6 +208,7 @@ const STATUS_NAMES: Record<string, string> = {
   refused: "Nicht gesprächsbereit",
   fakeData: "Fake Data",
   unreachable: "Nicht erreichbar",
+  tollOnly: "Nur Mautboxen",
 };
 
 /** Clears a pending handover (on closing or any reassignment). */
@@ -647,7 +648,7 @@ export const addContact = userMutation({
     nextFollowUp: v.optional(v.union(v.string(), v.null())),
     nextFollowUpTime: v.optional(v.union(v.string(), v.null())),
     /** Closes the case in the same step. */
-    status: v.optional(v.union(v.literal("winback"), v.literal("done"))),
+    status: v.optional(v.union(v.literal("winback"), v.literal("done"), v.literal("tollOnly"))),
     /** Milestone ticks after this contact (the whole set). */
     milestones: v.optional(v.array(milestoneValidator)),
   },
@@ -656,7 +657,7 @@ export const addContact = userMutation({
     const row = await loadCase(ctx, access, args.caseId);
     const note = args.note?.trim().slice(0, 4000) || undefined;
     // A bare note needs text – unless it only ticks milestones.
-    if (args.kind === "note" && !note && !args.milestones) {
+    if (args.kind === "note" && !note && !args.milestones && !args.status) {
       throw invalid("Bitte eine Notiz eintragen.");
     }
 
@@ -700,6 +701,8 @@ export const setOutcome = userMutation({
     nextFollowUpTime: v.optional(v.union(v.string(), v.null())),
     /** Milestone ticks after this contact (the whole set). */
     milestones: v.optional(v.array(milestoneValidator)),
+    /** Closes the case as a special case ("Nur Mautboxen"). */
+    status: v.optional(v.literal("tollOnly")),
   },
   handler: async (ctx, args) => {
     const access = await requireAccess(ctx);
@@ -743,7 +746,7 @@ export const setOutcome = userMutation({
       patch.itOpenSince = itSince ?? now;
     }
     if (args.milestones) await applyMilestones(ctx, access, row, patch, args.milestones);
-    const closeTo = CLOSING_KINDS[kind];
+    const closeTo = CLOSING_KINDS[kind] ?? args.status;
     if (closeTo) await setStatus(ctx, access, row, closeTo, patch);
     else if ((patch.status ?? row.status) === "fresh") {
       await setStatus(ctx, access, row, "step1", patch);

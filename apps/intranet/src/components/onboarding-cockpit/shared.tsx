@@ -49,10 +49,20 @@ export const caseDate = (c: CaseRow) => c.closeDate ?? c.reportDate;
 
 /** Prio first, then due follow-ups, then earlier phases ("Getankt" – only
  * the two-month check left – last), then the oldest case, then number. */
+/** Follow-ups by date, then time (08:00 before 13:00, no time last). */
+export function byFollowUp(
+  a: { nextFollowUp: string | null; nextFollowUpTime: string | null },
+  b: { nextFollowUp: string | null; nextFollowUpTime: string | null },
+) {
+  const key = (c: typeof a) => `${c.nextFollowUp ?? "9999-99-99"} ${c.nextFollowUpTime ?? "99:99"}`;
+  return key(a).localeCompare(key(b));
+}
+
 export function workOrder(today: string) {
   return (a: CaseRow, b: CaseRow) =>
     Number(b.prio && isOpen(b)) - Number(a.prio && isOpen(a)) ||
     Number(followUpDue(b, today)) - Number(followUpDue(a, today)) ||
+    (followUpDue(a, today) && followUpDue(b, today) ? byFollowUp(a, b) : 0) ||
     Number(a.status === "step3") - Number(b.status === "step3") ||
     phaseRank(a.status) - phaseRank(b.status) ||
     (caseDate(a) ?? "9999").localeCompare(caseDate(b) ?? "9999") ||
@@ -70,13 +80,14 @@ export const STATUS_ORDER = [
   "refused",
   "fakeData",
   "unreachable",
+  "tollOnly",
 ] as const;
 
 /** The phase ladder (Neu → … → Abgeschlossen). */
 export const LADDER = ["fresh", "step1", "step2", "step3", "done"] as const;
 
 /** Closed lists in the archive besides "done" (feedback 03.11.). */
-export const CLOSED_LISTS = ["winback", "refused", "fakeData", "unreachable"] as const;
+export const CLOSED_LISTS = ["winback", "refused", "fakeData", "unreachable", "tollOnly"] as const;
 export type ClosedList = (typeof CLOSED_LISTS)[number];
 
 /** Open case with an IT case not checked off yet. */
@@ -148,6 +159,7 @@ const STATUS_VARIANT: Record<
   refused: "destructive",
   fakeData: "muted",
   unreachable: "muted",
+  tollOnly: "destructive",
 };
 
 export function StatusBadge({ status }: { status: string }) {
