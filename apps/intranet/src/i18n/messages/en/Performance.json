@@ -459,10 +459,10 @@
     "by": "by {name}",
     "date": "Date",
     "asOf": "Figures as of {date}",
-    "week": "Week {from}–{to}",
+    "week": "Last 7 days {from}–{to}",
     "weekMissing": "No report: {days}",
     "colKpi": "KPI",
-    "colWeek": "Week",
+    "colWeek": "7 days",
     "colMonth": "Month",
     "colVm": "PM",
     "colVj": "PY",
@@ -598,7 +598,8 @@
     "noItems": "no points",
     "newCheck": "New check",
     "nextCheckOn": "Next check by {date}",
-    "deleteConfirmDate": "Delete the check of {date}?"
+    "deleteConfirmDate": "Delete the check of {date}?",
+    "dateHint": "A check can be entered afterwards: pick its date and the figures are those of that day (month to date, last 7 days, VM/VJ)."
   },
   "kpiInfo": {
     "workableRate": "Share of this month's new leads that are workable (status Analysis, Converted or Not Interested): Workable ÷ leads created. VM/VJ = change in percentage points vs. last month / same month last year.",

@@ -146,12 +146,24 @@ describe("checks", () => {
       employeeId: ids.annaEmp,
     });
     const row = (key: string) => live.kpis.rows.find((r) => r.key === key)!;
-    expect(live.kpis.week.start).toBe("2026-10-05");
+    // The 7 days up to the newest data (07.10.).
+    expect(live.kpis.week).toMatchObject({ start: "2026-10-01", end: "2026-10-07" });
     expect(row("leads")).toMatchObject({ month: 16, vm: 20, week: 16 });
     expect(row("workableRate")).toMatchObject({ month: 50, week: 50 });
     expect(row("won")).toMatchObject({ month: 3, week: 1 });
     expect(row("callsPerDay")).toMatchObject({ month: 30, week: 30 });
     expect(row("unqualified")).toMatchObject({ month: 2, week: 2 });
+
+    // Entered afterwards for 06.10.: that day's figures.
+    const back = await as("lead").query(api.performance.checks.liveKpis, {
+      employeeId: ids.annaEmp,
+      date: "2026-10-06",
+    });
+    const backRow = (key: string) => back.kpis.rows.find((r) => r.key === key)!;
+    expect(back.kpis.week).toMatchObject({ start: "2026-09-30", end: "2026-10-06" });
+    expect(backRow("leads")).toMatchObject({ month: 10, week: 10 });
+    expect(backRow("won")).toMatchObject({ month: 1, week: 1 });
+    expect(backRow("callsPerDay").month).toBeNull();
 
     const { checkId } = await as("lead").mutation(api.performance.checks.save, {
       employeeId: ids.annaEmp,

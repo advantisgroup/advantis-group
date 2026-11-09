@@ -459,10 +459,10 @@
     "by": "von {name}",
     "date": "Datum",
     "asOf": "Zahlen Stand {date}",
-    "week": "KW {from}–{to}",
+    "week": "Letzte 7 Tage {from}–{to}",
     "weekMissing": "Ohne Report: {days}",
     "colKpi": "KPI",
-    "colWeek": "Woche",
+    "colWeek": "7 Tage",
     "colMonth": "Monat",
     "colVm": "VM",
     "colVj": "VJ",
@@ -598,7 +598,8 @@
     "noItems": "keine Punkte",
     "newCheck": "Check anlegen",
     "nextCheckOn": "Nächster Check bis {date}",
-    "deleteConfirmDate": "Check vom {date} löschen?"
+    "deleteConfirmDate": "Check vom {date} löschen?",
+    "dateHint": "Ein Check kann auch nachträglich eingetragen werden: Datum wählen, die Zahlen gelten dann für diesen Tag (Monat bis dahin, letzte 7 Tage, VM/VJ)."
   },
   "kpiInfo": {
     "workableRate": "Anteil der in diesem Monat erstellten Leads, die workable sind (Status Analysis, Converted oder Not Interested): Workable ÷ Leads erstellt. VM/VJ = Veränderung in Prozentpunkten gegenüber Vormonat bzw. Vorjahresmonat.",

@@ -26,7 +26,6 @@ import {
   reasonsOverRange,
   reasonsTotal,
   sortReasons,
-  weekStart,
 } from "./lib/checkKpis";
 import { parseReasons, shiftYm, type Snapshot } from "./lib/kpi";
 import {
@@ -65,16 +64,22 @@ async function requireCheckAccess(
 
 // --------------------------------------------------------------- figures
 
-/** The check's KPI figures for one employee as of now. */
+/** The check's KPI figures for one employee as of `date` (default and at
+ * most today) — a check entered afterwards gets the figures of its own day:
+ * month to date, VM/VJ to the same workday, and the 7 days up to it. */
 export async function liveCheckKpis(
   ctx: Ctx,
   companyId: Id<"companies">,
   employee: Doc<"performanceEmployees">,
+  date?: string,
 ): Promise<CheckKpis> {
-  const now = today();
+  const now = date && ISO_DATE.test(date) && date < today() ? date : today();
+  const backdated = now < today();
   const ym = now.slice(0, 7);
+  // Nothing measured after the check's day counts.
+  const dayCut: Cutoff | undefined = backdated ? { sales: now, calls: now } : undefined;
   const cache = newQueryCache();
-  const team = await teamTotals(ctx, companyId, ym, cache);
+  const team = await teamTotals(ctx, companyId, ym, cache, dayCut);
 
   const own = await ctx.db
     .query("performanceReports")
@@ -89,7 +94,7 @@ export async function liveCheckKpis(
   const summarize = (m: string, cutoff?: Cutoff): Snapshot | undefined =>
     summarizeMonth(byMonth.get(m) ?? [], names, m, {
       cutoff,
-      coverage: m === ym && !cutoff ? team.coverage : null,
+      coverage: m === ym && (!cutoff || cutoff === dayCut) ? team.coverage : null,
     }).snaps[0];
   const reference = async (refYm: string): Promise<Snapshot | undefined> => {
     if (!byMonth.has(refYm)) return undefined;
@@ -107,17 +112,17 @@ export async function liveCheckKpis(
     });
     return ref.cut;
   };
-  const cur = summarize(ym);
+  const cur = summarize(ym, dayCut);
   const vm = await reference(shiftYm(ym, -1));
   const vj = await reference(shiftYm(ym, -12));
 
-  // The running calendar week, up to the newest data (at most today).
+  // The 7 days up to the newest data (at most the check's day).
   const newest = [team.asOf.sales, team.asOf.calls]
     .filter((d): d is string => !!d)
     .sort()
     .pop();
   const asOf = newest && newest < now ? newest : now;
-  const start = weekStart(asOf);
+  const start = addDays(asOf, -6);
 
   const teamDays = new Set<string>();
   for (const m of new Set([start.slice(0, 7), asOf.slice(0, 7)])) {
@@ -141,15 +146,19 @@ export async function liveCheckKpis(
     .query("performanceRawLeads")
     .withIndex("by_company_owner", (q) => q.eq("companyId", companyId).eq("owner", employee.name))
     .collect();
-  const analysis30 = leads.length
-    ? leads.filter((l) => {
-        if ((l.status ?? "").toLowerCase() !== "analysis" || !l.createDate) return false;
-        const age =
-          (parseISODate(l.reportDate).getTime() - parseISODate(l.createDate).getTime()) /
-          86_400_000;
-        return age > 30;
-      }).length
-    : null;
+  // The raw leads are today's; a check for an earlier day takes the
+  // figure its own report had.
+  const analysis30 = backdated
+    ? (cur?.overduesAnalysis ?? null)
+    : leads.length
+      ? leads.filter((l) => {
+          if ((l.status ?? "").toLowerCase() !== "analysis" || !l.createDate) return false;
+          const age =
+            (parseISODate(l.reportDate).getTime() - parseISODate(l.createDate).getTime()) /
+            86_400_000;
+          return age > 30;
+        }).length
+      : null;
 
   const leadsWeek = counterOverRange(own, "leadsCreated", start, asOf);
   const workableWeek = counterOverRange(own, "workableCreated", start, asOf);
@@ -196,16 +205,16 @@ export async function liveCheckKpis(
 
 // ----------------------------------------------------------------- reads
 
-/** Live figures for a new check, and when the last required check was. */
+/** Figures for a new check as of its day (`date`, default today). */
 export const liveKpis = userQuery({
-  args: { employeeId: v.id("performanceEmployees") },
-  handler: async (ctx, { employeeId }) => {
+  args: { employeeId: v.id("performanceEmployees"), date: v.optional(v.string()) },
+  handler: async (ctx, { employeeId, date }) => {
     const viewer = await loadViewer(ctx, ctx.caller);
     const { employee, companyId } = await requireCheckAccess(ctx, viewer, employeeId);
     return {
       employee: { id: employee._id, name: employee.name },
       kind: dashboardKind(await ctx.db.get(companyId)),
-      kpis: await liveCheckKpis(ctx, companyId, employee),
+      kpis: await liveCheckKpis(ctx, companyId, employee, date),
     };
   },
 });
@@ -397,13 +406,19 @@ export const save = userMutation({
     if (checkId) {
       const check = await ctx.db.get(checkId);
       if (!check || check.employeeId !== employee._id) throw notFound("Check nicht gefunden.");
-      await ctx.db.patch(checkId, fields);
+      // A check moved to another day takes that day's figures.
+      await ctx.db.patch(checkId, {
+        ...fields,
+        ...(check.date !== args.date
+          ? { kpis: await liveCheckKpis(ctx, companyId, employee, args.date) }
+          : {}),
+      });
     } else {
       checkId = await ctx.db.insert("performanceChecks", {
         ...fields,
         companyId,
         employeeId: employee._id,
-        kpis: await liveCheckKpis(ctx, companyId, employee),
+        kpis: await liveCheckKpis(ctx, companyId, employee, args.date),
         createdBy: viewer.userId,
         createdByName: actor,
         createdAt: now,

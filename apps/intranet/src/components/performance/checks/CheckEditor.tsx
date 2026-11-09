@@ -74,12 +74,17 @@ export function CheckEditor({
   const router = useRouter();
   const handleError = useErrorHandler();
   const confirm = useConfirm();
-  const live = useQuery(api.performance.checks.liveKpis, checkId ? "skip" : { employeeId });
   const saved = useQuery(api.performance.checks.get, checkId ? { checkId } : "skip");
   const save = useMutation(api.performance.checks.save);
   const remove = useMutation(api.performance.checks.remove);
 
   const [date, setDate] = useState(todayIso());
+  // Figures as of the chosen day — for a new check, or a saved one moved to
+  // another day (saving then takes that day's figures). A check can be
+  // entered afterwards: pick its day and the figures follow.
+  const dateValid = /^\d{4}-\d{2}-\d{2}$/.test(date);
+  const needLive = dateValid && (!checkId || (saved !== undefined && saved.check.date !== date));
+  const live = useQuery(api.performance.checks.liveKpis, needLive ? { employeeId, date } : "skip");
   const [ratings, setRatings] = useState<Record<string, { rating?: Rating; note?: string }>>({});
   const [tops, setTops] = useState<string[]>(["", "", ""]);
   const [goFors, setGoFors] = useState<string[]>(["", "", ""]);
@@ -126,7 +131,7 @@ export function CheckEditor({
     setLoadedId(c._id);
   }, [saved, loadedId]);
 
-  const kpis: Kpis | undefined = saved?.check.kpis ?? live?.kpis;
+  const kpis: Kpis | undefined = (needLive ? live?.kpis : undefined) ?? saved?.check.kpis;
   const employeeName = saved?.employee.name ?? live?.employee.name;
   const base = `/performance/mitarbeiter/${employeeId}/checks`;
 
@@ -217,8 +222,10 @@ export function CheckEditor({
           <Input
             type="date"
             value={date}
+            max={todayIso()}
             onChange={(e) => setDate(e.target.value)}
             className="w-40"
+            title={t("dateHint")}
           />
         </div>
         <div className="flex-1" />
