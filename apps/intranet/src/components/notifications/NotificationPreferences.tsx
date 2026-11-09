@@ -22,6 +22,7 @@ export const NOTIFICATION_SECTIONS = [
   { key: "drafts", types: ["draft_shared", "draft_comment"] },
   { key: "absence", types: ["absence_request", "absence_decision"] },
   { key: "appointment", types: ["appointment"] },
+  { key: "kitchen", types: ["kitchen_duty"] },
   { key: "uploads", types: ["upload_request", "upload_decision"] },
   { key: "announcement", types: ["announcement"] },
 ] as const;

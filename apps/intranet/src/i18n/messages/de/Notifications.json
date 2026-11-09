@@ -80,5 +80,9 @@
   "cat_appointment": "Termine",
   "type_appointment": "Termine und Terminanfragen",
   "desc_appointment": "Neue, geänderte und abgesagte Termine sowie Anfragen und Antworten dazu.",
-  "section_appointmentHint": "Termine mit deiner Teamleitung oder deinem Team."
+  "section_appointmentHint": "Termine mit deiner Teamleitung oder deinem Team.",
+  "cat_kitchen": "Küchendienst",
+  "type_kitchen_duty": "Küchendienst",
+  "desc_kitchen_duty": "Wenn du eingeteilt wirst, und Tauschanfragen samt Antworten.",
+  "section_kitchenHint": "Dein Plan und Tausch mit Kollegen."
 }
