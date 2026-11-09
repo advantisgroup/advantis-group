@@ -11,7 +11,8 @@ import {
   suggestFollowUp,
 } from "@advantis/convex/performance/onboarding";
 import { useMutation } from "convex/react";
-import { useTranslations } from "next-intl";
+import { CalendarClock } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { formatIsoDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 import { TimeSelect, useStatusConfig, useStatusName } from "./shared";
@@ -61,11 +63,13 @@ export function ContactForm({
   milestones: string[];
 }) {
   const t = useTranslations("OnboardingCockpit");
+  const locale = useLocale();
   const handleError = useErrorHandler();
   const config = useStatusConfig();
   const statusName = useStatusName();
   const setOutcome = useMutation(api.performance.onboarding.setOutcome);
   const addContact = useMutation(api.performance.onboarding.addContact);
+  const update = useMutation(api.performance.onboarding.update);
 
   const fresh = () => suggestFollowUp(new Date(), "contact");
   const start = MILESTONES.filter((m) => current.includes(m));
@@ -111,6 +115,29 @@ export function ContactForm({
       setWithFollowUp(true);
     } else if (!on) {
       setFollowUp(fresh());
+    }
+  };
+
+  /** Moves only the follow-up – no call result needed (Vahan, 09.11.). */
+  const moveFollowUp = async () => {
+    if (!followUp.date) return;
+    setBusy(true);
+    try {
+      await update({
+        caseId,
+        nextFollowUp: followUp.date,
+        nextFollowUpTime: followUp.time || null,
+      });
+      toast.success(
+        t("situation.followUpMoved", {
+          date: formatIsoDate(followUp.date, locale),
+          time: followUp.time || "–",
+        }),
+      );
+    } catch (e) {
+      handleError(e, t("case.saveError"));
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -314,6 +341,17 @@ export function ContactForm({
             disabled={!withFollowUp}
             onChange={(time) => setFollowUp({ ...followUp, time })}
           />
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8"
+            disabled={!withFollowUp || !followUp.date || busy}
+            title={t("situation.moveFollowUpHint")}
+            onClick={() => void moveFollowUp()}
+          >
+            <CalendarClock className="mr-1.5 h-3.5 w-3.5" />
+            {t("situation.moveFollowUp")}
+          </Button>
         </div>
       )}
 

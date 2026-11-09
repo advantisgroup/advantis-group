@@ -371,7 +371,10 @@
     "closed": "Saved – case is closed: {status}.",
     "progress": "Progress",
     "progressHint": "Tick or untick – saved with the contact.",
-    "tollOnlyHint": "Special case: the customer only wants toll boxes. Saving closes the case into the archive list “Toll boxes only”."
+    "tollOnlyHint": "Special case: the customer only wants toll boxes. Saving closes the case into the archive list “Toll boxes only”.",
+    "moveFollowUp": "Only move follow-up",
+    "moveFollowUpHint": "Saves only the new date and time – no call result.",
+    "followUpMoved": "Follow-up moved to {date}, {time}."
   },
   "closedIntro": {
     "winback": "Cases marked “will cancel”: closed, with a reason – for winning them back.",
