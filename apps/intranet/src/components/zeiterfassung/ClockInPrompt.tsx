@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { berlinParts } from "@advantis/convex/time";
@@ -11,7 +11,7 @@ import { useTranslations } from "next-intl";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
-import { useTimeClock } from "@/components/zeiterfassung/parts";
+import { KitchenNotice, useTimeClock } from "@/components/zeiterfassung/parts";
 import { SwipeToConfirm } from "@/components/zeiterfassung/SwipeToConfirm";
 
 /** Berlin hours during which the first visit of the day gets the prompt. */
@@ -45,11 +45,16 @@ function rememberDismissed(date: string) {
  */
 export function ClockInPrompt() {
   const t = useTranslations("Zeiterfassung.prompt");
+  const tk = useTranslations("Zeiterfassung.clock.kitchen");
   const user = useCurrentUser();
   const mode = useQuery(api.time.mode.status);
   const clock = useTimeClock();
   const [open, setOpen] = useState(false);
   const [decided, setDecided] = useState(false);
+  const [showKitchen, setShowKitchen] = useState(false);
+  // The clock's status flips before the mutation resolves; without this the
+  // effect below would close the dialog before it can show the kitchen note.
+  const clockingIn = useRef(false);
 
   const status = clock.state?.status;
   const today = berlinParts(Date.now());
@@ -65,7 +70,7 @@ export function ClockInPrompt() {
 
   // Clocked in somewhere else (header pill, another tab) — nothing to ask.
   useEffect(() => {
-    if (status && status !== "out") setOpen(false);
+    if (status && status !== "out" && !clockingIn.current) setOpen(false);
   }, [status]);
 
   function dismiss() {
@@ -75,7 +80,12 @@ export function ClockInPrompt() {
 
   async function clockIn() {
     rememberDismissed(today.date);
-    if (await clock.clockInNow()) setOpen(false);
+    clockingIn.current = true;
+    const ok = await clock.clockInNow();
+    clockingIn.current = false;
+    if (!ok) return;
+    if (clock.kitchenToday) setShowKitchen(true);
+    else setOpen(false);
   }
 
   const greeting = today.hour < 11 ? "morning" : today.hour < 17 ? "day" : "evening";
@@ -86,24 +96,34 @@ export function ClockInPrompt() {
       onOpenChange={(next) => {
         if (!next) dismiss();
       }}
-      title={t(`greeting.${greeting}`, { name: user.firstName ?? "" })}
-      description={t("description")}
+      title={showKitchen ? tk("title") : t(`greeting.${greeting}`, { name: user.firstName ?? "" })}
+      description={showKitchen ? undefined : t("description")}
       footer={
-        <Button variant="ghost" onClick={dismiss} className="w-full sm:w-auto">
-          {t("later")}
-        </Button>
+        showKitchen ? (
+          <Button onClick={dismiss} className="w-full sm:w-auto">
+            {tk("ok")}
+          </Button>
+        ) : (
+          <Button variant="ghost" onClick={dismiss} className="w-full sm:w-auto">
+            {t("later")}
+          </Button>
+        )
       }
     >
-      <div className="space-y-4">
-        <p className="text-sm text-muted-foreground">{t("hint")}</p>
-        <SwipeToConfirm
-          label={t("slide")}
-          tone="emerald"
-          icon={<Play className="size-5 fill-current" />}
-          disabled={clock.busy}
-          onConfirm={() => void clockIn()}
-        />
-      </div>
+      {showKitchen ? (
+        <KitchenNotice>{tk("afterIn")}</KitchenNotice>
+      ) : (
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">{t("hint")}</p>
+          <SwipeToConfirm
+            label={t("slide")}
+            tone="emerald"
+            icon={<Play className="size-5 fill-current" />}
+            disabled={clock.busy}
+            onConfirm={() => void clockIn()}
+          />
+        </div>
+      )}
     </ResponsiveDialog>
   );
 }

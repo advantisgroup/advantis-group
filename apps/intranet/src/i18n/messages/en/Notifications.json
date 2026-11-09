@@ -80,5 +80,9 @@
   "cat_appointment": "Appointments",
   "type_appointment": "Appointments and requests",
   "desc_appointment": "New, changed and cancelled appointments, plus requests and answers.",
-  "section_appointmentHint": "Appointments with your team lead or your team."
+  "section_appointmentHint": "Appointments with your team lead or your team.",
+  "cat_kitchen": "Kitchen duty",
+  "type_kitchen_duty": "Kitchen duty",
+  "desc_kitchen_duty": "When you're assigned, plus swap requests and answers.",
+  "section_kitchenHint": "Your plan and swaps with colleagues."
 }

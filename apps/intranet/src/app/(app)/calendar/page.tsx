@@ -28,6 +28,7 @@ import {
   CalendarRange,
   ChevronLeft,
   ChevronRight,
+  CookingPot,
   Copy,
   List,
   Pencil,
@@ -59,6 +60,16 @@ import {
   draftFromAppointment,
   newAppointmentDraft,
 } from "@/components/calendar/Appointments";
+import {
+  KITCHEN_ACCENT,
+  KITCHEN_CHIP,
+  KITCHEN_DOT,
+  type KitchenDuty,
+  KitchenChip,
+  KitchenDetails,
+  KitchenInbox,
+  KitchenPlanDialog,
+} from "@/components/calendar/KitchenDuty";
 import { DaysOffDialog } from "@/components/calendar/DaysOffDialog";
 import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { PersonLink } from "@/components/profile/PersonLink";
@@ -152,12 +163,13 @@ type DetailState =
   | { kind: "event"; id: Id<"events"> }
   | { kind: "absence"; id: string }
   | { kind: "appointment"; id: Id<"appointments">; fallback?: Appointment }
+  | { kind: "kitchen"; date: string }
   | null;
 
 type CalendarView = "month" | "week" | "list";
 
-type FilterKind = "event" | "appointment" | (typeof ABSENCE_TYPES)[number];
-const ALL_KINDS: FilterKind[] = ["event", "appointment", ...ABSENCE_TYPES];
+type FilterKind = "event" | "appointment" | "kitchen" | (typeof ABSENCE_TYPES)[number];
+const ALL_KINDS: FilterKind[] = ["event", "appointment", "kitchen", ...ABSENCE_TYPES];
 
 export default function CalendarPage() {
   const t = useTranslations("Calendar");
@@ -167,6 +179,7 @@ export default function CalendarPage() {
   const isManager = useIsManager();
   const isAdmin = useIsAdmin();
   const [daysOffOpen, setDaysOffOpen] = useState(false);
+  const [kitchenPlanOpen, setKitchenPlanOpen] = useState(false);
   const me = useCurrentUser();
   const confirm = useConfirm();
   const removeEvent = useMutation(api.events.remove);
@@ -253,6 +266,10 @@ export default function CalendarPage() {
     start: rangeStart.getTime(),
     end: rangeEnd.getTime() + 86399999,
   });
+  const kitchenDuties = useQuery(api.kitchen.forRange, {
+    from: isoDay(rangeStart),
+    to: isoDay(rangeEnd),
+  });
   const daysOff = useDaysOff(isoDay(rangeStart), isoDay(rangeEnd));
 
   const goPrev = useCallback(() => {
@@ -266,7 +283,7 @@ export default function CalendarPage() {
   // open or the focus sits in a form control.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (detail !== null || eventDraft !== null || apptDraft !== null) return;
+      if (detail !== null || eventDraft !== null || apptDraft !== null || kitchenPlanOpen) return;
       const target = e.target as HTMLElement | null;
       if (target?.closest("input, textarea, select, [contenteditable]")) return;
       if (e.key === "ArrowLeft") goPrev();
@@ -275,7 +292,7 @@ export default function CalendarPage() {
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [detail, eventDraft, apptDraft, goPrev, goNext]);
+  }, [detail, eventDraft, apptDraft, kitchenPlanOpen, goPrev, goNext]);
 
   const weekdays = useMemo(() => {
     const monday = startOfWeek(new Date(), { weekStartsOn });
@@ -319,11 +336,13 @@ export default function CalendarPage() {
   function kindLabel(kind: FilterKind) {
     if (kind === "event") return t("event");
     if (kind === "appointment") return t("appt.legend");
+    if (kind === "kitchen") return t("kitchen.legend");
     return tAbs(kind);
   }
   function kindDot(kind: FilterKind) {
     if (kind === "event") return "bg-primary";
     if (kind === "appointment") return APPOINTMENT_DOT;
+    if (kind === "kitchen") return KITCHEN_DOT;
     return ABSENCE_DOTS[kind];
   }
   function openAppointment(a: Appointment) {
@@ -334,6 +353,8 @@ export default function CalendarPage() {
     detail?.kind === "appointment"
       ? (appointments?.find((a) => a._id === detail.id) ?? detail.fallback)
       : undefined;
+  const detailKitchen =
+    detail?.kind === "kitchen" ? kitchenDuties?.find((k) => k.date === detail.date) : undefined;
   const detailEvent =
     detail?.kind === "event" ? events?.find((e) => e._id === detail.id) : undefined;
   const detailAbsence =
@@ -341,6 +362,9 @@ export default function CalendarPage() {
   const detailDay = detail?.kind === "day" ? detail.day : null;
   const dayEntries = detailDay
     ? {
+        kitchen: hiddenKinds.has("kitchen")
+          ? undefined
+          : kitchenDuties?.find((k) => k.date === detailDay),
         appointments: filteredAppointments.filter((a) => isoDay(new Date(a.start)) === detailDay),
         events: (filteredEvents ?? []).filter(
           (e) => eventDay(e, e.start) <= detailDay && detailDay <= eventDay(e, e.end),
@@ -476,6 +500,11 @@ export default function CalendarPage() {
       .filter((a) => isoDay(new Date(a.start)) === iso)
       .sort((a, b) => a.start - b.start);
   }
+  function kitchenOn(day: Date): KitchenDuty | undefined {
+    if (hiddenKinds.has("kitchen")) return undefined;
+    const iso = isoDay(day);
+    return kitchenDuties?.find((k) => k.date === iso);
+  }
   function absencesOn(day: Date): CalAbsence[] {
     const iso = isoDay(day);
     return filteredAbsences?.filter((a) => a.startDate <= iso && iso <= a.endDate) ?? [];
@@ -516,10 +545,12 @@ export default function CalendarPage() {
       dayEvents: eventsOn(day),
       dayAppointments: appointmentsOn(day),
       dayAbsences: absencesOn(day),
+      dayKitchen: kitchenOn(day),
       dayOff: daysOffOn(day),
     }))
     .filter(
       (d) =>
+        d.dayKitchen !== undefined ||
         d.dayEvents.length > 0 ||
         d.dayAppointments.length > 0 ||
         d.dayAbsences.length > 0 ||
@@ -622,6 +653,7 @@ export default function CalendarPage() {
     <div className="mx-auto max-w-5xl" data-tour="tour-calendar-view">
       <PageHeaderBar title={t("title")} tourCheckpoint="calendar" />
       {isAdmin && <DaysOffDialog open={daysOffOpen} onOpenChange={setDaysOffOpen} />}
+      {isAdmin && <KitchenPlanDialog open={kitchenPlanOpen} onOpenChange={setKitchenPlanOpen} />}
       <PageHeaderActions
         actions={[
           {
@@ -633,6 +665,13 @@ export default function CalendarPage() {
           },
           ...(isAdmin
             ? [
+                {
+                  key: "kitchen-plan",
+                  label: t("kitchen.planButton"),
+                  icon: CookingPot,
+                  onClick: () => setKitchenPlanOpen(true),
+                  variant: "outline" as const,
+                },
                 {
                   key: "days-off",
                   label: t("daysOffManage"),
@@ -889,6 +928,7 @@ export default function CalendarPage() {
         )}
       </ResponsiveDialog>
 
+      <KitchenInbox />
       <AppointmentInbox onOpen={openAppointment} />
 
       {/* Month grid (leading column: ISO week numbers) */}
@@ -909,12 +949,14 @@ export default function CalendarPage() {
             const dayEvents = eventsOn(day);
             const dayAppointments = appointmentsOn(day);
             const dayAbsences = absencesOn(day);
+            const dayKitchen = kitchenOn(day);
             const dayOff = daysOffOn(day);
             const inMonth = isSameMonth(day, cursor);
             const isToday = isSameDay(day, new Date());
+            const slots = dayKitchen ? 2 : 3;
             const shownAppointments = dayAppointments.slice(0, 2);
-            const shownEvents = dayEvents.slice(0, 3 - shownAppointments.length);
-            const absenceSlots = Math.max(0, 3 - shownAppointments.length - shownEvents.length);
+            const shownEvents = dayEvents.slice(0, Math.max(0, slots - shownAppointments.length));
+            const absenceSlots = Math.max(0, slots - shownAppointments.length - shownEvents.length);
             const aggregateAbsences = dayAbsences.length > absenceSlots && dayAbsences.length > 1;
             const eventOverflow =
               dayEvents.length -
@@ -948,6 +990,7 @@ export default function CalendarPage() {
                   </div>
                   <DayOffLabels days={dayOff} className="hidden md:block" />
                   <div className="flex flex-wrap gap-1 md:hidden">
+                    {dayKitchen && <span className={cn("size-1.5 rounded-full", KITCHEN_DOT)} />}
                     {dayAppointments.slice(0, 2).map((a) => (
                       <span key={a._id} className={cn("size-1.5 rounded-full", APPOINTMENT_DOT)} />
                     ))}
@@ -962,6 +1005,12 @@ export default function CalendarPage() {
                     ))}
                   </div>
                   <div className="hidden space-y-1 md:block">
+                    {dayKitchen && (
+                      <KitchenChip
+                        duty={dayKitchen}
+                        onOpen={() => setDetail({ kind: "kitchen", date: dayKitchen.date })}
+                      />
+                    )}
                     {shownAppointments.map((a) => (
                       <AppointmentChip
                         key={a._id}
@@ -1002,6 +1051,7 @@ export default function CalendarPage() {
             const dayEvents = eventsOn(day);
             const dayAppointments = appointmentsOn(day);
             const dayAbsences = absencesOn(day);
+            const dayKitchen = kitchenOn(day);
             const dayOff = daysOffOn(day);
             const isToday = isSameDay(day, new Date());
             return (
@@ -1031,7 +1081,8 @@ export default function CalendarPage() {
                 </button>
                 <div className="flex-1 space-y-1 p-1.5">
                   <DayOffLabels days={dayOff} />
-                  {dayEvents.length === 0 &&
+                  {!dayKitchen &&
+                  dayEvents.length === 0 &&
                   dayAppointments.length === 0 &&
                   dayAbsences.length === 0 &&
                   dayOff.length === 0 ? (
@@ -1040,6 +1091,12 @@ export default function CalendarPage() {
                     </p>
                   ) : (
                     <>
+                      {dayKitchen && (
+                        <KitchenChip
+                          duty={dayKitchen}
+                          onOpen={() => setDetail({ kind: "kitchen", date: dayKitchen.date })}
+                        />
+                      )}
                       {dayAppointments.map((a) => (
                         <AppointmentChip
                           key={a._id}
@@ -1071,107 +1128,136 @@ export default function CalendarPage() {
               <p className="text-sm text-muted-foreground">{t("noUpcoming")}</p>
             </div>
           ) : (
-            agendaDays.map(({ day, dayEvents, dayAppointments, dayAbsences, dayOff }) => (
-              <div
-                key={day.toISOString()}
-                className="flex gap-4 border-b border-border/60 px-4 py-3 last:border-b-0"
-              >
-                <div className="w-20 shrink-0 sm:w-28">
-                  <p
-                    className={cn(
-                      "text-sm font-semibold capitalize",
-                      isSameDay(day, new Date()) && "text-primary",
-                    )}
-                  >
-                    {day.toLocaleDateString(locale, {
-                      weekday: "short",
-                      day: "numeric",
-                      month: "short",
-                    })}
-                  </p>
-                </div>
-                <div className="min-w-0 flex-1 space-y-1.5">
-                  {dayOff.map((d) => (
-                    <div
-                      key={d.key}
-                      className="flex items-center gap-2.5 rounded-lg border border-dashed border-border/70 px-2.5 py-2"
-                    >
-                      <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
-                        <CalendarOff className="size-3.5" />
-                      </span>
-                      <span className="min-w-0 flex-1 truncate text-sm font-medium">{d.label}</span>
-                      <span className="shrink-0 text-xs text-muted-foreground">
-                        {d.kind === "holiday" ? t("publicHoliday") : t("officeClosed")}
-                      </span>
-                    </div>
-                  ))}
-                  {dayAppointments.map((a) => (
-                    <button
-                      key={a._id}
-                      onClick={() => openAppointment(a)}
+            agendaDays.map(
+              ({ day, dayEvents, dayAppointments, dayAbsences, dayKitchen, dayOff }) => (
+                <div
+                  key={day.toISOString()}
+                  className="flex gap-4 border-b border-border/60 px-4 py-3 last:border-b-0"
+                >
+                  <div className="w-20 shrink-0 sm:w-28">
+                    <p
                       className={cn(
-                        "flex w-full items-center gap-2.5 rounded-lg border border-border/60 px-2.5 py-2 text-left transition-colors hover:bg-accent",
-                        a.status === "requested" && "border-dashed border-violet-500/50",
+                        "text-sm font-semibold capitalize",
+                        isSameDay(day, new Date()) && "text-primary",
                       )}
                     >
-                      <span
-                        className={cn(
-                          "flex size-7 shrink-0 items-center justify-center rounded-md",
-                          APPOINTMENT_CHIP,
-                        )}
+                      {day.toLocaleDateString(locale, {
+                        weekday: "short",
+                        day: "numeric",
+                        month: "short",
+                      })}
+                    </p>
+                  </div>
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    {dayOff.map((d) => (
+                      <div
+                        key={d.key}
+                        className="flex items-center gap-2.5 rounded-lg border border-dashed border-border/70 px-2.5 py-2"
                       >
-                        <CalendarClock className="size-3.5" />
-                      </span>
-                      <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                        {a.title}
-                        <span className="font-normal text-muted-foreground">
-                          {" "}
-                          · {counterpart(a)}
+                        <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                          <CalendarOff className="size-3.5" />
                         </span>
-                      </span>
-                      <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                        {formatTime(a.start, locale)}
-                      </span>
-                    </button>
-                  ))}
-                  {dayEvents.map((e) => (
-                    <button
-                      key={e._id}
-                      onClick={() => setDetail({ kind: "event", id: e._id })}
-                      className="flex w-full items-center gap-2.5 rounded-lg border border-border/60 px-2.5 py-2 text-left transition-colors hover:bg-accent"
-                    >
-                      <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-                        <CalendarClock className="size-3.5" />
-                      </span>
-                      <span className="min-w-0 flex-1 truncate text-sm font-medium">{e.title}</span>
-                      <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                        {e.allDay ? t("allDay") : `${formatTime(e.start, locale)}`}
-                      </span>
-                    </button>
-                  ))}
-                  {dayAbsences.map((a) => (
-                    <button
-                      key={a.id}
-                      onClick={() => setDetail({ kind: "absence", id: a.id })}
-                      className="flex w-full items-center gap-2.5 rounded-lg border border-border/60 px-2.5 py-2 text-left transition-colors hover:bg-accent"
-                    >
-                      <span
+                        <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                          {d.label}
+                        </span>
+                        <span className="shrink-0 text-xs text-muted-foreground">
+                          {d.kind === "holiday" ? t("publicHoliday") : t("officeClosed")}
+                        </span>
+                      </div>
+                    ))}
+                    {dayKitchen && (
+                      <button
+                        onClick={() => setDetail({ kind: "kitchen", date: dayKitchen.date })}
+                        className="flex w-full items-center gap-2.5 rounded-lg border border-border/60 px-2.5 py-2 text-left transition-colors hover:bg-accent"
+                      >
+                        <span
+                          className={cn(
+                            "flex size-7 shrink-0 items-center justify-center rounded-md",
+                            KITCHEN_CHIP,
+                          )}
+                        >
+                          <CookingPot className="size-3.5" />
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                          {dayKitchen.name}
+                        </span>
+                        <span className="shrink-0 text-xs text-muted-foreground">
+                          {t("kitchen.legend")}
+                        </span>
+                      </button>
+                    )}
+                    {dayAppointments.map((a) => (
+                      <button
+                        key={a._id}
+                        onClick={() => openAppointment(a)}
                         className={cn(
-                          "flex size-7 shrink-0 items-center justify-center rounded-md",
-                          ABSENCE_COLORS[a.type] ?? ABSENCE_COLORS.other,
+                          "flex w-full items-center gap-2.5 rounded-lg border border-border/60 px-2.5 py-2 text-left transition-colors hover:bg-accent",
+                          a.status === "requested" && "border-dashed border-violet-500/50",
                         )}
                       >
-                        <Plane className="size-3.5" />
-                      </span>
-                      <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                        {a.userName}
-                      </span>
-                      <span className="shrink-0 text-xs text-muted-foreground">{tAbs(a.type)}</span>
-                    </button>
-                  ))}
+                        <span
+                          className={cn(
+                            "flex size-7 shrink-0 items-center justify-center rounded-md",
+                            APPOINTMENT_CHIP,
+                          )}
+                        >
+                          <CalendarClock className="size-3.5" />
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                          {a.title}
+                          <span className="font-normal text-muted-foreground">
+                            {" "}
+                            · {counterpart(a)}
+                          </span>
+                        </span>
+                        <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                          {formatTime(a.start, locale)}
+                        </span>
+                      </button>
+                    ))}
+                    {dayEvents.map((e) => (
+                      <button
+                        key={e._id}
+                        onClick={() => setDetail({ kind: "event", id: e._id })}
+                        className="flex w-full items-center gap-2.5 rounded-lg border border-border/60 px-2.5 py-2 text-left transition-colors hover:bg-accent"
+                      >
+                        <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                          <CalendarClock className="size-3.5" />
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                          {e.title}
+                        </span>
+                        <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                          {e.allDay ? t("allDay") : `${formatTime(e.start, locale)}`}
+                        </span>
+                      </button>
+                    ))}
+                    {dayAbsences.map((a) => (
+                      <button
+                        key={a.id}
+                        onClick={() => setDetail({ kind: "absence", id: a.id })}
+                        className="flex w-full items-center gap-2.5 rounded-lg border border-border/60 px-2.5 py-2 text-left transition-colors hover:bg-accent"
+                      >
+                        <span
+                          className={cn(
+                            "flex size-7 shrink-0 items-center justify-center rounded-md",
+                            ABSENCE_COLORS[a.type] ?? ABSENCE_COLORS.other,
+                          )}
+                        >
+                          <Plane className="size-3.5" />
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                          {a.userName}
+                        </span>
+                        <span className="shrink-0 text-xs text-muted-foreground">
+                          {tAbs(a.type)}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))
+              ),
+            )
           )}
         </div>
       )}
@@ -1183,7 +1269,7 @@ export default function CalendarPage() {
           detailEvent?.title ??
           detailAppointment?.title ??
           detailAbsence?.userName ??
-          (detailDay ? longDate(detailDay) : t("title"))
+          (detailKitchen ? t("kitchen.legend") : detailDay ? longDate(detailDay) : t("title"))
         }
         accent={
           detailEvent
@@ -1192,7 +1278,9 @@ export default function CalendarPage() {
               ? APPOINTMENT_ACCENT
               : detailAbsence
                 ? ABSENCE_ACCENT[detailAbsence.type]
-                : undefined
+                : detailKitchen
+                  ? KITCHEN_ACCENT
+                  : undefined
         }
         closeLabel={tc("close")}
         header={
@@ -1242,6 +1330,17 @@ export default function CalendarPage() {
                   </PersonLink>
                 </h2>
                 <p className="text-sm text-muted-foreground">{absenceRange(detailAbsence)}</p>
+              </>
+            )}
+            {detailKitchen && (
+              <>
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                  <span className="size-2 rounded-full" style={{ background: KITCHEN_ACCENT }} />
+                  {t("kitchen.legend")}
+                </span>
+                <h2 className="text-lg font-semibold capitalize leading-snug tracking-tight">
+                  {longDate(detailKitchen.date)}
+                </h2>
               </>
             )}
             {detailDay && (
@@ -1342,6 +1441,14 @@ export default function CalendarPage() {
           />
         )}
 
+        {detailKitchen && (
+          <KitchenDetails
+            duty={detailKitchen}
+            isAdmin={isAdmin}
+            onCleared={() => setDetail(null)}
+          />
+        )}
+
         {detailAbsence && (
           <SidePanelSection title={t("details")}>
             <SidePanelProperties
@@ -1358,6 +1465,25 @@ export default function CalendarPage() {
 
         {detailDay && dayEntries && (
           <>
+            {dayEntries.kitchen && (
+              <SidePanelSection title={t("kitchen.section")}>
+                <div className="-mx-2 space-y-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setDetail({ kind: "kitchen", date: dayEntries.kitchen!.date })}
+                    className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent"
+                  >
+                    <span
+                      className="h-8 w-1 shrink-0 rounded-full"
+                      style={{ background: KITCHEN_ACCENT }}
+                    />
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                      {dayEntries.kitchen.name}
+                    </span>
+                  </button>
+                </div>
+              </SidePanelSection>
+            )}
             {dayEntries.appointments.length > 0 && (
               <SidePanelSection title={t("appt.section")}>
                 <div className="-mx-2 space-y-0.5">

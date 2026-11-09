@@ -44,6 +44,12 @@
         "pause": "Slide for a break",
         "resume": "Slide to resume"
       }
+    },
+    "kitchen": {
+      "title": "You're on kitchen duty today",
+      "afterIn": "Please take care of the kitchen before closing time.",
+      "ok": "Got it",
+      "beforeOut": "You're on kitchen duty today – is the kitchen done?"
     }
   },
   "overview": {
