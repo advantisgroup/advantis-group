@@ -371,7 +371,10 @@
     "closed": "Gespeichert – Fall ist geschlossen: {status}.",
     "progress": "Fortschritt",
     "progressHint": "Haken setzen oder zurücknehmen – wird mit dem Kontakt gespeichert.",
-    "tollOnlyHint": "Sonderfall: Kunde will nur Mautboxen. Beim Speichern wird der Fall geschlossen und landet im Archiv unter „Nur Mautboxen“."
+    "tollOnlyHint": "Sonderfall: Kunde will nur Mautboxen. Beim Speichern wird der Fall geschlossen und landet im Archiv unter „Nur Mautboxen“.",
+    "moveFollowUp": "Nur Wiedervorlage verschieben",
+    "moveFollowUpHint": "Speichert nur das neue Datum und die Uhrzeit – ohne Anrufergebnis.",
+    "followUpMoved": "Wiedervorlage verschoben auf {date}, {time}."
   },
   "closedIntro": {
     "winback": "Fälle mit „wird kündigen“: geschlossen, mit Grund – für die Rückgewinnung.",
