@@ -44,6 +44,12 @@
         "pause": "Für Pause schieben",
         "resume": "Zum Weiterarbeiten schieben"
       }
+    },
+    "kitchen": {
+      "title": "Heute hast du Küchendienst",
+      "afterIn": "Bitte mach vor Feierabend die Küche.",
+      "ok": "Alles klar",
+      "beforeOut": "Du hast heute Küchendienst – ist die Küche gemacht?"
     }
   },
   "overview": {

@@ -3,13 +3,22 @@
 import { type ReactNode, useState } from "react";
 
 import { api } from "@advantis/convex/api";
-import { type DayWarning } from "@advantis/convex/time";
+import { berlinParts, type DayWarning } from "@advantis/convex/time";
 import { useMutation, useQuery } from "convex/react";
-import { CircleDashed, Hourglass, Plane, Sparkles, Thermometer, TriangleAlert } from "lucide-react";
+import {
+  CircleDashed,
+  CookingPot,
+  Hourglass,
+  Plane,
+  Sparkles,
+  Thermometer,
+  TriangleAlert,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Button } from "@/components/ui/button";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { SwipeToConfirm } from "@/components/zeiterfassung/SwipeToConfirm";
 import { ErrorFallback } from "@/components/ErrorFallback";
@@ -222,6 +231,15 @@ type ClockAction = "in" | "out" | "pause" | "resume";
  *  for a slide-to-confirm first (`confirmDialog` must be rendered by the
  *  caller); the `…Now` variants skip it for places that already are a
  *  confirmation (the morning prompt's own slider). */
+export function KitchenNotice({ children }: { children: ReactNode }) {
+  return (
+    <p className="flex items-start gap-2 rounded-lg bg-orange-500/10 px-3 py-2 text-sm font-medium text-orange-800 dark:text-orange-200">
+      <CookingPot className="mt-0.5 size-4 shrink-0" />
+      {children}
+    </p>
+  );
+}
+
 export function useTimeClock() {
   const t = useTranslations("Zeiterfassung");
   const state = useQuery(api.time.clock.state);
@@ -233,6 +251,9 @@ export function useTimeClock() {
   const now = useNow(15_000);
   const [busy, setBusy] = useState(false);
   const [pending, setPending] = useState<ClockAction | null>(null);
+  const [kitchenAfterIn, setKitchenAfterIn] = useState(false);
+  const kitchenToday =
+    useQuery(api.kitchen.myDay, state ? { date: berlinParts(now).date } : "skip") === true;
 
   const run = (action: () => Promise<unknown>, done: string) => async () => {
     setBusy(true);
@@ -268,15 +289,29 @@ export function useTimeClock() {
 
   const confirmDialog = (
     <ResponsiveDialog
-      open={pending !== null}
+      open={pending !== null || kitchenAfterIn}
       onOpenChange={(open) => {
-        if (!open) setPending(null);
+        if (open) return;
+        setPending(null);
+        setKitchenAfterIn(false);
       }}
-      title={pending ? t(`clock.confirm.${pending}`) : ""}
-      description={t("clock.confirm.hint")}
+      title={
+        kitchenAfterIn ? t("clock.kitchen.title") : pending ? t(`clock.confirm.${pending}`) : ""
+      }
+      description={kitchenAfterIn ? t("clock.kitchen.afterIn") : t("clock.confirm.hint")}
+      footer={
+        kitchenAfterIn ? (
+          <Button onClick={() => setKitchenAfterIn(false)} className="w-full sm:w-auto">
+            {t("clock.kitchen.ok")}
+          </Button>
+        ) : undefined
+      }
     >
       {pending && (
-        <div className="pb-2 pt-1">
+        <div className="space-y-3 pb-2 pt-1">
+          {pending === "out" && kitchenToday && (
+            <KitchenNotice>{t("clock.kitchen.beforeOut")}</KitchenNotice>
+          )}
           <SwipeToConfirm
             key={pending}
             label={t(`clock.confirm.slide.${pending}`)}
@@ -291,7 +326,9 @@ export function useTimeClock() {
             onConfirm={() => {
               const action = pending;
               void actions[action]().then((ok) => {
-                if (ok) setPending(null);
+                if (!ok) return;
+                setPending(null);
+                if (action === "in" && kitchenToday) setKitchenAfterIn(true);
               });
             }}
           />
@@ -311,6 +348,7 @@ export function useTimeClock() {
     endBreak: ask("resume"),
     clockInNow: actions.in,
     confirmDialog,
+    kitchenToday,
   };
 }
 
