@@ -195,6 +195,17 @@
     "withdraw": "Zurückziehen",
     "accepted": "Küchendienst übernommen",
     "declined": "Abgelehnt",
-    "withdrawn": "Anfrage zurückgezogen"
+    "withdrawn": "Anfrage zurückgezogen",
+    "printKind": "Aushang",
+    "printNotice": "Tausch im Intranet-Kalender anfragen. Dort steht immer der aktuelle Stand.",
+    "printLead": "Die eingeteilte Person macht vor Feierabend die Küche.",
+    "printWeek": "KW",
+    "print": "Drucken",
+    "printSaved": "Gespeicherten Plan drucken",
+    "savedTitle": "Plan gespeichert",
+    "printTitle": "Plan drucken",
+    "printHint": "{from} – {to} als A4-Aushang für die Küche.",
+    "printEmpty": "Für diesen Zeitraum ist noch nichts gespeichert.",
+    "close": "Schließen"
   }
 }

@@ -195,6 +195,17 @@
     "withdraw": "Withdraw",
     "accepted": "Kitchen duty taken over",
     "declined": "Declined",
-    "withdrawn": "Request withdrawn"
+    "withdrawn": "Request withdrawn",
+    "printKind": "Notice",
+    "printNotice": "Request swaps in the intranet calendar. It always has the latest plan.",
+    "printLead": "The assigned person takes care of the kitchen before closing time.",
+    "printWeek": "Wk",
+    "print": "Print",
+    "printSaved": "Print saved plan",
+    "savedTitle": "Plan saved",
+    "printTitle": "Print plan",
+    "printHint": "{from} – {to} as an A4 notice for the kitchen.",
+    "printEmpty": "Nothing has been saved for this period yet.",
+    "close": "Close"
   }
 }
