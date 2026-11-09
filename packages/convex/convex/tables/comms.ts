@@ -37,6 +37,41 @@ export const commsTables = {
     .index("by_personal_rich_date", ["personalForUserId", "sourceRichDateId"])
     .index("by_deletedAt", ["deletedAt"]),
 
+  // --- Calendar: kitchen duty -----------------------------------------------
+  /** Who cleans the kitchen before closing time on a date. One row per day. */
+  kitchenDuties: defineTable({
+    date: v.string(), // YYYY-MM-DD, Berlin
+    userId: v.id("users"),
+    assignedBy: v.id("users"),
+    updatedAt: v.number(),
+  })
+    .index("by_date", ["date"])
+    .index("by_user_date", ["userId", "date"]),
+
+  /** Singleton: who is in the kitchen rotation, as last chosen by an admin. */
+  kitchenSettings: defineTable({
+    memberIds: v.array(v.id("users")),
+    updatedBy: v.id("users"),
+    updatedAt: v.number(),
+  }),
+
+  /** Handing over or trading a duty; nothing moves until the colleague accepts. */
+  kitchenSwaps: defineTable({
+    date: v.string(),
+    fromUserId: v.id("users"),
+    toUserId: v.id("users"),
+    /** The colleague's day taken in exchange; unset = they just take over. */
+    otherDate: v.optional(v.string()),
+    status: v.union(
+      v.literal("requested"),
+      v.literal("accepted"),
+      v.literal("declined"),
+      v.literal("cancelled"),
+    ),
+    createdAt: v.number(),
+    decidedAt: v.optional(v.number()),
+  }).index("by_status", ["status"]),
+
   // --- Calendar: appointments ----------------------------------------------
   /**
    * One-to-one (or small) appointments between a lead and employees: a team
