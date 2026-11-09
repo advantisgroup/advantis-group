@@ -7,7 +7,7 @@ import { type Id } from "@advantis/convex/dataModel";
 import { addDays, berlinDate, datesBetween } from "@advantis/convex/time";
 import { useMutation, useQuery } from "convex/react";
 import { type FunctionReturnType } from "convex/server";
-import { AlertTriangle, Check, CookingPot, Repeat2 } from "lucide-react";
+import { AlertTriangle, Check, CookingPot, Printer, Repeat2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SidePanelProperties, SidePanelSection } from "@/components/ui/side-panel";
+import { KitchenPlanPrint } from "@/components/calendar/KitchenPrint";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { cn } from "@/lib/utils";
 
@@ -102,11 +103,20 @@ export function KitchenPlanDialog({
   const [memberIds, setMemberIds] = useState<UserId[] | null>(null);
   const [overrides, setOverrides] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+  // Set once there's something to print; the dialog then offers just that.
+  const [printing, setPrinting] = useState<{ from: string; to: string; saved: boolean } | null>(
+    null,
+  );
+  const printDuties = useQuery(
+    api.kitchen.forRange,
+    printing ? { from: printing.from, to: printing.to } : "skip",
+  );
 
   useEffect(() => {
     if (open) return;
     setMemberIds(null);
     setOverrides({});
+    setPrinting(null);
   }, [open]);
 
   const members = useMemo(
@@ -146,7 +156,7 @@ export function KitchenPlanDialog({
       });
       const { changed } = await save({ from, to, memberIds: members, days: planned });
       toast.success(t("planSaved", { count: changed }));
-      onOpenChange(false);
+      setPrinting({ from, to, saved: true });
     } catch (error) {
       handleError(error);
     } finally {
@@ -158,21 +168,52 @@ export function KitchenPlanDialog({
     <ResponsiveDialog
       open={open}
       onOpenChange={onOpenChange}
-      title={t("planTitle")}
-      description={t("planHint")}
+      title={printing ? t(printing.saved ? "savedTitle" : "printTitle") : t("planTitle")}
+      description={
+        printing
+          ? t("printHint", { from: dayLabel(printing.from), to: dayLabel(printing.to) })
+          : t("planHint")
+      }
       contentClassName="max-w-lg"
       footer={
-        <>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            {tc("cancel")}
-          </Button>
-          <Button onClick={() => void submit()} disabled={!days || days.length === 0 || busy}>
-            {t("savePlan")}
-          </Button>
-        </>
+        printing ? (
+          <>
+            <Button variant="ghost" onClick={() => onOpenChange(false)}>
+              {t("close")}
+            </Button>
+            <Button onClick={() => window.print()} disabled={!printDuties?.length}>
+              <Printer />
+              {t("print")}
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button
+              variant="ghost"
+              className="sm:mr-auto"
+              disabled={!validPeriod}
+              onClick={() => setPrinting({ from, to, saved: false })}
+            >
+              <Printer />
+              {t("printSaved")}
+            </Button>
+            <Button variant="ghost" onClick={() => onOpenChange(false)}>
+              {tc("cancel")}
+            </Button>
+            <Button onClick={() => void submit()} disabled={!days || days.length === 0 || busy}>
+              {t("savePlan")}
+            </Button>
+          </>
+        )
       }
     >
-      <div className="space-y-4">
+      {printing && printDuties?.length === 0 && (
+        <p className="text-sm text-muted-foreground">{t("printEmpty")}</p>
+      )}
+      {printing && !!printDuties?.length && (
+        <KitchenPlanPrint duties={printDuties} from={printing.from} to={printing.to} />
+      )}
+      <div className={cn("space-y-4", printing && "hidden")}>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2">
             <Label htmlFor="kitchen-from">{t("from")}</Label>
