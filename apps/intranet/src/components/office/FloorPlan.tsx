@@ -149,7 +149,7 @@ export function FloorPlan() {
 
   const width = layout.width;
   const height = layout.height;
-  const font = width / 30;
+  const font = width / 36;
   const roomLabelAt = (room: Room) => ({
     x: room.labelX ?? room.x + font * 0.6,
     y: room.labelY ?? room.y + font * 1.3,
@@ -657,7 +657,7 @@ export function FloorPlan() {
           </div>
         )}
       </aside>
-      <div className="max-w-full overflow-hidden rounded-2xl border border-border bg-card p-2 sm:p-4 lg:w-fit lg:shrink-0">
+      <div className="max-w-full overflow-hidden rounded-2xl border border-border bg-card p-2 sm:p-4 lg:w-1/2 lg:shrink-0">
         {!hasPlan && !editing && (
           <p className="px-2 pb-3 text-sm text-muted-foreground">{t("plan.empty")}</p>
         )}
@@ -665,8 +665,8 @@ export function FloorPlan() {
           ref={svgRef}
           viewBox={`-10 -10 ${width + 20} ${height + 20}`}
           className={cn(
-            // Desktop: a bit taller than the window, so the whole office is one short scroll away.
-            "block h-auto w-full select-none lg:h-[calc((100dvh-9rem)*1.2)] lg:w-auto lg:max-w-full",
+            // Desktop: the plan takes half the page width, the editors the other half.
+            "block h-auto w-full select-none",
             editing && "touch-none",
           )}
           onPointerMove={onPointerMove}
