@@ -31,6 +31,17 @@ export const officeRoomValidator = v.object({
   h: v.number(),
 });
 
+/** A line on the plan: a wall (black, anything in the way – sound walls,
+ *  partitions) or a door (an opening with its swing, as on a floor plan). */
+export const officeLineValidator = v.object({
+  id: v.string(),
+  kind: v.union(v.literal("wall"), v.literal("door")),
+  x1: v.number(),
+  y1: v.number(),
+  x2: v.number(),
+  y2: v.number(),
+});
+
 /** Plan coordinates are centimetres from the top-left corner of the office. */
 export const officeTables = {
   /** Singleton: the office outline and its rooms. */
@@ -38,6 +49,7 @@ export const officeTables = {
     width: v.number(),
     height: v.number(),
     rooms: v.array(officeRoomValidator),
+    lines: v.optional(v.array(officeLineValidator)),
     updatedBy: v.id("users"),
     updatedAt: v.number(),
   }),

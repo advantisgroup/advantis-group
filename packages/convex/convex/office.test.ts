@@ -95,4 +95,25 @@ describe("office", () => {
       ["created", null],
     ]);
   });
+
+  test("walls and doors are stored with the plan and must stay on it", async () => {
+    const { ada } = await setup();
+    const wall = { id: "w1", kind: "wall" as const, x1: 0, y1: 500, x2: 600, y2: 500 };
+    const door = { id: "d1", kind: "door" as const, x1: 600, y1: 500, x2: 690, y2: 500 };
+    await ada.mutation(api.office.saveLayout, {
+      width: 1200,
+      height: 3000,
+      rooms: [],
+      lines: [wall, door],
+    });
+    expect((await ada.query(api.office.plan, {})).layout.lines).toEqual([wall, door]);
+    await expect(
+      ada.mutation(api.office.saveLayout, {
+        width: 1200,
+        height: 3000,
+        rooms: [],
+        lines: [{ ...wall, x2: 1300 }],
+      }),
+    ).rejects.toThrow();
+  });
 });

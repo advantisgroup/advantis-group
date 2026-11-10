@@ -3,7 +3,10 @@
   "intro": "Büro-Grundriss: Arbeitsplatz anklicken für Geräte, Kabel und Adapter.",
   "adminsOnly": "Nur für Admins sichtbar",
   "adminsOnlyHint": "Freigabe für alle: Convex-Env OFFICE_MODE=live und /office in OPEN_PREFIXES eintragen.",
-  "tabs": { "plan": "Grundriss", "storage": "Lager" },
+  "tabs": {
+    "plan": "Grundriss",
+    "storage": "Lager"
+  },
   "kpi": {
     "desks": "Arbeitsplätze",
     "checked": "Inventur erfasst",
@@ -17,7 +20,7 @@
     "addDesk": "Arbeitsplatz",
     "size": "Bürogröße",
     "printQr": "QR-Etiketten drucken",
-    "editHint": "Ziehen zum Verschieben, Ecke unten rechts zum Größe ändern. Raster 10 cm.",
+    "editHint": "Ziehen zum Verschieben, Ecke unten rechts zum Größe ändern. Wände und Türen: Enden ziehen, „Drehen“ dreht um 90°. Raster 10 cm.",
     "rename": "Bearbeiten",
     "rotate": "Drehen",
     "delete": "Entfernen",
@@ -27,7 +30,9 @@
     "legendDefect": "Defektes Gerät",
     "newRoom": "Raum",
     "free": "frei",
-    "saveError": "Grundriss konnte nicht gespeichert werden."
+    "saveError": "Grundriss konnte nicht gespeichert werden.",
+    "addWall": "Wand",
+    "addDoor": "Tür"
   },
   "sizeDialog": {
     "title": "Bürogröße",
@@ -35,7 +40,11 @@
     "width": "Breite (cm)",
     "height": "Tiefe (cm)"
   },
-  "roomDialog": { "title": "Raum", "name": "Name", "placeholder": "z. B. Großraum, Küche, Lager" },
+  "roomDialog": {
+    "title": "Raum",
+    "name": "Name",
+    "placeholder": "z. B. Großraum, Küche, Lager"
+  },
   "deskDialog": {
     "title": "Arbeitsplatz",
     "name": "Bezeichnung",
@@ -123,7 +132,11 @@
     "intro": "Alles, was gerade an keinem Arbeitsplatz hängt.",
     "add": "Ins Lager erfassen",
     "search": "Suchen …",
-    "scope": { "storage": "Im Lager", "all": "Gesamtbestand", "retired": "Ausgemustert" },
+    "scope": {
+      "storage": "Im Lager",
+      "all": "Gesamtbestand",
+      "retired": "Ausgemustert"
+    },
     "empty": "Nichts gefunden.",
     "col": {
       "kind": "Art",
@@ -144,7 +157,9 @@
     "dialogDescription": "Je Arbeitsplatz ein Etikett. Gescannt öffnet es den Platz direkt im Intranet.",
     "all": "Alle Arbeitsplätze ({count})"
   },
-  "place": { "storage": "Lager" },
+  "place": {
+    "storage": "Lager"
+  },
   "kinds": {
     "computer": "PC",
     "laptop": "Laptop",
