@@ -547,6 +547,54 @@ describe("18:00 rule", () => {
     expect(entry?.end).toBe(local("2026-12-01", "17:00"));
     expect(new Date(entry!.end!).toISOString()).toBe("2026-12-01T16:00:00.000Z");
   });
+
+  test("a schedule entered later re-books untouched 18:00 entries, keeping pending corrections", async () => {
+    const s = await setup();
+    // Wednesday, no schedule yet: the 8 h default applies, 13 min break inside.
+    setNow("2026-10-14", "08:00");
+    const id = await s.alice.mutation(api.time.clock.clockIn, {});
+    setNow("2026-10-14", "10:00");
+    await s.alice.mutation(api.time.clock.startBreak, {});
+    setNow("2026-10-14", "10:13");
+    await s.alice.mutation(api.time.clock.endBreak, {});
+    setNow("2026-10-14", "18:00");
+    await s.t.mutation(internal.time.jobs.autoCloseOpenEntries, {});
+    expect((await s.t.run((ctx) => ctx.db.get(id)))?.end).toBe(local("2026-10-14", "16:13"));
+    await s.alice.mutation(api.time.entries.save, {
+      entryId: id,
+      kind: "work",
+      start: local("2026-10-14", "08:00"),
+      end: local("2026-10-14", "17:00"),
+      reason: "Länger gearbeitet",
+    });
+
+    // Back-dated 7:36 schedule: the entry now ends at 08:00 + 7:36 + 0:13.
+    setNow("2026-10-21", "15:00");
+    await s.admin.mutation(api.time.admin.setSchedule, {
+      userId: s.ids.alice,
+      validFrom: "2026-10-05",
+      minutesPerWeekday: [456, 456, 456, 456, 456, 0, 0],
+    });
+    const entry = await s.t.run((ctx) => ctx.db.get(id));
+    expect(entry).toMatchObject({
+      end: local("2026-10-14", "15:49"),
+      status: "active",
+      source: "auto18",
+    });
+
+    // The pending correction still applies to the same entry.
+    const pending = await s.t.run((ctx) =>
+      ctx.db
+        .query("timeEntries")
+        .withIndex("by_status", (q) => q.eq("status", "pending"))
+        .collect(),
+    );
+    await s.admin.mutation(api.time.entries.decide, { entryId: pending[0]._id, approve: true });
+    expect((await s.t.run((ctx) => ctx.db.get(id)))?.status).toBe("deleted");
+
+    // Nothing left to re-book.
+    expect(await s.t.mutation(internal.time.jobs.recalcAllAutoClosed, {})).toBe(0);
+  });
 });
 
 describe("hours account and settings", () => {

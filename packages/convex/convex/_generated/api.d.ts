@@ -265,6 +265,7 @@ import type * as time_importClockodo from "../time/importClockodo.js";
 import type * as time_jobs from "../time/jobs.js";
 import type * as time_lib_autoBook from "../time/lib/autoBook.js";
 import type * as time_lib_autoClose from "../time/lib/autoClose.js";
+import type * as time_lib_autoCloseDb from "../time/lib/autoCloseDb.js";
 import type * as time_lib_berlin from "../time/lib/berlin.js";
 import type * as time_lib_clockodo from "../time/lib/clockodo.js";
 import type * as time_lib_days from "../time/lib/days.js";
@@ -571,6 +572,7 @@ declare const fullApi: ApiFromModules<{
   "time/jobs": typeof time_jobs;
   "time/lib/autoBook": typeof time_lib_autoBook;
   "time/lib/autoClose": typeof time_lib_autoClose;
+  "time/lib/autoCloseDb": typeof time_lib_autoCloseDb;
   "time/lib/berlin": typeof time_lib_berlin;
   "time/lib/clockodo": typeof time_lib_clockodo;
   "time/lib/days": typeof time_lib_days;

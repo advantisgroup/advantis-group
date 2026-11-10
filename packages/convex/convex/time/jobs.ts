@@ -5,19 +5,15 @@ import { type Doc } from "../_generated/dataModel";
 import { type MutationCtx } from "../_generated/server";
 import { internalMutation } from "../functions";
 import { createNotification } from "../lib/notify";
-import { autoCloseCutoff, autoCloseEnd } from "./lib/autoClose";
+import { autoCloseCutoff } from "./lib/autoClose";
+import { autoCloseEndFor, recalcAutoClosed } from "./lib/autoCloseDb";
 import { addDays, berlinDate, berlinParts, monthOf } from "./lib/berlin";
-import { measureDay } from "./lib/days";
 import { latestLockableMonth, lockBoundary } from "./lib/lock";
-import { regularMinutesOn } from "./lib/schedule";
 import { carryOverExpiry, carryOverFrom, DEFAULT_VACATION_DAYS } from "./lib/vacation";
 import { seedHolidays } from "./holidays";
 import {
   formatDate,
   invalidateTotals,
-  isActive,
-  loadEntries,
-  loadSchedules,
   lockRow,
   openEntries,
   storeMonthTotals,
@@ -32,8 +28,6 @@ import {
  * caught up by the next one. Every job is idempotent.
  */
 
-const MINUTE = 60_000;
-
 async function activeUsers(ctx: MutationCtx) {
   const users = await ctx.db.query("users").collect();
   return users.filter((user) => user.status === "active" && !user.external);
@@ -42,25 +36,7 @@ async function activeUsers(ctx: MutationCtx) {
 /** The 18:00 rule for one person's open work entry. */
 async function autoCloseEntry(ctx: MutationCtx, work: Doc<"timeEntries">, cutoff: number) {
   const date = berlinDate(work.start);
-  const [dayEntries, schedules] = await Promise.all([
-    loadEntries(ctx, work.userId, date, date),
-    loadSchedules(ctx, work.userId),
-  ]);
-  const active = dayEntries.filter(isActive);
-  const earlier = active.filter((row) => row.end !== undefined && row.start < work.start);
-  const earlierWorkedMinutes = Math.round(measureDay(earlier, 0).workedMs / MINUTE);
-  const breakMinutesInside = Math.round(
-    active
-      .filter((row) => row.kind === "break" && row.end !== undefined && row.start >= work.start)
-      .reduce((sum, row) => sum + (row.end! - row.start), 0) / MINUTE,
-  );
-  const end = autoCloseEnd({
-    start: work.start,
-    cutoff,
-    regularMinutes: regularMinutesOn(schedules, date),
-    earlierWorkedMinutes,
-    breakMinutesInside,
-  });
+  const end = await autoCloseEndFor(ctx, work, cutoff);
   const now = Date.now();
   const openBreak = (await openEntries(ctx, work.userId)).find((row) => row.kind === "break");
   // A break still running at 18:00 ends with the work segment.
@@ -96,6 +72,23 @@ async function autoCloseEntry(ctx: MutationCtx, work: Doc<"timeEntries">, cutoff
     link: `/zeiterfassung/arbeitszeiten?date=${date}`,
   });
 }
+
+/**
+ * One-off repair (run from the Convex dashboard): re-book every untouched
+ * 18:00-rule entry with the schedules as they are now. Entries booked before
+ * a back-dated schedule existed used the old hours (or the 8 h default).
+ */
+export const recalcAllAutoClosed = internalMutation({
+  args: { fromDate: v.optional(v.string()) },
+  handler: async (ctx, { fromDate }) => {
+    const users = await activeUsers(ctx);
+    let changed = 0;
+    for (const user of users) {
+      changed += await recalcAutoClosed(ctx, user._id, fromDate ?? "2000-01-01");
+    }
+    return changed;
+  },
+});
 
 /** Hourly: close every work entry still open past its 18:00. */
 export const autoCloseOpenEntries = internalMutation({
