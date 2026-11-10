@@ -15,7 +15,8 @@ import { displayName } from "./time/lib/store";
 
 type DeskId = Id<"officeDesks">;
 
-const DEFAULT_LAYOUT = { width: 1600, height: 1000, rooms: [] };
+// The office (Vahan, 10.11.2026): 12 m wide, 30 m long, drawn upright.
+const DEFAULT_LAYOUT = { width: 1200, height: 3000, rooms: [] };
 const MIN_SIZE = 20;
 const MAX_PLAN = 10_000;
 
