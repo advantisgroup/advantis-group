@@ -220,5 +220,22 @@
     "save": "{count, plural, =0 {Nothing selected} one {Save 1 item} other {Save # items}}",
     "saved": "{count, plural, one {1 item saved} other {# items saved}} – on to the next.",
     "done": "Done"
+  },
+  "import": {
+    "open": "Import inventory",
+    "title": "Import an inventory list",
+    "description": "Bring storage and all desks in at once from an inventory list (JSON). Check first, then import.",
+    "choose": "Choose file",
+    "readError": "This file doesn't fit – an inventory list in JSON format is expected.",
+    "storageRows": "Storage: {rows, plural, one {1 row} other {# rows}} ({count} parts)",
+    "rows": "{count, plural, one {1 row} other {# rows}}",
+    "deskNotEmpty": "{count, plural, one {1 part is} other {# parts are}} already recorded at this desk",
+    "storageNotEmpty": "{count, plural, one {1 part is} other {# parts are}} already in storage. The import only adds – retire anything imported twice by hand.",
+    "skip": "Don't import",
+    "skipped": "{count, plural, one {1 block is} other {# blocks are}} not imported – pick a desk above.",
+    "doubled": "Several blocks go to the same desk.",
+    "run": "{count, plural, =0 {Nothing to import} one {Import 1 row} other {Import # rows}}",
+    "done": "{count, plural, one {1 row} other {# rows}} imported.",
+    "partial": "Stopped – {count} rows are already in."
   }
 }

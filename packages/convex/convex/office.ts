@@ -464,6 +464,39 @@ export const createItem = userMutation({
   },
 });
 
+const MAX_IMPORT = 300;
+
+/**
+ * Bulk import from an inventory list (one round through the office): all
+ * rows in one go, each into storage or onto its desk. Nothing is merged with
+ * what's already recorded — the dialog warns before importing twice.
+ */
+export const importItems = userMutation({
+  role: "admin",
+  args: {
+    items: v.array(v.object({ ...itemFields, deskId: v.optional(v.id("officeDesks")) })),
+  },
+  handler: async (ctx, { items }) => {
+    if (items.length === 0) return 0;
+    if (items.length > MAX_IMPORT) fail("bad_request", `At most ${MAX_IMPORT} rows at once`);
+    const desks = [...new Set(items.flatMap((item) => (item.deskId ? [item.deskId] : [])))];
+    for (const deskId of desks) await liveDesk(ctx, deskId);
+    // Validate everything before writing anything.
+    const rows = items.map(({ deskId, ...fields }) => ({ deskId, ...cleanItem(fields) }));
+    const now = Date.now();
+    for (const row of rows) {
+      const itemId = await ctx.db.insert("officeItems", {
+        ...row,
+        createdBy: ctx.caller.user._id,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await log(ctx, ctx.caller, itemId, "created", { to: row.deskId });
+    }
+    return rows.length;
+  },
+});
+
 export const updateItem = userMutation({
   role: "admin",
   args: { itemId: v.id("officeItems"), ...itemFields },
