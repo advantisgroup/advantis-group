@@ -96,7 +96,8 @@ export function FloorPlan() {
 
   const width = layout.width;
   const height = layout.height;
-  const font = Math.max(width, height) / 70;
+  // Sized to the width: the plan always spans the full width of the page.
+  const font = width / 45;
   const checked = desks.filter((desk) => desk.checkedAt).length;
   const defective = desks.reduce((sum, desk) => sum + desk.defective, 0);
 
@@ -283,18 +284,94 @@ export function FloorPlan() {
   const hasPlan = shownRooms.length > 0 || desks.length > 0;
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start">
-      <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card p-2 sm:p-4 lg:h-[calc(100dvh-10rem)] lg:min-h-[36rem]">
+    <div className="space-y-4">
+      <aside className="space-y-3">
+        <KpiStrip>
+          <Kpi label={t("kpi.desks")} value={desks.length} />
+          <Kpi
+            label={t("kpi.checked")}
+            value={`${checked} / ${desks.length}`}
+            tone={desks.length && checked < desks.length ? "warn" : "neutral"}
+          />
+          <Kpi label={t("kpi.inStorage")} value={plan.inStorage} href="/office/lager" />
+          <Kpi
+            label={t("kpi.defective")}
+            value={defective}
+            tone={defective ? "critical" : "neutral"}
+          />
+        </KpiStrip>
+        {canEdit && (
+          <div className="sticky top-0 z-10 -mx-1 flex flex-wrap items-center gap-2 bg-background/95 px-1 py-2 backdrop-blur">
+            {editing ? (
+              <>
+                <Button size="sm" variant="outline" onClick={addRoom}>
+                  <DoorOpen className="size-4" />
+                  {t("plan.addRoom")}
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => void addDesk()}>
+                  <Monitor className="size-4" />
+                  {t("plan.addDesk")}
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setSizeOpen(true)}>
+                  <Ruler className="size-4" />
+                  {t("plan.size")}
+                </Button>
+                {selected && (
+                  <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-0.5">
+                    <Button size="sm" variant="ghost" onClick={editSelected}>
+                      <Pencil className="size-4" />
+                      {t("plan.rename")}
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={rotate}>
+                      <RotateCw className="size-4" />
+                      {t("plan.rotate")}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-destructive"
+                      onClick={deleteSelected}
+                    >
+                      <Trash2 className="size-4" />
+                      {t("plan.delete")}
+                    </Button>
+                  </div>
+                )}
+                <Button size="sm" onClick={stopEditing}>
+                  <Check className="size-4" />
+                  {t("plan.done")}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button size="sm" variant="outline" onClick={startEditing}>
+                  <Maximize2 className="size-4" />
+                  {t("plan.edit")}
+                </Button>
+                {desks.length > 0 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setQrDesks(desks.map((d) => d._id))}
+                  >
+                    <QrCode className="size-4" />
+                    {t("plan.printQr")}
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
+        )}
+        {editing && <p className="text-xs text-muted-foreground">{t("plan.editHint")}</p>}
+      </aside>
+      <div className="overflow-hidden rounded-2xl border border-border bg-card p-2 sm:p-4">
         {!hasPlan && !editing && (
           <p className="px-2 pb-3 text-sm text-muted-foreground">{t("plan.empty")}</p>
         )}
         <svg
           ref={svgRef}
           viewBox={`-10 -10 ${width + 20} ${height + 20}`}
-          className={cn(
-            "block h-auto w-full select-none lg:h-0 lg:min-h-0 lg:flex-1",
-            editing && "touch-none",
-          )}
+          className={cn("block h-auto w-full select-none", editing && "touch-none")}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
@@ -432,85 +509,6 @@ export function FloorPlan() {
           </span>
         </div>
       </div>
-      <aside className="order-first space-y-4 lg:sticky lg:top-4 lg:order-none">
-        <KpiStrip className="lg:grid-cols-2">
-          <Kpi label={t("kpi.desks")} value={desks.length} />
-          <Kpi
-            label={t("kpi.checked")}
-            value={`${checked} / ${desks.length}`}
-            tone={desks.length && checked < desks.length ? "warn" : "neutral"}
-          />
-          <Kpi label={t("kpi.inStorage")} value={plan.inStorage} href="/office/lager" />
-          <Kpi
-            label={t("kpi.defective")}
-            value={defective}
-            tone={defective ? "critical" : "neutral"}
-          />
-        </KpiStrip>
-        {canEdit && (
-          <div className="flex flex-wrap items-center gap-2">
-            {editing ? (
-              <>
-                <Button size="sm" variant="outline" onClick={addRoom}>
-                  <DoorOpen className="size-4" />
-                  {t("plan.addRoom")}
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => void addDesk()}>
-                  <Monitor className="size-4" />
-                  {t("plan.addDesk")}
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => setSizeOpen(true)}>
-                  <Ruler className="size-4" />
-                  {t("plan.size")}
-                </Button>
-                {selected && (
-                  <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-0.5">
-                    <Button size="sm" variant="ghost" onClick={editSelected}>
-                      <Pencil className="size-4" />
-                      {t("plan.rename")}
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={rotate}>
-                      <RotateCw className="size-4" />
-                      {t("plan.rotate")}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-destructive"
-                      onClick={deleteSelected}
-                    >
-                      <Trash2 className="size-4" />
-                      {t("plan.delete")}
-                    </Button>
-                  </div>
-                )}
-                <Button size="sm" onClick={stopEditing}>
-                  <Check className="size-4" />
-                  {t("plan.done")}
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button size="sm" variant="outline" onClick={startEditing}>
-                  <Maximize2 className="size-4" />
-                  {t("plan.edit")}
-                </Button>
-                {desks.length > 0 && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setQrDesks(desks.map((d) => d._id))}
-                  >
-                    <QrCode className="size-4" />
-                    {t("plan.printQr")}
-                  </Button>
-                )}
-              </>
-            )}
-          </div>
-        )}
-        {editing && <p className="text-xs text-muted-foreground">{t("plan.editHint")}</p>}
-      </aside>
 
       <DeskPanel
         deskId={openDesk && desks.some((desk) => desk._id === openDesk) ? openDesk : null}
