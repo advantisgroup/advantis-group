@@ -96,6 +96,33 @@ describe("office", () => {
     ]);
   });
 
+  test("importing an inventory list writes all rows or none", async () => {
+    const { ada, ben } = await setup();
+    const deskId = await ada.mutation(api.office.createDesk, {
+      name: "P1",
+      x: 0,
+      y: 0,
+      w: 160,
+      h: 80,
+    });
+    const rows = [
+      { kind: "cable" as const, name: "VGA-Kabel", quantity: 8 },
+      { kind: "monitor" as const, name: "iiyama ProLite XB2491H", quantity: 1, deskId },
+    ];
+    await expect(ben.mutation(api.office.importItems, { items: rows })).rejects.toThrow();
+    // One bad row stops the whole import.
+    await expect(
+      ada.mutation(api.office.importItems, { items: [...rows, { ...rows[0], quantity: 0 }] }),
+    ).rejects.toThrow();
+    expect(await ada.query(api.office.items, { scope: "all" })).toHaveLength(0);
+
+    expect(await ada.mutation(api.office.importItems, { items: rows })).toBe(2);
+    const storage = await ada.query(api.office.items, { scope: "storage" });
+    expect(storage.map((item) => [item.name, item.quantity])).toEqual([["VGA-Kabel", 8]]);
+    const desk = await ada.query(api.office.desk, { deskId });
+    expect(desk?.items.map((item) => item.name)).toEqual(["iiyama ProLite XB2491H"]);
+  });
+
   test("walls and doors are stored with the plan and must stay on it", async () => {
     const { ada } = await setup();
     const wall = { id: "w1", kind: "wall" as const, x1: 0, y1: 500, x2: 600, y2: 500 };
