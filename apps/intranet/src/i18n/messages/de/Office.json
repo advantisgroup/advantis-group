@@ -55,10 +55,11 @@
   },
   "deskDialog": {
     "title": "Arbeitsplatz",
-    "name": "Bezeichnung",
+    "name": "Name im Plan",
     "person": "Person",
     "nobody": "Niemand",
-    "note": "Notiz"
+    "note": "Notiz",
+    "nameHint": "Bleibt P1, P2 …, steht im Plan der Vorname der Person. Sonst das, was du hier einträgst – z. B. „Alex“."
   },
   "removeDesk": {
     "title": "Arbeitsplatz entfernen?",
