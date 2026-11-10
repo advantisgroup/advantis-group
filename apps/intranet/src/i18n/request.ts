@@ -50,6 +50,7 @@ import deOnboarding from "./messages/de/Onboarding.json";
 import dePlayground from "./messages/de/Playground.json";
 import dePasswordReset from "./messages/de/PasswordReset.json";
 import deOnboardingCockpit from "./messages/de/OnboardingCockpit.json";
+import deOffice from "./messages/de/Office.json";
 import dePerformance from "./messages/de/Performance.json";
 import deprivacy from "./messages/de/privacy.json";
 import deProfile from "./messages/de/Profile.json";
@@ -110,6 +111,7 @@ import enOnboarding from "./messages/en/Onboarding.json";
 import enPlayground from "./messages/en/Playground.json";
 import enPasswordReset from "./messages/en/PasswordReset.json";
 import enOnboardingCockpit from "./messages/en/OnboardingCockpit.json";
+import enOffice from "./messages/en/Office.json";
 import enPerformance from "./messages/en/Performance.json";
 import enprivacy from "./messages/en/privacy.json";
 import enProfile from "./messages/en/Profile.json";
@@ -171,6 +173,7 @@ const messagesByLocale = {
     Notifications: enNotifications,
     Command: enCommand,
     OnboardingCockpit: enOnboardingCockpit,
+    Office: enOffice,
     Performance: enPerformance,
     Errors: enErrors,
     ErrorManagement: enErrorManagement,
@@ -233,6 +236,7 @@ const messagesByLocale = {
     Notifications: deNotifications,
     Command: deCommand,
     OnboardingCockpit: deOnboardingCockpit,
+    Office: deOffice,
     Performance: dePerformance,
     Errors: deErrors,
     ErrorManagement: deErrorManagement,

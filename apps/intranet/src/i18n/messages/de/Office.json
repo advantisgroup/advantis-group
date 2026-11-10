@@ -1,0 +1,170 @@
+{
+  "title": "Office",
+  "intro": "Büro-Grundriss: Arbeitsplatz anklicken für Geräte, Kabel und Adapter.",
+  "adminsOnly": "Nur für Admins sichtbar",
+  "adminsOnlyHint": "Freigabe für alle: Convex-Env OFFICE_MODE=live und /office in OPEN_PREFIXES eintragen.",
+  "tabs": { "plan": "Grundriss", "storage": "Lager" },
+  "kpi": {
+    "desks": "Arbeitsplätze",
+    "checked": "Inventur erfasst",
+    "inStorage": "Teile im Lager",
+    "defective": "Defekt gemeldet"
+  },
+  "plan": {
+    "edit": "Grundriss bearbeiten",
+    "done": "Fertig",
+    "addRoom": "Raum",
+    "addDesk": "Arbeitsplatz",
+    "size": "Bürogröße",
+    "printQr": "QR-Etiketten drucken",
+    "editHint": "Ziehen zum Verschieben, Ecke unten rechts zum Größe ändern. Raster 10 cm.",
+    "rename": "Bearbeiten",
+    "rotate": "Drehen",
+    "delete": "Entfernen",
+    "empty": "Noch kein Grundriss. Auf „Grundriss bearbeiten“ tippen und Räume und Arbeitsplätze einzeichnen.",
+    "legendChecked": "Inventur erfasst",
+    "legendOpen": "Noch nicht erfasst",
+    "legendDefect": "Defektes Gerät",
+    "newRoom": "Raum",
+    "free": "frei",
+    "saveError": "Grundriss konnte nicht gespeichert werden."
+  },
+  "sizeDialog": {
+    "title": "Bürogröße",
+    "description": "Außenmaße des Büros in Zentimetern.",
+    "width": "Breite (cm)",
+    "height": "Tiefe (cm)"
+  },
+  "roomDialog": { "title": "Raum", "name": "Name", "placeholder": "z. B. Großraum, Küche, Lager" },
+  "deskDialog": {
+    "title": "Arbeitsplatz",
+    "name": "Bezeichnung",
+    "person": "Person",
+    "nobody": "Niemand",
+    "note": "Notiz"
+  },
+  "removeDesk": {
+    "title": "Arbeitsplatz entfernen?",
+    "description": "„{name}“ verschwindet vom Grundriss. Alles, was dort angeschlossen ist, wandert ins Lager."
+  },
+  "desk": {
+    "person": "Person",
+    "nobody": "Nicht fest vergeben",
+    "checked": "Inventur",
+    "checkedValue": "{date} · {name}",
+    "notChecked": "Noch nicht erfasst",
+    "note": "Notiz",
+    "equipment": "Angeschlossen",
+    "none": "Hier ist noch nichts erfasst.",
+    "addItem": "Neues Gerät",
+    "fromStorage": "Aus dem Lager",
+    "markChecked": "Inventur abschließen",
+    "markedChecked": "Inventur für diesen Platz gespeichert.",
+    "edit": "Platz bearbeiten",
+    "qr": "QR-Etikett"
+  },
+  "item": {
+    "edit": "Bearbeiten",
+    "move": "Verschieben",
+    "toStorage": "Ins Lager",
+    "retire": "Ausmustern",
+    "restore": "Zurück ins Lager",
+    "history": "Verlauf",
+    "defective": "Defekt",
+    "serial": "SN {value}",
+    "inventory": "Inv. {value}",
+    "movedToStorage": "Ins Lager gelegt.",
+    "retired": "Ausgemustert.",
+    "restored": "Wieder im Lager."
+  },
+  "itemDialog": {
+    "createTitle": "Gerät erfassen",
+    "editTitle": "Gerät bearbeiten",
+    "createAt": "Wird bei „{place}“ eingetragen.",
+    "kind": "Art",
+    "name": "Bezeichnung",
+    "namePlaceholder": "z. B. Dell P2422H, HDMI-Kabel",
+    "spec": "Details",
+    "specPlaceholder": "z. B. USB-C → HDMI, 2 m",
+    "serial": "Seriennummer",
+    "inventory": "Inventarnummer",
+    "quantity": "Anzahl",
+    "defective": "Defekt",
+    "note": "Notiz",
+    "storage": "Lager",
+    "addAnother": "Speichern + weiteres",
+    "saved": "Gespeichert."
+  },
+  "moveDialog": {
+    "title": "Verschieben",
+    "description": "„{name}“ an einen Platz oder ins Lager.",
+    "target": "Wohin",
+    "quantity": "Wie viele (von {total})"
+  },
+  "pickDialog": {
+    "title": "Aus dem Lager holen",
+    "description": "Teil aus dem Lager an „{place}“ anschließen.",
+    "search": "Suchen …",
+    "empty": "Im Lager liegt nichts Passendes.",
+    "quantity": "Anzahl (von {total})",
+    "take": "Holen"
+  },
+  "history": {
+    "title": "Verlauf",
+    "empty": "Noch kein Verlauf.",
+    "created": "Erfasst",
+    "moved": "Verschoben",
+    "updated": "Bearbeitet",
+    "retired": "Ausgemustert",
+    "restored": "Zurückgeholt",
+    "route": "{from} → {to}"
+  },
+  "storage": {
+    "intro": "Alles, was gerade an keinem Arbeitsplatz hängt.",
+    "add": "Ins Lager erfassen",
+    "search": "Suchen …",
+    "scope": { "storage": "Im Lager", "all": "Gesamtbestand", "retired": "Ausgemustert" },
+    "empty": "Nichts gefunden.",
+    "col": {
+      "kind": "Art",
+      "name": "Bezeichnung",
+      "details": "Details",
+      "quantity": "Anzahl",
+      "place": "Standort"
+    }
+  },
+  "qr": {
+    "title": "QR-Etiketten Arbeitsplätze",
+    "area": "Office",
+    "kind": "QR-Etiketten",
+    "scan": "Scannen → Arbeitsplatz im Intranet",
+    "notice": "Am Arbeitsplatz aufkleben. Zum Erfassen mit dem Handy scannen.",
+    "print": "Drucken",
+    "dialogTitle": "QR-Etiketten",
+    "dialogDescription": "Je Arbeitsplatz ein Etikett. Gescannt öffnet es den Platz direkt im Intranet.",
+    "all": "Alle Arbeitsplätze ({count})"
+  },
+  "place": { "storage": "Lager" },
+  "kinds": {
+    "computer": "PC",
+    "laptop": "Laptop",
+    "monitor": "Monitor",
+    "dock": "Dockingstation",
+    "keyboard": "Tastatur",
+    "mouse": "Maus",
+    "headset": "Headset",
+    "webcam": "Webcam",
+    "phone": "Telefon",
+    "cable": "Kabel",
+    "adapter": "Adapter",
+    "power": "Strom",
+    "network": "Netzwerk",
+    "printer": "Drucker",
+    "furniture": "Möbel",
+    "other": "Sonstiges"
+  },
+  "cancel": "Abbrechen",
+  "save": "Speichern",
+  "close": "Schließen",
+  "error": "Das hat nicht geklappt."
+}
