@@ -65,7 +65,7 @@ interface PlanLabel {
 }
 interface Line {
   id: string;
-  kind: "wall" | "door";
+  kind: "wall" | "soft" | "door";
   x1: number;
   y1: number;
   x2: number;
@@ -87,7 +87,12 @@ function sideLine(room: Box, side: Side) {
   return { x1: room.x, y1: room.y, x2: room.x, y2: bottom };
 }
 
-const NEW_LINE = { wall: 300, door: 90 };
+const NEW_LINE = { wall: 300, soft: 300, door: 90 };
+const LINE_NAMES = {
+  wall: "plan.addWall",
+  soft: "plan.addSoftWall",
+  door: "plan.addDoor",
+} as const;
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
 const snap = (value: number) => Math.round(value / GRID) * GRID;
@@ -149,7 +154,7 @@ export function FloorPlan() {
 
   const width = layout.width;
   const height = layout.height;
-  const font = width / 30;
+  const font = width / 36;
   const roomLabelAt = (room: Room) => ({
     x: room.labelX ?? room.x + font * 0.6,
     y: room.labelY ?? room.y + font * 1.3,
@@ -511,11 +516,7 @@ export function FloorPlan() {
       : selected.type === "label"
         ? (labels.find((l) => l.id === selected.id)?.text ?? "")
         : selected.type === "line"
-          ? t(
-              lines.find((l) => l.id === selected.id)?.kind === "door"
-                ? "plan.addDoor"
-                : "plan.addWall",
-            )
+          ? t(LINE_NAMES[lines.find((l) => l.id === selected.id)?.kind ?? "wall"])
           : (desks.find((d) => d._id === selected.id)?.name ?? "");
 
   return (
@@ -574,6 +575,10 @@ export function FloorPlan() {
               <Button size="sm" variant="outline" onClick={() => addLine("wall")}>
                 <Minus className="size-4" />
                 {t("plan.addWall")}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => addLine("soft")}>
+                <Minus className="size-4 opacity-60" />
+                {t("plan.addSoftWall")}
               </Button>
               <Button size="sm" variant="outline" onClick={() => addLine("door")}>
                 <DoorOpen className="size-4" />
@@ -657,7 +662,7 @@ export function FloorPlan() {
           </div>
         )}
       </aside>
-      <div className="max-w-full overflow-hidden rounded-2xl border border-border bg-card p-2 sm:p-4 lg:w-fit lg:shrink-0">
+      <div className="max-w-full overflow-hidden rounded-2xl border border-border bg-card p-2 sm:p-4 lg:w-1/2 lg:shrink-0">
         {!hasPlan && !editing && (
           <p className="px-2 pb-3 text-sm text-muted-foreground">{t("plan.empty")}</p>
         )}
@@ -665,8 +670,8 @@ export function FloorPlan() {
           ref={svgRef}
           viewBox={`-10 -10 ${width + 20} ${height + 20}`}
           className={cn(
-            // Desktop: a bit taller than the window, so the whole office is one short scroll away.
-            "block h-auto w-full select-none lg:h-[calc((100dvh-9rem)*1.2)] lg:w-auto lg:max-w-full",
+            // Desktop: the plan takes half the page width, the editors the other half.
+            "block h-auto w-full select-none",
             editing && "touch-none",
           )}
           onPointerMove={onPointerMove}
@@ -757,7 +762,7 @@ export function FloorPlan() {
           })}
 
           {[...shownLines]
-            .sort((a, b) => (a.kind === b.kind ? 0 : a.kind === "wall" ? -1 : 1))
+            .sort((a, b) => Number(a.kind === "door") - Number(b.kind === "door"))
             .map((line) => (
               <PlanLine
                 key={line.id}
@@ -975,14 +980,17 @@ function PlanLine({
   const ink = selected ? "stroke-primary" : "stroke-foreground";
   return (
     <g className={cn(editing && "cursor-move")}>
-      {line.kind === "wall" ? (
+      {line.kind !== "door" ? (
         <line
           x1={line.x1}
           y1={line.y1}
           x2={line.x2}
           y2={line.y2}
-          className={ink}
-          strokeWidth={10}
+          // A soft wall looks like a room wall: thin and a little lighter.
+          className={
+            selected ? "stroke-primary" : line.kind === "soft" ? "stroke-foreground/70" : ink
+          }
+          strokeWidth={line.kind === "soft" ? 4 : 10}
           strokeLinecap="square"
         />
       ) : (

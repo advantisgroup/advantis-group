@@ -39,7 +39,8 @@
     "selection": "Selected",
     "walls": "Walls (on = wall, off = open)",
     "selectHint": "Tap something on the plan to edit it.",
-    "legendBlocked": "Blocked area"
+    "legendBlocked": "Blocked area",
+    "addSoftWall": "Thin wall"
   },
   "sizeDialog": {
     "title": "Office size",
