@@ -37,16 +37,21 @@ describe("cockpit counts", () => {
         ev("2026-11-05", "status", { from: "Getankt", to: "Abgeschlossen" }),
         ev("2026-10-30", "reached"),
         ev("2026-11-02", "reached", { by: "u2" }),
+        // The cockpit's situations: a contact by phone / e-mail, or none.
+        { ...ev("2026-11-06", "outcome", { from: "phone", caseId: "c4" }), outcomeKind: "case" },
+        { ...ev("2026-11-06", "outcome", { from: "phone" }), outcomeKind: "notReached" },
+        { ...ev("2026-11-06", "outcome", { from: "email" }), outcomeKind: "reached" },
+        { ...ev("2026-11-06", "outcome", { from: "phone" }), outcomeKind: "other" },
       ],
       "2026-11-01",
       "2026-11-30",
     );
     expect(counts.get("u1")).toMatchObject({
-      attempts: 4,
-      reached: 1,
-      notReached: 2,
-      emails: 1,
-      casesWorked: 3,
+      attempts: 7,
+      reached: 2,
+      notReached: 3,
+      emails: 2,
+      casesWorked: 4,
       cards: 1,
       fuel: 0,
       winback: 1,
@@ -59,7 +64,7 @@ describe("cockpit counts", () => {
       callDays: 4,
       talkTotalSec: 2000,
     } as never);
-    expect(values.reachRate).toBe(33.3);
+    expect(values.reachRate).toBe(40);
     expect(values.callsPerDay).toBe(10);
     expect(values.talkAvgSec).toBe(50);
     // No cockpit data at all for a period: dashes, not zeros.
@@ -128,6 +133,11 @@ async function setup() {
     await log("2026-11-03", "not_reached", dalia);
     await log("2026-11-04", "milestone", dalia, { fromValue: "cards", toValue: "1" });
     await log("2026-11-04", "reached", melina);
+    // An entry from before the kind was stored: only the label.
+    await log("2026-11-04", "outcome", melina, {
+      fromValue: "phone",
+      toValue: "nicht erreicht",
+    });
     // … October: up to workday 3 (05.10.) one attempt, later ones don't count for VM.
     await log("2026-10-02", "reached", dalia);
     await log("2026-10-20", "reached", dalia);
@@ -171,6 +181,7 @@ describe("onboarding tab", () => {
     expect(dalia.cur.reachRate).toBe(50);
     expect(dalia.vm.attempts).toBe(1);
     expect(data.total.cur.reached).toBe(2);
+    expect(data.rows[1].cur).toMatchObject({ attempts: 2, notReached: 1 });
     expect(data.trend.at(-1)?.ym).toBe("2026-11");
 
     // Dalia sees her own figures, not the team.

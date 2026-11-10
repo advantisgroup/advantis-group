@@ -126,7 +126,13 @@ async function log(
   ctx: MutationCtx,
   access: CockpitAccess,
   caseId: Id<"onboardingCases">,
-  entry: { kind: string; note?: string; fromValue?: string; toValue?: string },
+  entry: {
+    kind: string;
+    note?: string;
+    fromValue?: string;
+    toValue?: string;
+    outcomeKind?: string;
+  },
 ): Promise<void> {
   await ctx.db.insert("onboardingContacts", {
     caseId,
@@ -728,6 +734,7 @@ export const setOutcome = userMutation({
       kind: "outcome",
       fromValue: args.channel === "email" ? "email" : "phone",
       toValue: pathLabel(config, args.path) ?? undefined,
+      outcomeKind: kind,
       note: text,
     });
 

@@ -782,6 +782,10 @@ export const performanceTables = {
     note: v.optional(v.string()),
     fromValue: v.optional(v.string()),
     toValue: v.optional(v.string()),
+    /** "outcome" entries: kind of the situation's top entry (reached,
+     * notReached, case …) — the label in `toValue` can be renamed later.
+     * Unset on entries before 11/2026. */
+    outcomeKind: v.optional(v.string()),
     at: v.number(),
     byUserId: v.id("users"),
     byName: v.string(),

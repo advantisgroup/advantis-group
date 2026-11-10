@@ -47,6 +47,9 @@ export interface CockpitEvent {
   kind: string;
   fromValue?: string;
   toValue?: string;
+  /** "outcome" entries: kind of the situation's top entry ("reached",
+   * "notReached", "case" … or "other" = no contact). */
+  outcomeKind?: string;
   byUserId: string;
   /** Berlin day of the entry, "YYYY-MM-DD". */
   day: string;
@@ -98,10 +101,24 @@ export function cockpitCounts(
     if (e.day < from || e.day > to) continue;
     const c = out.get(e.byUserId) ?? emptyCockpit();
     out.set(e.byUserId, c);
-    if (e.kind === "reached" || e.kind === "not_reached" || e.kind === "email") {
+    // The cockpit logs a contact as its situation ("outcome": channel in
+    // `fromValue`); the first version logged reached / not reached / e-mail.
+    const contact =
+      e.kind === "outcome"
+        ? e.outcomeKind && e.outcomeKind !== "other"
+          ? e.fromValue === "email"
+            ? "email"
+            : e.outcomeKind === "notReached"
+              ? "not_reached"
+              : "reached"
+          : null
+        : e.kind === "reached" || e.kind === "not_reached" || e.kind === "email"
+          ? e.kind
+          : null;
+    if (contact) {
       c.attempts++;
-      if (e.kind === "reached") c.reached++;
-      else if (e.kind === "not_reached") c.notReached++;
+      if (contact === "reached") c.reached++;
+      else if (contact === "not_reached") c.notReached++;
       else c.emails++;
       const set = worked.get(e.byUserId) ?? new Set<string>();
       set.add(e.caseId);

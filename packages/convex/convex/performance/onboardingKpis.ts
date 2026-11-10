@@ -14,7 +14,8 @@ import { type Doc, type Id } from "../_generated/dataModel";
 import { userQuery } from "../functions";
 import { berlinDate, berlinInstant } from "../time/lib/berlin";
 import { loadViewer, requireTeamView, requireViewableEmployee } from "./lib/access";
-import { monthBounds, monthCompleted, shiftYm, type Snapshot } from "./lib/kpi";
+import { monthBounds, monthCompleted, shiftYm, type Snapshot, sumTeam } from "./lib/kpi";
+import { DEFAULT_STATUS_CONFIG, withBuiltins } from "./lib/onboarding";
 import {
   CALL_KEYS,
   COCKPIT_KEYS,
@@ -51,8 +52,17 @@ async function requireCockpitDashboard(
   return company;
 }
 
+/** Kind of a situation's top entry by its label (entries logged before the
+ * kind was stored carry only the label, "erreicht – alles ok › …"). */
+async function outcomeKindsByLabel(ctx: Ctx): Promise<Map<string, string>> {
+  const row = await ctx.db.query("onboardingStatusConfig").first();
+  const config = withBuiltins({ outcomes: row?.outcomes ?? DEFAULT_STATUS_CONFIG.outcomes });
+  return new Map(config.outcomes.map((o) => [o.label, o.kind ?? "other"]));
+}
+
 /** Cockpit log entries of the days `from`–`to` (Berlin). */
 async function cockpitEvents(ctx: Ctx, from: string, to: string): Promise<CockpitEvent[]> {
+  const kinds = await outcomeKindsByLabel(ctx);
   const rows = await ctx.db
     .query("onboardingContacts")
     .withIndex("by_at", (q) =>
@@ -65,6 +75,10 @@ async function cockpitEvents(ctx: Ctx, from: string, to: string): Promise<Cockpi
       kind: r.kind,
       fromValue: r.fromValue,
       toValue: r.toValue,
+      outcomeKind:
+        r.kind === "outcome"
+          ? (r.outcomeKind ?? kinds.get((r.toValue ?? "").split(" › ")[0]) ?? "other")
+          : undefined,
       byUserId: r.byUserId,
       day: berlinDate(r.at),
     }))
@@ -111,6 +125,41 @@ async function periods(
   return { cur, vm: ref(shiftYm(ym, -1)), vj: ref(shiftYm(ym, -12)) };
 }
 
+/**
+ * A person's Genesys figures for a period. The call report lands in every
+ * dashboard whose roster had the agent at upload time, so a person who
+ * joined this dashboard later has their calls on another one (e.g. Sales):
+ * the same intranet account's row there is used then.
+ */
+async function personCalls(
+  ctx: Ctx,
+  companyId: Id<"companies">,
+  person: { employeeId: Id<"performanceEmployees">; userId: string | null },
+  period: Period,
+  cache: QueryCache,
+): Promise<Snapshot | undefined> {
+  const rows: { employeeId: Id<"performanceEmployees">; companyId: Id<"companies"> }[] = [
+    { employeeId: person.employeeId, companyId },
+  ];
+  if (person.userId) {
+    const others = await ctx.db
+      .query("performanceEmployees")
+      .withIndex("by_userId", (q) => q.eq("userId", person.userId as Id<"users">))
+      .collect();
+    for (const e of others) {
+      if (e._id !== person.employeeId && e.companyId) {
+        rows.push({ employeeId: e._id, companyId: e.companyId });
+      }
+    }
+  }
+  for (const r of rows) {
+    const totals = await teamTotals(ctx, r.companyId, period.ym, cache, period.callsCutoff);
+    const snap = totals.snaps.find((s) => s.employeeId === r.employeeId);
+    if (snap?.callsToday !== undefined) return snap;
+  }
+  return undefined;
+}
+
 /** The dashboard's people with their intranet account. */
 async function people(
   ctx: Ctx,
@@ -139,28 +188,24 @@ export const team = userQuery({
     const since = await cockpitSince(ctx);
 
     const valuesFor = async (period: Period) => {
-      const [events, calls] = await Promise.all([
-        cockpitEvents(ctx, period.from, period.to),
-        teamTotals(ctx, companyId, period.ym, cache, period.callsCutoff),
-      ]);
+      const events = await cockpitEvents(ctx, period.from, period.to);
       const counts = cockpitCounts(events, period.from, period.to);
       const has = since !== null && since <= period.to;
-      const callsOf = (id: string) => calls.snaps.find((s) => s.employeeId === id);
-      const rows = persons.map((pp) => ({
+      const calls = await Promise.all(
+        persons.map((pp) => personCalls(ctx, companyId, pp, period, cache)),
+      );
+      const rows = persons.map((pp, i) => ({
         employeeId: pp.employeeId,
-        values: onboardingValues(
-          pp.userId ? counts.get(pp.userId) : undefined,
-          has,
-          callsOf(pp.employeeId),
-        ),
+        values: onboardingValues(pp.userId ? counts.get(pp.userId) : undefined, has, calls[i]),
       }));
       const mine = persons.flatMap((pp) =>
         pp.userId && counts.has(pp.userId) ? [counts.get(pp.userId)!] : [],
       );
+      const withCalls = calls.filter((c): c is Snapshot => c !== undefined);
       const total = onboardingValues(
         sumCockpit(mine),
         has,
-        calls.snaps.length ? calls.total : undefined,
+        withCalls.length ? sumTeam(withCalls) : undefined,
       );
       return { rows, total };
     };
@@ -217,12 +262,9 @@ export const employee = userQuery({
     const userId = employee.userId ?? null;
 
     const valuesFor = async (period: Period) => {
-      const [events, calls] = await Promise.all([
-        cockpitEvents(ctx, period.from, period.to),
-        teamTotals(ctx, companyId, period.ym, cache, period.callsCutoff),
-      ]);
+      const events = await cockpitEvents(ctx, period.from, period.to);
       const counts = cockpitCounts(events, period.from, period.to);
-      const own: Snapshot | undefined = calls.snaps.find((s) => s.employeeId === employeeId);
+      const own = await personCalls(ctx, companyId, { employeeId, userId }, period, cache);
       return onboardingValues(
         userId ? counts.get(userId) : undefined,
         since !== null && since <= period.to,
