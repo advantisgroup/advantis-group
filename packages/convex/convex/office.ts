@@ -2,7 +2,7 @@ import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "./_generated/server";
-import { userMutation, userQuery } from "./functions";
+import { serverUserQuery, userMutation, userQuery } from "./functions";
 import { type Caller } from "./lib/caller";
 import {
   officeItemKindValidator,
@@ -115,6 +115,13 @@ export const me = userQuery({
     live: officeLive(),
     canEdit: ctx.caller.isAdmin,
   }),
+});
+
+/** For the API's photo recognition: only admins record equipment. */
+export const apiCanRecord = serverUserQuery({
+  role: "admin",
+  args: {},
+  handler: async () => true,
 });
 
 /** The floor plan with every desk and how much is set up there. */

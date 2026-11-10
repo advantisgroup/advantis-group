@@ -5,7 +5,7 @@ import { useState } from "react";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { CheckCircle2, PackageOpen, Pencil, Plus, QrCode } from "lucide-react";
+import { CheckCircle2, PackageOpen, Pencil, Plus, QrCode, Sparkles } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -25,6 +25,7 @@ import { SidePanel, SidePanelProperties, SidePanelSection } from "@/components/u
 import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 
+import { AiCaptureDialog } from "./AiCapture";
 import { ItemMenu } from "./ItemMenu";
 import {
   type DeskOption,
@@ -61,6 +62,7 @@ export function DeskPanel({
   const desk = useQuery(api.office.desk, deskId ? { deskId } : "skip");
   const markChecked = useMutation(api.office.markChecked);
   const [adding, setAdding] = useState(false);
+  const [capturing, setCapturing] = useState(false);
   const [picking, setPicking] = useState(false);
   const [editingDesk, setEditingDesk] = useState(false);
   const [editing, setEditing] = useState<OfficeItem | null>(null);
@@ -138,7 +140,7 @@ export function DeskPanel({
                       <PackageOpen className="size-4" />
                       {t("desk.fromStorage")}
                     </Button>
-                    <Button size="sm" onClick={() => setAdding(true)}>
+                    <Button size="sm" variant="ghost" onClick={() => setAdding(true)}>
                       <Plus className="size-4" />
                       {t("desk.addItem")}
                     </Button>
@@ -146,6 +148,12 @@ export function DeskPanel({
                 )
               }
             >
+              {canEdit && (
+                <Button className="mb-3 w-full" onClick={() => setCapturing(true)}>
+                  <Sparkles className="size-4" />
+                  {t("ai.open")}
+                </Button>
+              )}
               {desk.items.length === 0 ? (
                 <p className="text-sm text-muted-foreground">{t("desk.none")}</p>
               ) : (
@@ -197,6 +205,12 @@ export function DeskPanel({
 
       {desk && (
         <>
+          <AiCaptureDialog
+            open={capturing}
+            onOpenChange={setCapturing}
+            deskId={desk._id}
+            placeName={desk.name}
+          />
           <ItemDialog
             open={adding}
             onOpenChange={setAdding}

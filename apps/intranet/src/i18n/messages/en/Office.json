@@ -200,5 +200,25 @@
     "title": "Label",
     "name": "Text",
     "placeholder": "e.g. kitchen, reception, hallway"
+  },
+  "ai": {
+    "open": "Record with photo/voice",
+    "title": "Record with AI",
+    "description": "Take photos and/or say what's there – the AI suggests a list for “{place}”.",
+    "camera": "Take photo",
+    "gallery": "From gallery",
+    "removePhoto": "Remove photo",
+    "textPlaceholder": "What's there? e.g. “two Dell monitors, a Lenovo dock, three HDMI cables” – on a phone, tap the keyboard's microphone and speak.",
+    "hint": "Up to 6 photos. Make plugs and printed labels visible. Photos are sent to the AI only to recognise them and are not stored.",
+    "recognize": "Recognise",
+    "recognizing": "Recognising …",
+    "nothing": "Nothing recognised – try another photo or a short description.",
+    "failed": "Recognition didn't work.",
+    "review": "Check the suggestion: untick anything that's wrong, adjust names and details.",
+    "unsure": "unsure",
+    "back": "Back",
+    "save": "{count, plural, =0 {Nothing selected} one {Save 1 item} other {Save # items}}",
+    "saved": "{count, plural, one {1 item saved} other {# items saved}} – on to the next.",
+    "done": "Done"
   }
 }
