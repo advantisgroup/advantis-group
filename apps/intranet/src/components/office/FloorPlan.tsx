@@ -682,6 +682,9 @@ export function FloorPlan() {
           aria-label={t("tabs.plan")}
         >
           <defs>
+            <filter id="office-desk-shadow" x="-20%" y="-20%" width="140%" height="160%">
+              <feDropShadow dx={0} dy={4} stdDeviation={5} floodOpacity={0.18} />
+            </filter>
             <pattern id="office-grid" width={50} height={50} patternUnits="userSpaceOnUse">
               <path d="M 50 0 L 0 0 0 50" className="fill-none stroke-border" strokeWidth={1} />
             </pattern>
@@ -691,8 +694,9 @@ export function FloorPlan() {
             y={0}
             width={width}
             height={height}
-            className="fill-background stroke-foreground"
-            strokeWidth={6}
+            rx={4}
+            className="fill-muted/30 stroke-foreground/80"
+            strokeWidth={10}
           />
           {editing && <rect x={0} y={0} width={width} height={height} fill="url(#office-grid)" />}
 
@@ -708,7 +712,7 @@ export function FloorPlan() {
                   width={room.w}
                   height={room.h}
                   className={cn(
-                    room.blocked ? "fill-foreground/85" : "fill-muted/40",
+                    room.blocked ? "fill-foreground/85" : "fill-background",
                     editing && "cursor-move",
                   )}
                   onPointerDown={(e) => onPointerDown(e, { type: "room", id: room.id }, "move")}
@@ -796,56 +800,22 @@ export function FloorPlan() {
           {desks.map((desk) => {
             const isSelected = sameTarget(selected, { type: "desk", id: desk._id });
             const isOpen = openDesk === desk._id;
-            const size = Math.min(font, desk.h / 2.6, desk.w / 4);
             return (
               <g
                 key={desk._id}
-                className={cn(editing ? "cursor-move" : "cursor-pointer")}
+                className={cn("group", editing ? "cursor-move" : "cursor-pointer")}
                 onPointerDown={(e) => onPointerDown(e, { type: "desk", id: desk._id }, "move")}
                 onClick={() => !editing && setDesk(desk._id)}
                 role={editing ? undefined : "button"}
-                aria-label={desk.userName ? `${desk.name} · ${desk.userName}` : desk.name}
+                aria-label={desk.userName ?? t("plan.free")}
               >
-                <rect
-                  x={desk.x}
-                  y={desk.y}
-                  width={desk.w}
-                  height={desk.h}
-                  rx={6}
-                  className={cn(
-                    desk.checkedAt ? "fill-ok/15 stroke-ok" : "fill-warn/10 stroke-warn",
-                    (isSelected || isOpen) && "stroke-primary",
-                    !editing && "transition-[fill] hover:fill-primary/15",
-                  )}
-                  strokeWidth={isSelected || isOpen ? 6 : 3}
-                  strokeDasharray={desk.checkedAt ? undefined : "10 6"}
+                <DeskShape
+                  desk={desk}
+                  font={font}
+                  highlighted={isSelected || isOpen}
+                  interactive={!editing}
+                  freeLabel={t("plan.free")}
                 />
-                <text
-                  x={desk.x + desk.w / 2}
-                  y={desk.y + desk.h / 2 - (desk.userName ? size * 0.25 : -size * 0.35)}
-                  fontSize={size}
-                  textAnchor="middle"
-                  className="pointer-events-none fill-foreground font-bold"
-                >
-                  {desk.name}
-                </text>
-                <text
-                  x={desk.x + desk.w / 2}
-                  y={desk.y + desk.h / 2 + size * 0.95}
-                  fontSize={size * 0.72}
-                  textAnchor="middle"
-                  className="pointer-events-none fill-muted-foreground"
-                >
-                  {desk.userName ? desk.userName.split(" ")[0] : ""}
-                </text>
-                {desk.defective > 0 && (
-                  <circle
-                    cx={desk.x + desk.w - size * 0.5}
-                    cy={desk.y + size * 0.5}
-                    r={size * 0.28}
-                    className="pointer-events-none fill-destructive"
-                  />
-                )}
                 {editing && isSelected && (
                   <ResizeHandle
                     box={desk}
@@ -860,8 +830,14 @@ export function FloorPlan() {
           })}
         </svg>
         <div className="flex flex-wrap gap-x-4 gap-y-1 px-2 pt-3 text-xs text-muted-foreground">
-          <Legend className="border-ok bg-ok/15" label={t("plan.legendChecked")} />
-          <Legend className="border-dashed border-warn bg-warn/10" label={t("plan.legendOpen")} />
+          <Legend
+            className="size-2.5 rounded-full border-ok bg-ok"
+            label={t("plan.legendChecked")}
+          />
+          <Legend
+            className="size-2.5 rounded-full border-warn bg-warn"
+            label={t("plan.legendOpen")}
+          />
           <span className="flex items-center gap-1.5">
             <span className="size-2.5 rounded-full bg-destructive" />
             {t("plan.legendDefect")}
@@ -1213,5 +1189,173 @@ function SizeDialog({
         </div>
       </div>
     </ResponsiveDialog>
+  );
+}
+
+/** Initials and a steady colour per person, for desks without a photo. */
+function initials(name: string) {
+  const parts = name.trim().split(/\s+/);
+  return (
+    (parts[0]?.[0] ?? "") + (parts.length > 1 ? (parts.at(-1)?.[0] ?? "") : "")
+  ).toUpperCase();
+}
+
+function hue(name: string) {
+  let h = 0;
+  for (const char of name) h = (h * 31 + char.charCodeAt(0)) % 360;
+  return h;
+}
+
+/**
+ * A desk as a little tabletop with the person in front: photo or initials,
+ * first name big, last name small. Wide desks put the face left of the name,
+ * narrow ones above it. A dot in the corner shows the inventory status.
+ */
+function DeskShape({
+  desk,
+  font,
+  highlighted,
+  interactive,
+  freeLabel,
+}: {
+  desk: {
+    _id: string;
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    userName: string | null;
+    userAvatar: string | null;
+    checkedAt: number | null;
+    defective: number;
+  };
+  font: number;
+  highlighted: boolean;
+  interactive: boolean;
+  freeLabel: string;
+}) {
+  const { x, y, w, h } = desk;
+  const name = desk.userName;
+  const [first, ...rest] = (name ?? freeLabel).split(" ");
+  const last = rest.join(" ");
+  const wide = w >= h * 1.4;
+  const pad = Math.min(w, h) * 0.12;
+  // Face: left of the name on wide desks, above it on narrow ones.
+  const r = wide ? Math.min(h * 0.32, w * 0.16) : Math.min(w * 0.3, h * 0.2);
+  const cx = wide ? x + pad + r : x + w / 2;
+  const textX = wide ? cx + r + pad * 0.8 : x + w / 2;
+  const room = wide ? x + w - pad * 1.4 - textX : w - pad * 2;
+  // Bold display letters run about two thirds of the font size wide.
+  const fit = (text: string, max: number, width: number) =>
+    Math.min(max, room / Math.max(text.length * width, 1));
+  const big = fit(
+    first,
+    wide ? Math.min(font * 0.75, h * 0.3) : Math.min(font * 0.6, h * 0.16),
+    0.66,
+  );
+  const small = fit(last, big * 0.72, 0.58);
+  const gap = pad * 0.6;
+  // Narrow desks: face and name as one block, centred top to bottom.
+  const block = r * 2 + gap + big + (last ? small * 1.15 : 0);
+  const cy = wide ? y + h / 2 : y + Math.max((h - block) / 2, pad) + r;
+  const nameY = wide ? cy + (last ? -big * 0.05 : big * 0.35) : cy + r + gap + big * 0.85;
+  const clip = `office-face-${desk._id}`;
+  const dot = Math.max(Math.min(w, h) * 0.07, 5);
+
+  return (
+    <>
+      <rect
+        x={x}
+        y={y}
+        width={w}
+        height={h}
+        rx={Math.min(w, h) * 0.14}
+        filter="url(#office-desk-shadow)"
+        className={cn(
+          "fill-card stroke-border transition-[fill,stroke]",
+          interactive && "group-hover:fill-primary/10 group-hover:stroke-primary/60",
+          highlighted && "stroke-primary",
+        )}
+        strokeWidth={highlighted ? 6 : 2}
+      />
+      {name ? (
+        desk.userAvatar ? (
+          <>
+            <clipPath id={clip}>
+              <circle cx={cx} cy={cy} r={r} />
+            </clipPath>
+            <image
+              href={desk.userAvatar}
+              x={cx - r}
+              y={cy - r}
+              width={r * 2}
+              height={r * 2}
+              clipPath={`url(#${clip})`}
+              preserveAspectRatio="xMidYMid slice"
+              className="pointer-events-none"
+            />
+          </>
+        ) : (
+          <>
+            <circle cx={cx} cy={cy} r={r} fill={`hsl(${hue(name)} 55% 52%)`} />
+            <text
+              x={cx}
+              y={cy + r * 0.28}
+              fontSize={r * 0.78}
+              textAnchor="middle"
+              className="pointer-events-none fill-white font-semibold"
+            >
+              {initials(name)}
+            </text>
+          </>
+        )
+      ) : (
+        <circle
+          cx={cx}
+          cy={cy}
+          r={r}
+          className="fill-none stroke-muted-foreground/50"
+          strokeWidth={2}
+          strokeDasharray="6 5"
+        />
+      )}
+      <text
+        x={textX}
+        y={nameY}
+        fontSize={big}
+        textAnchor={wide ? "start" : "middle"}
+        className={cn(
+          "pointer-events-none font-display font-bold",
+          name ? "fill-foreground" : "fill-muted-foreground font-medium",
+        )}
+      >
+        {first}
+      </text>
+      {last && (
+        <text
+          x={textX}
+          y={nameY + small * 1.15}
+          fontSize={small}
+          textAnchor={wide ? "start" : "middle"}
+          className="pointer-events-none fill-muted-foreground"
+        >
+          {last}
+        </text>
+      )}
+      <circle
+        cx={x + w - dot * 1.6}
+        cy={y + dot * 1.6}
+        r={dot}
+        className={cn("pointer-events-none", desk.checkedAt ? "fill-ok" : "fill-warn")}
+      />
+      {desk.defective > 0 && (
+        <circle
+          cx={x + w - dot * 4}
+          cy={y + dot * 1.6}
+          r={dot}
+          className="pointer-events-none fill-destructive"
+        />
+      )}
+    </>
   );
 }

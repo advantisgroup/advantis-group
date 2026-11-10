@@ -4,6 +4,7 @@ import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import { serverUserQuery, userMutation, userQuery } from "./functions";
 import { type Caller } from "./lib/caller";
+import { profileAvatarUrl } from "./lib/profile";
 import {
   officeItemKindValidator,
   officeLabelValidator,
@@ -142,6 +143,16 @@ export const plan = userQuery({
       ctx.db.query("users").collect(),
     ]);
     const names = new Map(users.map((user) => [user._id, displayName(user)]));
+    // Only the people at a desk need a picture.
+    const seated = new Set(desks.flatMap((desk) => (desk.userId ? [desk.userId] : [])));
+    const avatars = new Map(
+      await Promise.all(
+        users
+          .filter((user) => seated.has(user._id))
+          .map(async (user) => [user._id, await profileAvatarUrl(ctx, user)] as const),
+      ),
+    );
+    const titles = new Map(users.map((user) => [user._id, user.jobTitle ?? null]));
     const counts = new Map<DeskId, { items: number; defective: number }>();
     let inStorage = 0;
     for (const item of items) {
@@ -174,6 +185,8 @@ export const plan = userQuery({
           h: desk.h,
           userId: desk.userId ?? null,
           userName: desk.userId ? (names.get(desk.userId) ?? null) : null,
+          userAvatar: desk.userId ? (avatars.get(desk.userId) ?? null) : null,
+          userTitle: desk.userId ? (titles.get(desk.userId) ?? null) : null,
           checkedAt: desk.checkedAt ?? null,
           items: counts.get(desk._id)?.items ?? 0,
           defective: counts.get(desk._id)?.defective ?? 0,
