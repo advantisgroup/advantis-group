@@ -317,7 +317,7 @@ function MoveForm({
             <SelectItem value={STORAGE}>{t("place.storage")}</SelectItem>
             {desks.map((desk) => (
               <SelectItem key={desk._id} value={desk._id}>
-                {desk.userName ? `${desk.name} · ${desk.userName}` : desk.name}
+                {desk.userName ?? desk.name}
               </SelectItem>
             ))}
           </SelectContent>

@@ -86,16 +86,15 @@ export function DeskPanel({
       <SidePanel
         open={!!deskId}
         onOpenChange={(open) => !open && onClose()}
-        title={desk?.name ?? t("deskDialog.title")}
+        title={desk?.userName ?? desk?.name ?? t("deskDialog.title")}
         accent={accent}
         closeLabel={t("close")}
         header={
           <div className="pr-8">
             <p className="text-xs text-muted-foreground">{t("deskDialog.title")}</p>
-            <h2 className="font-display text-xl font-bold leading-snug">{desk?.name ?? "…"}</h2>
-            {desk && (
-              <p className="text-sm text-muted-foreground">{desk.userName ?? t("desk.nobody")}</p>
-            )}
+            <h2 className="font-display text-xl font-bold leading-snug">
+              {desk ? (desk.userName ?? t("desk.nobody")) : "…"}
+            </h2>
           </div>
         }
       >
@@ -209,25 +208,25 @@ export function DeskPanel({
             open={capturing}
             onOpenChange={setCapturing}
             deskId={desk._id}
-            placeName={desk.name}
+            placeName={desk.userName ?? desk.name}
           />
           <ItemDialog
             open={adding}
             onOpenChange={setAdding}
             deskId={desk._id}
-            placeName={desk.name}
+            placeName={desk.userName ?? desk.name}
           />
           <ItemDialog
             open={!!editing}
             onOpenChange={(open) => !open && setEditing(null)}
             item={editing ?? undefined}
-            placeName={desk.name}
+            placeName={desk.userName ?? desk.name}
           />
           <PickFromStorageDialog
             open={picking}
             onOpenChange={setPicking}
             deskId={desk._id}
-            placeName={desk.name}
+            placeName={desk.userName ?? desk.name}
           />
           <DeskDialog
             open={editingDesk}

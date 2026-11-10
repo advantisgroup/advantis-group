@@ -262,7 +262,7 @@ function ImportFlow({ onDone }: { onDone: () => void }) {
                       <SelectItem value={SKIP}>{t("import.skip")}</SelectItem>
                       {desks.map((desk) => (
                         <SelectItem key={desk._id} value={desk._id}>
-                          {desk.userName ? `${desk.name} – ${desk.userName}` : desk.name}
+                          {desk.userName ?? desk.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
