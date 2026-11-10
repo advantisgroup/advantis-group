@@ -40,7 +40,11 @@
     "walls": "Walls (on = wall, off = open)",
     "selectHint": "Tap something on the plan to edit it.",
     "legendBlocked": "Blocked area",
-    "addSoftWall": "Thin wall"
+    "addSoftWall": "Thin wall",
+    "clockIn": "Clocked in",
+    "clockBreak": "On a break",
+    "clockOut": "Not clocked in",
+    "kitchen": "Kitchen duty today"
   },
   "sizeDialog": {
     "title": "Office size",

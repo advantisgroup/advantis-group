@@ -8,6 +8,7 @@ import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
 import {
   Check,
+  CookingPot,
   DoorOpen,
   Maximize2,
   Minus,
@@ -819,7 +820,14 @@ export function FloorPlan() {
                   font={font}
                   highlighted={isSelected || isOpen}
                   interactive={!editing}
+                  editing={editing}
                   freeLabel={t("plan.free")}
+                  labels={{
+                    in: t("plan.clockIn"),
+                    break: t("plan.clockBreak"),
+                    out: t("plan.clockOut"),
+                    kitchen: t("plan.kitchen"),
+                  }}
                 />
                 {editing && isSelected && (
                   <ResizeHandle
@@ -835,18 +843,38 @@ export function FloorPlan() {
           })}
         </svg>
         <div className="flex flex-wrap gap-x-4 gap-y-1 px-2 pt-3 text-xs text-muted-foreground">
-          <Legend
-            className="size-2.5 rounded-full border-ok bg-ok"
-            label={t("plan.legendChecked")}
-          />
-          <Legend
-            className="size-2.5 rounded-full border-warn bg-warn"
-            label={t("plan.legendOpen")}
-          />
-          <span className="flex items-center gap-1.5">
-            <span className="size-2.5 rounded-full bg-destructive" />
-            {t("plan.legendDefect")}
-          </span>
+          {editing ? (
+            <>
+              <Legend
+                className="size-2.5 rounded-full border-ok bg-ok"
+                label={t("plan.legendChecked")}
+              />
+              <Legend
+                className="size-2.5 rounded-full border-warn bg-warn"
+                label={t("plan.legendOpen")}
+              />
+              <span className="flex items-center gap-1.5">
+                <span className="size-2.5 rounded-full bg-destructive" />
+                {t("plan.legendDefect")}
+              </span>
+            </>
+          ) : (
+            <>
+              <Legend className="size-2.5 rounded-full border-ok bg-ok" label={t("plan.clockIn")} />
+              <Legend
+                className="size-2.5 rounded-full border-warn bg-warn"
+                label={t("plan.clockBreak")}
+              />
+              <Legend
+                className="size-2.5 rounded-full border-destructive bg-destructive"
+                label={t("plan.clockOut")}
+              />
+              <span className="flex items-center gap-1.5">
+                <CookingPot className="size-3.5" />
+                {t("plan.kitchen")}
+              </span>
+            </>
+          )}
           <span className="flex items-center gap-1.5">
             <span className="h-2.5 w-4 rounded-sm bg-foreground/85" />
             {t("plan.legendBlocked")}
@@ -1223,7 +1251,9 @@ function DeskShape({
   font,
   highlighted,
   interactive,
+  editing,
   freeLabel,
+  labels,
 }: {
   desk: {
     _id: string;
@@ -1236,11 +1266,16 @@ function DeskShape({
     userAvatar: string | null;
     checkedAt: number | null;
     defective: number;
+    clock: "in" | "break" | "out" | null;
+    kitchenToday: boolean;
   };
   font: number;
   highlighted: boolean;
   interactive: boolean;
+  /** Inventory dots only while editing; otherwise the person's status. */
+  editing: boolean;
   freeLabel: string;
+  labels: { in: string; break: string; out: string; kitchen: string };
 }) {
   const { x, y, w, h } = desk;
   const name = desk.userName;
@@ -1265,9 +1300,15 @@ function DeskShape({
   );
   const gap = pad * 0.6;
   // Narrow desks: face and name as one block, centred top to bottom.
-  const block = r * 2 + gap + big;
+  // Kitchen duty today: a small pot above the name.
+  const pot = desk.kitchenToday ? big * 0.85 : 0;
+  const block = r * 2 + gap + (pot ? pot + gap * 0.5 : 0) + big;
   const cy = wide ? y + h / 2 : y + Math.max((h - block) / 2, pad) + r;
-  const nameY = wide ? cy + big * 0.35 : cy + r + gap + big * 0.85;
+  const nameY = wide
+    ? cy + big * 0.35 + (pot ? pot * 0.45 : 0)
+    : cy + r + gap + (pot ? pot + gap * 0.5 : 0) + big * 0.85;
+  const potY = nameY - big * 0.85 - pot - gap * 0.3;
+  const potX = wide ? textX : textX - pot / 2;
   const clip = `office-face-${desk._id}`;
   const dot = Math.max(Math.min(w, h) * 0.07, 5);
 
@@ -1363,19 +1404,67 @@ function DeskShape({
       >
         {first}
       </text>
-      <circle
-        cx={x + w - dot * 1.6}
-        cy={y + dot * 1.6}
-        r={dot}
-        className={cn("pointer-events-none", desk.checkedAt ? "fill-ok" : "fill-warn")}
-      />
-      {desk.defective > 0 && (
-        <circle
-          cx={x + w - dot * 4}
-          cy={y + dot * 1.6}
-          r={dot}
-          className="pointer-events-none fill-destructive"
+      {pot > 0 && (
+        <CookingPot
+          x={potX}
+          y={potY}
+          width={pot}
+          height={pot}
+          className="pointer-events-none text-warn"
+          aria-label={labels.kitchen}
         />
+      )}
+      {!editing &&
+        desk.clock && (
+          // Clock status sits on the face, lower right, and glows.
+          <g className="pointer-events-none">
+            <title>{labels[desk.clock]}</title>
+            <circle
+              cx={cx + r * 0.72}
+              cy={cy + r * 0.72}
+              r={r * 0.3}
+              className={cn(
+                "opacity-40",
+                desk.clock === "in"
+                  ? "fill-ok animate-pulse"
+                  : desk.clock === "break"
+                    ? "fill-warn"
+                    : "fill-destructive",
+              )}
+            />
+            <circle
+              cx={cx + r * 0.72}
+              cy={cy + r * 0.72}
+              r={r * 0.2}
+              className={cn(
+                "stroke-card",
+                desk.clock === "in"
+                  ? "fill-ok"
+                  : desk.clock === "break"
+                    ? "fill-warn"
+                    : "fill-destructive",
+              )}
+              strokeWidth={r * 0.06}
+            />
+          </g>
+        )}
+      {editing && (
+        <>
+          <circle
+            cx={x + w - dot * 1.6}
+            cy={y + dot * 1.6}
+            r={dot}
+            className={cn("pointer-events-none", desk.checkedAt ? "fill-ok" : "fill-warn")}
+          />
+          {desk.defective > 0 && (
+            <circle
+              cx={x + w - dot * 4}
+              cy={y + dot * 1.6}
+              r={dot}
+              className="pointer-events-none fill-destructive"
+            />
+          )}
+        </>
       )}
     </>
   );

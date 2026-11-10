@@ -40,7 +40,11 @@
     "walls": "Wände (an = Wand, aus = offen)",
     "selectHint": "Element im Plan antippen, um es zu bearbeiten.",
     "legendBlocked": "Sperrfläche",
-    "addSoftWall": "Dünne Wand"
+    "addSoftWall": "Dünne Wand",
+    "clockIn": "Eingestempelt",
+    "clockBreak": "Pause",
+    "clockOut": "Nicht eingestempelt",
+    "kitchen": "Küchendienst heute"
   },
   "sizeDialog": {
     "title": "Bürogröße",

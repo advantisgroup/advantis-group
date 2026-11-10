@@ -1,9 +1,11 @@
-import { internalAction, internalMutation, serverMutation } from "../functions";
+import { internalAction, internalMutation, internalQuery, serverMutation } from "../functions";
 import { type Infer, v } from "convex/values";
 
 import { internal } from "../_generated/api";
+import { type Id } from "../_generated/dataModel";
 import { type MutationCtx } from "../_generated/server";
 import {
+  clerkUserImage,
   deleteClerkUser,
   lockClerkUser,
   revokeClerkInvitations,
@@ -163,5 +165,58 @@ export const alertGaveUp = internalMutation({
       title: GAVE_UP_TITLES[change.kind],
       body: `${who}: Clerk kept failing for about 14 hours, so it has to be done in the Clerk dashboard.`,
     });
+  },
+});
+
+// --- Missing profile pictures -------------------------------------------------
+
+/** Active members whose Clerk picture never reached the intranet — a webhook
+ *  that was missed, or an account set up before the sync existed. */
+export const missingAvatars = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const users = await ctx.db.query("users").collect();
+    return users
+      .filter(
+        (user) =>
+          user.status === "active" &&
+          !user.avatarUrl &&
+          !user.avatarStorageId &&
+          user.clerkUserId.startsWith("user_"),
+      )
+      .map((user) => ({ userId: user._id, clerkUserId: user.clerkUserId }));
+  },
+});
+
+export const setMissingAvatar = internalMutation({
+  args: { userId: v.id("users"), avatarUrl: v.string() },
+  handler: async (ctx, { userId, avatarUrl }) => {
+    const user = await ctx.db.get(userId);
+    // Something newer may have arrived in the meantime.
+    if (!user || user.avatarUrl || user.avatarStorageId) return;
+    await ctx.db.patch(userId, { avatarUrl });
+  },
+});
+
+/** Fetches the Clerk picture (often Clerk's default) for everyone missing one. */
+export const backfillAvatars = internalAction({
+  args: {},
+  handler: async (ctx): Promise<{ missing: number; filled: number }> => {
+    const missing: { userId: Id<"users">; clerkUserId: string }[] = await ctx.runQuery(
+      internal.people.clerkSync.missingAvatars,
+      {},
+    );
+    let filled = 0;
+    for (const { userId, clerkUserId } of missing.slice(0, 50)) {
+      try {
+        const avatarUrl = await clerkUserImage(clerkUserId);
+        if (!avatarUrl) continue;
+        await ctx.runMutation(internal.people.clerkSync.setMissingAvatar, { userId, avatarUrl });
+        filled++;
+      } catch (error) {
+        console.warn(`[clerkSync] no picture for ${clerkUserId}`, error);
+      }
+    }
+    return { missing: missing.length, filled };
   },
 });

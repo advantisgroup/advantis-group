@@ -123,6 +123,51 @@ describe("office", () => {
     expect(desk?.items.map((item) => item.name)).toEqual(["iiyama ProLite XB2491H"]);
   });
 
+  test("desks show who is clocked in, on a break or out, and today's kitchen duty", async () => {
+    const { t, ada } = await setup();
+    const users = await t.run((ctx) => ctx.db.query("users").collect());
+    const [adaId, benId] = ["ada", "ben"].map(
+      (key) => users.find((user) => user.clerkUserId === key)!._id,
+    );
+    for (const [name, userId] of [
+      ["P1", adaId],
+      ["P2", benId],
+    ] as const) {
+      const deskId = await ada.mutation(api.office.createDesk, { name, x: 0, y: 0, w: 160, h: 80 });
+      await ada.mutation(api.office.updateDesk, { deskId, userId });
+    }
+    const now = Date.now();
+    await t.run(async (ctx) => {
+      for (const kind of ["work", "break"] as const) {
+        await ctx.db.insert("timeEntries", {
+          userId: benId,
+          kind,
+          start: now - 60_000,
+          source: "clock",
+          status: "active",
+          updatedAt: now,
+        });
+      }
+      await ctx.db.insert("kitchenDuties", {
+        date: new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(now),
+        userId: adaId,
+        assignedBy: adaId,
+        updatedAt: now,
+      });
+    });
+
+    // Before time tracking goes live nobody's status shows.
+    const before = await ada.query(api.office.plan, {});
+    expect(before.desks.map((desk) => desk.clock)).toEqual([null, null]);
+
+    vi.stubEnv("TIME_MODE", "live");
+    const { desks } = await ada.query(api.office.plan, {});
+    expect(desks.map((desk) => [desk.name, desk.clock, desk.kitchenToday])).toEqual([
+      ["P1", "out", true],
+      ["P2", "break", false],
+    ]);
+  });
+
   test("walls and doors are stored with the plan and must stay on it", async () => {
     const { ada } = await setup();
     const wall = { id: "w1", kind: "wall" as const, x1: 0, y1: 500, x2: 600, y2: 500 };
