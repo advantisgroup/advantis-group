@@ -25,14 +25,26 @@ export function nameKey(name: string): string {
     .join(" ");
 }
 
-/** Active intranet users in the dashboard's linked teams and departments. */
+/** The Onboarding-Cockpit's team and leads (empty when unset). */
+export async function cockpitTeam(
+  ctx: QueryCtx | MutationCtx,
+): Promise<{ members: Id<"users">[]; leads: Id<"users">[] }> {
+  const row = await ctx.db.query("onboardingSettings").first();
+  return { members: row?.memberUserIds ?? [], leads: row?.leadUserIds ?? [] };
+}
+
+/** Active intranet users in the dashboard's linked teams and departments —
+ * and, for a dashboard linked to the Onboarding-Cockpit, the cockpit's team. */
 export async function dashboardMembers(
   ctx: QueryCtx | MutationCtx,
   company: Doc<"companies">,
 ): Promise<Doc<"users">[]> {
   const teamIds = new Set<string>(company.teamIds ?? []);
   const departmentIds = new Set<string>(company.departmentIds ?? []);
-  if (teamIds.size === 0 && departmentIds.size === 0) return [];
+  const cockpit = new Set<string>(
+    company.onboardingCockpit ? (await cockpitTeam(ctx)).members : [],
+  );
+  if (teamIds.size === 0 && departmentIds.size === 0 && cockpit.size === 0) return [];
   // Archived teams/departments no longer count.
   for (const id of [...teamIds]) {
     const team = await ctx.db.get(id as Id<"teams">);
@@ -52,7 +64,9 @@ export async function dashboardMembers(
   return users.filter(
     (u) =>
       u.status === "active" &&
-      (inTeam.has(u._id) || (u.departmentId !== undefined && departmentIds.has(u.departmentId))),
+      (inTeam.has(u._id) ||
+        cockpit.has(u._id) ||
+        (u.departmentId !== undefined && departmentIds.has(u.departmentId))),
   );
 }
 

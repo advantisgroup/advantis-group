@@ -24,6 +24,7 @@ import { userMutation, userQuery } from "../functions";
 import { type Caller } from "../lib/caller";
 import { displayName } from "../lib/users";
 import { onboardingOutcomeValidator } from "../tables/performance";
+import { syncTeamRoster } from "./lib/roster";
 import {
   activeChildren,
   CLOSING_KINDS,
@@ -495,6 +496,10 @@ export const saveSettings = userMutation({
     };
     if (row) await ctx.db.patch(row._id, next);
     else await ctx.db.insert("onboardingSettings", next);
+    // New team members get their row on the linked Performance dashboard.
+    for (const company of await ctx.db.query("companies").collect()) {
+      if (company.onboardingCockpit) await syncTeamRoster(ctx, company);
+    }
   },
 });
 

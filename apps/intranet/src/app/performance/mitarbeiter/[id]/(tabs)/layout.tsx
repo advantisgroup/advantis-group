@@ -13,6 +13,7 @@ import {
   ClipboardCheck,
   LayoutDashboard,
   Phone,
+  Rocket,
   TrendingUp,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -170,7 +171,15 @@ function EmployeeChrome({
       me.dashboards.some(
         (d) => d.canViewTeam && (!data || d.companyId === data.employee.companyId),
       ));
-  const tabsForViewer = TABS_BY_KIND[kind].filter((tab) => tab !== "checks" || canLead);
+  // A dashboard linked to the Onboarding-Cockpit adds its tab first.
+  const cockpit =
+    me?.dashboards.find((d) => d.companyId === data?.employee.companyId)?.cockpit ??
+    dashboard?.cockpit ??
+    false;
+  const tabsForViewer = [
+    ...(cockpit ? ["onboarding"] : []),
+    ...TABS_BY_KIND[kind].filter((tab) => tab !== "checks" || canLead),
+  ];
   // Check status in the header, for those who run the checks.
   const checkStatus = useQuery(
     api.performance.checks.listForEmployee,
@@ -179,8 +188,8 @@ function EmployeeChrome({
   const tc = useTranslations("Performance.checks");
   const offTab = !tabsForViewer.includes(activeTab);
   useEffect(() => {
-    if (data && offTab) router.replace(employeeHome(employeeId, data.employee.kind));
-  }, [data, offTab, employeeId, router]);
+    if (data && offTab) router.replace(employeeHome(employeeId, data.employee.kind, cockpit));
+  }, [data, offTab, employeeId, router, cockpit]);
   // Only the Interaktionen tab shows the month's single interactions.
   const interactions = useQuery(
     api.performance.queries.interactionsMonth,
@@ -188,6 +197,12 @@ function EmployeeChrome({
   );
 
   const allTabs: RouteTab[] = [
+    {
+      value: "onboarding",
+      href: `/performance/mitarbeiter/${employeeId}/onboarding`,
+      label: t("onboarding.tab"),
+      icon: Rocket,
+    },
     {
       value: "wallbox",
       href: `/performance/mitarbeiter/${employeeId}/wallbox`,

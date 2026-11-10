@@ -6,7 +6,7 @@ import { effectiveRole } from "../../lib/auth";
 import { type Caller } from "../../lib/caller";
 import { displayName } from "../../lib/users";
 import { countsOnDashboard } from "./reports";
-import { dashboardKind, type DashboardKind } from "./roster";
+import { cockpitTeam, dashboardKind, type DashboardKind } from "./roster";
 
 /**
  * Who may see which Performance dashboard. Access runs entirely through the
@@ -33,6 +33,8 @@ export interface DashboardAccess {
   canViewTeam: boolean;
   /** The viewer's own employee row on this dashboard, if one is linked. */
   employeeId: Id<"performanceEmployees"> | null;
+  /** Linked to the Onboarding-Cockpit (shows its KPIs). */
+  cockpit: boolean;
 }
 
 export interface PerformanceViewer {
@@ -113,25 +115,27 @@ export async function viewerFor(
     return { userId: user._id, name: displayName(user), isAdmin, dashboards: [] };
   }
 
-  const [companies, memberships, ledTeams, ledDepartments, myEmployees] = await Promise.all([
-    ctx.db.query("companies").collect(),
-    ctx.db
-      .query("userTeams")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
-      .collect(),
-    ctx.db
-      .query("teams")
-      .collect()
-      .then((teams) => teams.filter((t) => t.reportsToUserId === user._id && !t.archivedAt)),
-    ctx.db
-      .query("departments")
-      .collect()
-      .then((deps) => deps.filter((d) => d.reportsToUserId === user._id && !d.archivedAt)),
-    ctx.db
-      .query("performanceEmployees")
-      .withIndex("by_userId", (q) => q.eq("userId", user._id))
-      .collect(),
-  ]);
+  const [companies, memberships, ledTeams, ledDepartments, myEmployees, cockpit] =
+    await Promise.all([
+      ctx.db.query("companies").collect(),
+      ctx.db
+        .query("userTeams")
+        .withIndex("by_user", (q) => q.eq("userId", user._id))
+        .collect(),
+      ctx.db
+        .query("teams")
+        .collect()
+        .then((teams) => teams.filter((t) => t.reportsToUserId === user._id && !t.archivedAt)),
+      ctx.db
+        .query("departments")
+        .collect()
+        .then((deps) => deps.filter((d) => d.reportsToUserId === user._id && !d.archivedAt)),
+      ctx.db
+        .query("performanceEmployees")
+        .withIndex("by_userId", (q) => q.eq("userId", user._id))
+        .collect(),
+      cockpitTeam(ctx),
+    ]);
 
   const myTeamIds = new Set<Id<"teams">>(memberships.map((m) => m.teamId));
   const ledTeamIds = new Set<Id<"teams">>(ledTeams.map((t) => t._id));
@@ -145,12 +149,17 @@ export async function viewerFor(
   for (const company of companies) {
     const teamIds = company.teamIds ?? [];
     const departmentIds = company.departmentIds ?? [];
+    // A dashboard linked to the Onboarding-Cockpit takes its team and
+    // team leads from there.
+    const viaCockpit = company.onboardingCockpit === true;
     const leads =
       teamIds.some((id) => ledTeamIds.has(id)) ||
-      departmentIds.some((id) => ledDepartmentIds.has(id));
+      departmentIds.some((id) => ledDepartmentIds.has(id)) ||
+      (viaCockpit && cockpit.leads.includes(user._id));
     const member =
       teamIds.some((id) => myTeamIds.has(id)) ||
-      (user.departmentId !== undefined && departmentIds.includes(user.departmentId));
+      (user.departmentId !== undefined && departmentIds.includes(user.departmentId)) ||
+      (viaCockpit && cockpit.members.includes(user._id));
     const employeeId = employeeByCompany.get(company._id) ?? null;
     if (!isAdmin && !leads && !member && !employeeId) continue;
     dashboards.push({
@@ -159,6 +168,7 @@ export async function viewerFor(
       kind: dashboardKind(company),
       canViewTeam: isAdmin || leads,
       employeeId,
+      cockpit: viaCockpit,
     });
   }
   dashboards.sort((a, b) => a.name.localeCompare(b.name, "de"));

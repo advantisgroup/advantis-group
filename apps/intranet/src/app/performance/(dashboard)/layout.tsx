@@ -13,6 +13,7 @@ import {
   LayoutDashboard,
   Phone,
   Presentation,
+  Rocket,
   TrendingUp,
   Users,
 } from "lucide-react";
@@ -59,7 +60,7 @@ import {
 } from "@/components/ui/select";
 import { usePerformanceApi } from "@/lib/performance";
 
-const CALLS_ONLY_TABS = new Set(["calls", "team", "interaktionen"]);
+const CALLS_ONLY_TABS = new Set(["onboarding", "calls", "team", "interaktionen"]);
 
 interface DashboardTopData {
   hasCalls: boolean;
@@ -232,6 +233,17 @@ function DashboardChrome({
 
   const kind = dashboard.kind;
   const allTabs: RouteTab[] = [
+    // Dashboards linked to the Onboarding-Cockpit: its KPIs first.
+    ...(dashboard.cockpit
+      ? [
+          {
+            value: "onboarding",
+            href: "/performance/onboarding",
+            label: t("onboarding.tab"),
+            icon: Rocket,
+          },
+        ]
+      : []),
     {
       value: "ueberblick",
       href: "/performance/ueberblick",
@@ -289,7 +301,7 @@ function DashboardChrome({
   const usesMonth =
     kind === "sales"
       ? !["entwicklung", "interaktionen", "monitoring", "business-review"].includes(activeTab)
-      : activeTab === "calls" || activeTab === "team";
+      : activeTab === "calls" || activeTab === "team" || activeTab === "onboarding";
 
   return (
     <div className="min-h-screen bg-muted/20">
@@ -370,14 +382,16 @@ export default function PerformanceDashboardLayout({ children }: { children: Rea
   const { me, dashboard } = usePerformanceAccess();
   const activeTab = pathname.split("/").filter(Boolean)[1] ?? "ueberblick";
   // A calls-only dashboard has no Überblick or Entwicklung.
-  const offTab = dashboard?.kind === "calls" && !CALLS_ONLY_TABS.has(activeTab);
+  const offTab =
+    (dashboard?.kind === "calls" && !CALLS_ONLY_TABS.has(activeTab)) ||
+    (activeTab === "onboarding" && !dashboard?.cockpit);
 
   // People without the team view have their own detail page instead.
   useEffect(() => {
     if (dashboard && !dashboard.canViewTeam && dashboard.employeeId) {
       router.replace(dashboardHome(dashboard));
     } else if (dashboard?.canViewTeam && offTab) {
-      router.replace(teamHome(dashboard.kind));
+      router.replace(teamHome(dashboard.kind, dashboard.cockpit));
     }
   }, [dashboard, offTab, router]);
 

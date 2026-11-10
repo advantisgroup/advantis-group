@@ -54,6 +54,7 @@ export const list = userQuery({
           name: c.name,
           kind: dashboardKind(c),
           teamOnly: c.teamOnly !== false,
+          onboardingCockpit: c.onboardingCockpit === true,
           teams: (c.teamIds ?? []).map((id) => ({ id, name: teamName.get(id) ?? "?" })),
           departments: (c.departmentIds ?? []).map((id) => ({
             id,
@@ -97,6 +98,8 @@ const orgArgs = {
   kind: v.optional(kindValidator),
   /** Count only names linked to an intranet person (default on). */
   teamOnly: v.optional(v.boolean()),
+  /** Team, leads and KPIs from the Onboarding-Cockpit (calls dashboards). */
+  onboardingCockpit: v.optional(v.boolean()),
 };
 
 export const create = userMutation({
@@ -141,7 +144,7 @@ export const update = userMutation({
   args: { companyId: v.id("companies"), name: v.string(), ...orgArgs },
   handler: async (
     ctx,
-    { companyId, name, teamIds, departmentIds, kind, teamOnly },
+    { companyId, name, teamIds, departmentIds, kind, teamOnly, onboardingCockpit },
   ): Promise<void> => {
     await getDashboard(ctx, companyId);
     const trimmed = name.trim();
@@ -153,6 +156,7 @@ export const update = userMutation({
       departmentIds,
       ...(kind ? { kind } : {}),
       ...(teamOnly !== undefined ? { teamOnly } : {}),
+      ...(onboardingCockpit !== undefined ? { onboardingCockpit } : {}),
       updatedAt: Date.now(),
     });
     const company = await ctx.db.get(companyId);

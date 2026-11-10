@@ -82,6 +82,10 @@ export const performanceTables = {
      * totals, badges). Hides people from partner firms (e.g. S2B) who show
      * up in the shared Salesforce/Genesys exports. Unset = on. */
     teamOnly: v.optional(v.boolean()),
+    /** Linked to the Onboarding-Cockpit: its team (and team leads) belong
+     * to this dashboard, and its contacts, milestones and closed cases show
+     * as KPIs next to the calls (`performance/onboardingKpis.ts`). */
+    onboardingCockpit: v.optional(v.boolean()),
     // Legacy (old tenant domain routing) — no longer read.
     domain: v.optional(v.string()),
     status: v.optional(
@@ -781,7 +785,9 @@ export const performanceTables = {
     at: v.number(),
     byUserId: v.id("users"),
     byName: v.string(),
-  }).index("by_case", ["caseId"]),
+  })
+    .index("by_case", ["caseId"])
+    .index("by_at", ["at"]),
 
   // Team setup of the cockpit (one row): who works onboarding cases (the
   // distribution splits between them) and who leads the team (may

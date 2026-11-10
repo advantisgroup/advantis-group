@@ -74,6 +74,7 @@ function DashboardDialog({
   const [name, setName] = useState(dashboard?.name ?? "");
   const [kind, setKind] = useState<DashboardKind>(dashboard?.kind ?? "sales");
   const [teamOnly, setTeamOnly] = useState<boolean>(dashboard?.teamOnly ?? true);
+  const [cockpit, setCockpit] = useState<boolean>(dashboard?.onboardingCockpit ?? false);
   const [teamIds, setTeamIds] = useState<Set<string>>(
     () => new Set(dashboard?.teams.map((x) => x.id) ?? []),
   );
@@ -96,6 +97,7 @@ function DashboardDialog({
         name,
         kind,
         teamOnly,
+        onboardingCockpit: kind === "calls" && cockpit,
         teamIds: [...teamIds] as Id<"teams">[],
         departmentIds: [...departmentIds] as Id<"departments">[],
       };
@@ -217,6 +219,21 @@ function DashboardDialog({
               </span>
             </span>
           </label>
+          {kind === "calls" && (
+            <label className="flex cursor-pointer items-start gap-2 rounded-md border px-3 py-2 text-sm">
+              <Checkbox
+                className="mt-0.5"
+                checked={cockpit}
+                onCheckedChange={(v) => setCockpit(v === true)}
+              />
+              <span>
+                <span className="font-medium">{t("settingsCockpit")}</span>
+                <span className="block text-xs text-muted-foreground">
+                  {t("settingsCockpitHint")}
+                </span>
+              </span>
+            </label>
+          )}
         </div>
         <DialogFooter>
           {dashboard && (
@@ -408,6 +425,9 @@ export default function PerformanceSettingsPage() {
                     <Badge variant={d.kind === "sales" ? "muted" : "secondary"}>
                       {t(`settingsKindBadge.${d.kind}`)}
                     </Badge>
+                    {d.onboardingCockpit && (
+                      <Badge variant="secondary">{t("settingsCockpitBadge")}</Badge>
+                    )}
                   </div>
                   <Button
                     variant="ghost"

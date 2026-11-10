@@ -74,20 +74,34 @@ export function usePerformanceAccess(): PerformanceAccessValue {
 
 export type PerformanceDashboardKind = PerformanceDashboard["kind"];
 
-/** The team view's first tab: a calls-only dashboard has no Überblick. */
-export function teamHome(kind: PerformanceDashboardKind): string {
+/** The team view's first tab: a calls-only dashboard has no Überblick; one
+ * linked to the Onboarding-Cockpit opens on its Onboarding tab. */
+export function teamHome(kind: PerformanceDashboardKind, cockpit = false): string {
+  if (cockpit) return "/performance/onboarding";
   return kind === "calls" ? "/performance/calls" : "/performance/ueberblick";
 }
 
 /** An employee page's first tab for the kind of dashboard they're on. */
-export function employeeHome(employeeId: string, kind: PerformanceDashboardKind): string {
-  const tab = kind === "wallbox" ? "wallbox" : kind === "calls" ? "calls" : "ueberblick";
+export function employeeHome(
+  employeeId: string,
+  kind: PerformanceDashboardKind,
+  cockpit = false,
+): string {
+  const tab = cockpit
+    ? "onboarding"
+    : kind === "wallbox"
+      ? "wallbox"
+      : kind === "calls"
+        ? "calls"
+        : "ueberblick";
   return `/performance/mitarbeiter/${employeeId}/${tab}`;
 }
 
 /** Where "Dashboard" leads for this viewer on the current dashboard. */
 export function dashboardHome(dashboard: PerformanceDashboard | null): string {
-  if (dashboard?.canViewTeam) return teamHome(dashboard.kind);
-  if (dashboard?.employeeId) return employeeHome(dashboard.employeeId, dashboard.kind);
+  if (dashboard?.canViewTeam) return teamHome(dashboard.kind, dashboard.cockpit);
+  if (dashboard?.employeeId) {
+    return employeeHome(dashboard.employeeId, dashboard.kind, dashboard.cockpit);
+  }
   return "/performance";
 }
