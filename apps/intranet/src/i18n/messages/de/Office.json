@@ -39,7 +39,8 @@
     "selection": "Ausgewählt",
     "walls": "Wände (an = Wand, aus = offen)",
     "selectHint": "Element im Plan antippen, um es zu bearbeiten.",
-    "legendBlocked": "Sperrfläche"
+    "legendBlocked": "Sperrfläche",
+    "addSoftWall": "Dünne Wand"
   },
   "sizeDialog": {
     "title": "Bürogröße",

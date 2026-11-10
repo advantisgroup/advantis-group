@@ -54,10 +54,10 @@ export const officeLabelValidator = v.object({
 });
 
 /** A line on the plan: a wall (black, anything in the way – sound walls,
- *  partitions) or a door (an opening with its swing, as on a floor plan). */
+ *  partitions), a soft wall (thin, like a room wall) or a door (an opening with its swing, as on a floor plan). */
 export const officeLineValidator = v.object({
   id: v.string(),
-  kind: v.union(v.literal("wall"), v.literal("door")),
+  kind: v.union(v.literal("wall"), v.literal("soft"), v.literal("door")),
   x1: v.number(),
   y1: v.number(),
   x2: v.number(),
