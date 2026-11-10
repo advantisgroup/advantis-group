@@ -59,7 +59,7 @@
     "person": "Person",
     "nobody": "Niemand",
     "note": "Notiz",
-    "nameHint": "Bleibt P1, P2 …, steht im Plan der Vorname der Person. Sonst das, was du hier einträgst – z. B. „Alex“."
+    "nameHint": "Bleibt P1, P2 …, steht im Plan der Vorname der Person. Sonst das, was du hier einträgst – z. B. „Alex“. Ohne Person und mit eigenem Namen (z. B. „Meetingraum“) ist es ein Technik-Platz statt „frei“."
   },
   "removeDesk": {
     "title": "Arbeitsplatz entfernen?",
