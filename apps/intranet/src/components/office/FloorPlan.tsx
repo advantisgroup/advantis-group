@@ -523,6 +523,16 @@ export function FloorPlan() {
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
       <aside className="min-w-0 space-y-3 lg:sticky lg:top-4 lg:order-last lg:flex-1">
+        {plan?.kitchen && (
+          <div className="flex items-center gap-3 rounded-2xl border border-warn/40 bg-warn/10 px-4 py-3">
+            <CookingPot className="size-6 shrink-0 text-warn" aria-hidden />
+            <p className="font-display text-lg font-bold leading-snug">
+              {t("plan.kitchenBanner", {
+                name: kitchenName(plan.kitchen, desks),
+              })}
+            </p>
+          </div>
+        )}
         <KpiStrip className="lg:grid-cols-2">
           <Kpi label={t("kpi.desks")} value={desks.length} />
           <Kpi
@@ -1231,6 +1241,15 @@ function initials(name: string) {
   return (
     (parts[0]?.[0] ?? "") + (parts.length > 1 ? (parts.at(-1)?.[0] ?? "") : "")
   ).toUpperCase();
+}
+
+/** The kitchen person as the plan shows them: call name from their desk, else first name. */
+function kitchenName(
+  kitchen: { userId: string; firstName: string | null },
+  desks: { name: string; userId: string | null; userName: string | null }[],
+) {
+  const desk = desks.find((d) => d.userId === kitchen.userId && d.userName);
+  return desk?.userName ? callName(desk.name, desk.userName) : (kitchen.firstName ?? "?");
 }
 
 /** Desks are numbered P1, P2 … on creation; anything else is a call name. */

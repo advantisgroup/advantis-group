@@ -166,6 +166,10 @@ describe("office", () => {
       ["P1", "out", true],
       ["P2", "break", false],
     ]);
+    expect((await ada.query(api.office.plan, {})).kitchen).toEqual({
+      userId: adaId,
+      firstName: "ada",
+    });
   });
 
   test("walls and doors are stored with the plan and must stay on it", async () => {
