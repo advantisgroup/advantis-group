@@ -55,10 +55,11 @@
   },
   "deskDialog": {
     "title": "Desk",
-    "name": "Label",
+    "name": "Name on the plan",
     "person": "Person",
     "nobody": "Nobody",
-    "note": "Note"
+    "note": "Note",
+    "nameHint": "Left as P1, P2 …, the plan shows the person's first name. Otherwise what you enter here – e.g. \"Alex\"."
   },
   "removeDesk": {
     "title": "Remove desk?",

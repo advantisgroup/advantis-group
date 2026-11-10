@@ -302,6 +302,7 @@ function DeskForm({
       <div className="space-y-1.5">
         <Label htmlFor="office-desk-name">{t("deskDialog.name")}</Label>
         <Input id="office-desk-name" value={name} onChange={(e) => setName(e.target.value)} />
+        <p className="text-xs text-muted-foreground">{t("deskDialog.nameHint")}</p>
       </div>
       <div className="space-y-1.5">
         <Label>{t("deskDialog.person")}</Label>

@@ -1200,6 +1200,11 @@ function initials(name: string) {
   ).toUpperCase();
 }
 
+/** Desks are numbered P1, P2 … on creation; anything else is a call name. */
+function callName(deskName: string, userName: string) {
+  return /^p\d+$/i.test(deskName.trim()) ? (userName.split(" ")[0] ?? userName) : deskName.trim();
+}
+
 function hue(name: string) {
   let h = 0;
   for (const char of name) h = (h * 31 + char.charCodeAt(0)) % 360;
@@ -1208,7 +1213,8 @@ function hue(name: string) {
 
 /**
  * A desk as a little tabletop with the person in front: photo or initials,
- * first name big, last name small. Wide desks put the face left of the name,
+ * and just the first name — or the desk's own name when someone typed a
+ * call name there (e.g. „Alex“ for Alexandra). Wide desks put the face left of the name,
  * narrow ones above it. A dot in the corner shows the inventory status.
  */
 function DeskShape({
@@ -1224,6 +1230,7 @@ function DeskShape({
     y: number;
     w: number;
     h: number;
+    name: string;
     userName: string | null;
     userAvatar: string | null;
     checkedAt: number | null;
@@ -1236,8 +1243,7 @@ function DeskShape({
 }) {
   const { x, y, w, h } = desk;
   const name = desk.userName;
-  const [first, ...rest] = (name ?? freeLabel).split(" ");
-  const last = rest.join(" ");
+  const first = name ? callName(desk.name, name) : freeLabel;
   const wide = w >= h * 1.4;
   const pad = Math.min(w, h) * 0.12;
   // Face: left of the name on wide desks, above it on narrow ones.
@@ -1253,12 +1259,11 @@ function DeskShape({
     wide ? Math.min(font * 0.75, h * 0.3) : Math.min(font * 0.6, h * 0.16),
     0.66,
   );
-  const small = fit(last, big * 0.72, 0.58);
   const gap = pad * 0.6;
   // Narrow desks: face and name as one block, centred top to bottom.
-  const block = r * 2 + gap + big + (last ? small * 1.15 : 0);
+  const block = r * 2 + gap + big;
   const cy = wide ? y + h / 2 : y + Math.max((h - block) / 2, pad) + r;
-  const nameY = wide ? cy + (last ? -big * 0.05 : big * 0.35) : cy + r + gap + big * 0.85;
+  const nameY = wide ? cy + big * 0.35 : cy + r + gap + big * 0.85;
   const clip = `office-face-${desk._id}`;
   const dot = Math.max(Math.min(w, h) * 0.07, 5);
 
@@ -1331,17 +1336,6 @@ function DeskShape({
       >
         {first}
       </text>
-      {last && (
-        <text
-          x={textX}
-          y={nameY + small * 1.15}
-          fontSize={small}
-          textAnchor={wide ? "start" : "middle"}
-          className="pointer-events-none fill-muted-foreground"
-        >
-          {last}
-        </text>
-      )}
       <circle
         cx={x + w - dot * 1.6}
         cy={y + dot * 1.6}
