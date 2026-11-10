@@ -22,6 +22,13 @@ export const officeItemKinds = [
 
 export const officeItemKindValidator = v.union(...officeItemKinds.map((kind) => v.literal(kind)));
 
+export const officeSideValidator = v.union(
+  v.literal("top"),
+  v.literal("right"),
+  v.literal("bottom"),
+  v.literal("left"),
+);
+
 export const officeRoomValidator = v.object({
   id: v.string(),
   name: v.string(),
@@ -29,6 +36,21 @@ export const officeRoomValidator = v.object({
   y: v.number(),
   w: v.number(),
   h: v.number(),
+  /** Sides without a wall (a room open to the corridor). */
+  open: v.optional(v.array(officeSideValidator)),
+  /** A blacked-out area: part of the outline that isn't office space. */
+  blocked: v.optional(v.boolean()),
+  /** Where the name sits; unset = top left corner. */
+  labelX: v.optional(v.number()),
+  labelY: v.optional(v.number()),
+});
+
+/** Free text on the plan for areas without walls ("Küche", "Empfang"). */
+export const officeLabelValidator = v.object({
+  id: v.string(),
+  text: v.string(),
+  x: v.number(),
+  y: v.number(),
 });
 
 /** A line on the plan: a wall (black, anything in the way – sound walls,
@@ -50,6 +72,7 @@ export const officeTables = {
     height: v.number(),
     rooms: v.array(officeRoomValidator),
     lines: v.optional(v.array(officeLineValidator)),
+    labels: v.optional(v.array(officeLabelValidator)),
     updatedBy: v.id("users"),
     updatedAt: v.number(),
   }),

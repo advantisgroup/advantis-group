@@ -4,7 +4,12 @@ import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import { userMutation, userQuery } from "./functions";
 import { type Caller } from "./lib/caller";
-import { officeItemKindValidator, officeRoomValidator, officeLineValidator } from "./tables/office";
+import {
+  officeItemKindValidator,
+  officeLabelValidator,
+  officeLineValidator,
+  officeRoomValidator,
+} from "./tables/office";
 import { displayName } from "./time/lib/store";
 
 /**
@@ -16,7 +21,7 @@ import { displayName } from "./time/lib/store";
 type DeskId = Id<"officeDesks">;
 
 // The office (Vahan, 10.11.2026): 12 m wide, 30 m long, drawn upright.
-const DEFAULT_LAYOUT = { width: 1200, height: 3000, rooms: [], lines: [] };
+const DEFAULT_LAYOUT = { width: 1200, height: 3000, rooms: [], lines: [], labels: [] };
 const MIN_SIZE = 20;
 const MAX_PLAN = 10_000;
 
@@ -149,6 +154,7 @@ export const plan = userQuery({
             height: layout.height,
             rooms: layout.rooms,
             lines: layout.lines ?? [],
+            labels: layout.labels ?? [],
           }
         : DEFAULT_LAYOUT,
       desks: desks
@@ -261,16 +267,37 @@ export const saveLayout = userMutation({
     height: v.number(),
     rooms: v.array(officeRoomValidator),
     lines: v.optional(v.array(officeLineValidator)),
+    labels: v.optional(v.array(officeLabelValidator)),
   },
-  handler: async (ctx, { width, height, rooms, lines }) => {
+  handler: async (ctx, { width, height, rooms, lines, labels }) => {
     const size = checkBox({ x: 0, y: 0, w: width, h: height });
-    const cleanRooms = rooms.map((room) => ({
-      id: room.id.slice(0, 40),
-      name: cleanText(room.name, 60) ?? "",
-      ...checkBox(room),
-    }));
     const inside = (x: number, y: number) =>
       Number.isFinite(x) && Number.isFinite(y) && x >= 0 && y >= 0 && x <= size.w && y <= size.h;
+    const cleanRooms = rooms.map((room) => {
+      const label =
+        room.labelX !== undefined && room.labelY !== undefined
+          ? { labelX: Math.round(room.labelX), labelY: Math.round(room.labelY) }
+          : null;
+      if (label && !inside(label.labelX, label.labelY))
+        fail("bad_request", "Label outside the plan");
+      return {
+        id: room.id.slice(0, 40),
+        name: cleanText(room.name, 60) ?? "",
+        ...checkBox(room),
+        ...(room.open?.length ? { open: [...new Set(room.open)] } : {}),
+        ...(room.blocked ? { blocked: true } : {}),
+        ...label,
+      };
+    });
+    const cleanLabels = (labels ?? []).map((label) => {
+      if (!inside(label.x, label.y)) fail("bad_request", "Label outside the plan");
+      return {
+        id: label.id.slice(0, 40),
+        text: cleanText(label.text, 60) ?? "",
+        x: Math.round(label.x),
+        y: Math.round(label.y),
+      };
+    });
     const cleanLines = (lines ?? []).map((line) => {
       if (!inside(line.x1, line.y1) || !inside(line.x2, line.y2)) {
         fail("bad_request", "Line outside the plan");
@@ -289,6 +316,7 @@ export const saveLayout = userMutation({
       height: size.h,
       rooms: cleanRooms,
       lines: cleanLines,
+      labels: cleanLabels,
       updatedBy: ctx.caller.user._id,
       updatedAt: Date.now(),
     };

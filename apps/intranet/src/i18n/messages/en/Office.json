@@ -20,7 +20,7 @@
     "addDesk": "Desk",
     "size": "Office size",
     "printQr": "Print QR labels",
-    "editHint": "Drag to move, bottom-right corner to resize. Walls and doors: drag the ends, “Rotate” turns by 90°. 10 cm grid.",
+    "editHint": "Drag to move, bottom-right corner to resize. Names can be moved on their own. Walls/doors: drag the ends. 10 cm grid.",
     "rename": "Edit",
     "rotate": "Rotate",
     "delete": "Remove",
@@ -32,7 +32,14 @@
     "free": "free",
     "saveError": "Couldn't save the floor plan.",
     "addWall": "Wall",
-    "addDoor": "Door"
+    "addDoor": "Door",
+    "addLabel": "Label",
+    "addBlock": "Blocked area",
+    "newLabel": "Area",
+    "selection": "Selected",
+    "walls": "Walls (on = wall, off = open)",
+    "selectHint": "Tap something on the plan to edit it.",
+    "legendBlocked": "Blocked area"
   },
   "sizeDialog": {
     "title": "Office size",
@@ -181,5 +188,16 @@
   "cancel": "Cancel",
   "save": "Save",
   "close": "Close",
-  "error": "That didn't work."
+  "error": "That didn't work.",
+  "sides": {
+    "top": "top",
+    "right": "right",
+    "bottom": "bottom",
+    "left": "left"
+  },
+  "labelDialog": {
+    "title": "Label",
+    "name": "Text",
+    "placeholder": "e.g. kitchen, reception, hallway"
+  }
 }
