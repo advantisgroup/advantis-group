@@ -4,7 +4,7 @@ import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import { userMutation, userQuery } from "./functions";
 import { type Caller } from "./lib/caller";
-import { officeItemKindValidator, officeRoomValidator } from "./tables/office";
+import { officeItemKindValidator, officeRoomValidator, officeLineValidator } from "./tables/office";
 import { displayName } from "./time/lib/store";
 
 /**
@@ -16,7 +16,7 @@ import { displayName } from "./time/lib/store";
 type DeskId = Id<"officeDesks">;
 
 // The office (Vahan, 10.11.2026): 12 m wide, 30 m long, drawn upright.
-const DEFAULT_LAYOUT = { width: 1200, height: 3000, rooms: [] };
+const DEFAULT_LAYOUT = { width: 1200, height: 3000, rooms: [], lines: [] };
 const MIN_SIZE = 20;
 const MAX_PLAN = 10_000;
 
@@ -144,7 +144,12 @@ export const plan = userQuery({
     }
     return {
       layout: layout
-        ? { width: layout.width, height: layout.height, rooms: layout.rooms }
+        ? {
+            width: layout.width,
+            height: layout.height,
+            rooms: layout.rooms,
+            lines: layout.lines ?? [],
+          }
         : DEFAULT_LAYOUT,
       desks: desks
         .map((desk) => ({
@@ -251,18 +256,39 @@ export const itemHistory = userQuery({
 
 export const saveLayout = userMutation({
   role: "admin",
-  args: { width: v.number(), height: v.number(), rooms: v.array(officeRoomValidator) },
-  handler: async (ctx, { width, height, rooms }) => {
+  args: {
+    width: v.number(),
+    height: v.number(),
+    rooms: v.array(officeRoomValidator),
+    lines: v.optional(v.array(officeLineValidator)),
+  },
+  handler: async (ctx, { width, height, rooms, lines }) => {
     const size = checkBox({ x: 0, y: 0, w: width, h: height });
     const cleanRooms = rooms.map((room) => ({
       id: room.id.slice(0, 40),
       name: cleanText(room.name, 60) ?? "",
       ...checkBox(room),
     }));
+    const inside = (x: number, y: number) =>
+      Number.isFinite(x) && Number.isFinite(y) && x >= 0 && y >= 0 && x <= size.w && y <= size.h;
+    const cleanLines = (lines ?? []).map((line) => {
+      if (!inside(line.x1, line.y1) || !inside(line.x2, line.y2)) {
+        fail("bad_request", "Line outside the plan");
+      }
+      return {
+        id: line.id.slice(0, 40),
+        kind: line.kind,
+        x1: Math.round(line.x1),
+        y1: Math.round(line.y1),
+        x2: Math.round(line.x2),
+        y2: Math.round(line.y2),
+      };
+    });
     const row = {
       width: size.w,
       height: size.h,
       rooms: cleanRooms,
+      lines: cleanLines,
       updatedBy: ctx.caller.user._id,
       updatedAt: Date.now(),
     };

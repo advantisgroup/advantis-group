@@ -10,11 +10,13 @@ import {
   Check,
   DoorOpen,
   Maximize2,
+  Minus,
   Monitor,
   Pencil,
   QrCode,
   RotateCw,
   Ruler,
+  Square,
   Trash2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -46,7 +48,22 @@ interface Room extends Box {
   id: string;
   name: string;
 }
-type Target = { type: "room"; id: string } | { type: "desk"; id: DeskId };
+interface Line {
+  id: string;
+  kind: "wall" | "door";
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+type Target =
+  | { type: "room"; id: string }
+  | { type: "desk"; id: DeskId }
+  | { type: "line"; id: string };
+type DragMode = "move" | "resize" | "end1" | "end2";
+
+const NEW_LINE = { wall: 300, door: 90 };
+const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
 const snap = (value: number) => Math.round(value / GRID) * GRID;
 const sameTarget = (a: Target | null, b: Target) => a?.type === b.type && a.id === b.id;
@@ -66,6 +83,7 @@ export function FloorPlan() {
 
   const [editing, setEditing] = useState(false);
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [lines, setLines] = useState<Line[]>([]);
   const [deskDraft, setDeskDraft] = useState<Map<string, Box>>(new Map());
   const [selected, setSelected] = useState<Target | null>(null);
   const [roomDialog, setRoomDialog] = useState<Room | null>(null);
@@ -75,9 +93,10 @@ export function FloorPlan() {
   const svgRef = useRef<SVGSVGElement>(null);
   const drag = useRef<{
     target: Target;
-    mode: "move" | "resize";
+    mode: DragMode;
     start: { x: number; y: number };
     box: Box;
+    line?: Line;
     moved: boolean;
   } | null>(null);
 
@@ -85,6 +104,7 @@ export function FloorPlan() {
   const openDesk = searchParams.get("platz") as DeskId | null;
   const layout = plan?.layout;
   const shownRooms = editing ? rooms : (layout?.rooms ?? []);
+  const shownLines = editing ? lines : (layout?.lines ?? []);
   const desks = useMemo(
     () => (plan?.desks ?? []).map((desk) => ({ ...desk, ...deskDraft.get(desk._id) })),
     [plan?.desks, deskDraft],
@@ -96,7 +116,8 @@ export function FloorPlan() {
 
   const width = layout.width;
   const height = layout.height;
-  const font = Math.max(width, height) / 70;
+  // Sized to the width: the plan always spans the full width of the page.
+  const font = width / 45;
   const checked = desks.filter((desk) => desk.checkedAt).length;
   const defective = desks.reduce((sum, desk) => sum + desk.defective, 0);
 
@@ -110,6 +131,7 @@ export function FloorPlan() {
 
   function startEditing() {
     setRooms(layout!.rooms);
+    setLines(layout!.lines);
     setEditing(true);
   }
 
@@ -118,10 +140,23 @@ export function FloorPlan() {
     setSelected(null);
   }
 
-  async function commitRooms(next: Room[], size = { width, height }) {
-    setRooms(next);
+  async function commitLayout(change: {
+    rooms?: Room[];
+    lines?: Line[];
+    width?: number;
+    height?: number;
+  }) {
+    const nextRooms = change.rooms ?? rooms;
+    const nextLines = change.lines ?? lines;
+    setRooms(nextRooms);
+    setLines(nextLines);
     try {
-      await saveLayout({ ...size, rooms: next });
+      await saveLayout({
+        width: change.width ?? width,
+        height: change.height ?? height,
+        rooms: nextRooms,
+        lines: nextLines,
+      });
     } catch (e) {
       handleError(e, t("plan.saveError"));
     }
@@ -142,9 +177,17 @@ export function FloorPlan() {
   }
 
   function boxOf(target: Target): Box | undefined {
-    return target.type === "room"
-      ? rooms.find((room) => room.id === target.id)
-      : desks.find((desk) => desk._id === target.id);
+    if (target.type === "room") return rooms.find((room) => room.id === target.id);
+    if (target.type === "desk") return desks.find((desk) => desk._id === target.id);
+    const line = lines.find((l) => l.id === target.id);
+    return (
+      line && {
+        x: Math.min(line.x1, line.x2),
+        y: Math.min(line.y1, line.y2),
+        w: Math.abs(line.x2 - line.x1),
+        h: Math.abs(line.y2 - line.y1),
+      }
+    );
   }
 
   function toPlan(event: ReactPointerEvent) {
@@ -156,14 +199,39 @@ export function FloorPlan() {
     return { x: local.x, y: local.y };
   }
 
-  function onPointerDown(event: ReactPointerEvent, target: Target, mode: "move" | "resize") {
+  function onPointerDown(event: ReactPointerEvent, target: Target, mode: DragMode) {
     if (!editing) return;
     event.stopPropagation();
     const box = boxOf(target);
     if (!box) return;
     svgRef.current?.setPointerCapture(event.pointerId);
     setSelected(target);
-    drag.current = { target, mode, start: toPlan(event), box: { ...box }, moved: false };
+    const line = target.type === "line" ? lines.find((l) => l.id === target.id) : undefined;
+    drag.current = {
+      target,
+      mode,
+      start: toPlan(event),
+      box: { ...box },
+      line: line && { ...line },
+      moved: false,
+    };
+  }
+
+  function draggedLine(
+    line: Line,
+    mode: DragMode,
+    point: { x: number; y: number },
+    dx: number,
+    dy: number,
+  ) {
+    if (mode === "end1" || mode === "end2") {
+      const x = clamp(snap(point.x), 0, width);
+      const y = clamp(snap(point.y), 0, height);
+      return mode === "end1" ? { ...line, x1: x, y1: y } : { ...line, x2: x, y2: y };
+    }
+    const mx = clamp(snap(dx), -Math.min(line.x1, line.x2), width - Math.max(line.x1, line.x2));
+    const my = clamp(snap(dy), -Math.min(line.y1, line.y2), height - Math.max(line.y1, line.y2));
+    return { ...line, x1: line.x1 + mx, y1: line.y1 + my, x2: line.x2 + mx, y2: line.y2 + my };
   }
 
   function onPointerMove(event: ReactPointerEvent) {
@@ -174,6 +242,11 @@ export function FloorPlan() {
     const dy = point.y - current.start.y;
     if (!current.moved && Math.hypot(dx, dy) < GRID / 2) return;
     current.moved = true;
+    if (current.line) {
+      const next = draggedLine(current.line, current.mode, point, dx, dy);
+      setLines((prev) => prev.map((line) => (line.id === next.id ? next : line)));
+      return;
+    }
     const { box } = current;
     const next =
       current.mode === "move"
@@ -202,7 +275,7 @@ export function FloorPlan() {
     if (!current?.moved) return;
     const box = boxOf(current.target);
     if (!box) return;
-    if (current.target.type === "room") void commitRooms(rooms);
+    if (current.target.type !== "desk") void commitLayout({});
     else void commitDesk(current.target.id, { x: box.x, y: box.y, w: box.w, h: box.h });
   }
 
@@ -221,9 +294,18 @@ export function FloorPlan() {
       name: t("plan.newRoom"),
       ...centered(NEW_ROOM),
     };
-    void commitRooms([...rooms, room]);
+    void commitLayout({ rooms: [...rooms, room] });
     setSelected({ type: "room", id: room.id });
     setRoomDialog(room);
+  }
+
+  function addLine(kind: Line["kind"]) {
+    const length = Math.min(NEW_LINE[kind], width);
+    const x1 = snap(Math.max(0, (width - length) / 2));
+    const y = snap(height / 2);
+    const line = { id: crypto.randomUUID().slice(0, 8), kind, x1, y1: y, x2: x1 + length, y2: y };
+    void commitLayout({ lines: [...lines, line] });
+    setSelected({ type: "line", id: line.id });
   }
 
   async function addDesk() {
@@ -240,6 +322,24 @@ export function FloorPlan() {
 
   function rotate() {
     if (!selected) return;
+    if (selected.type === "line") {
+      const line = lines.find((l) => l.id === selected.id);
+      if (!line) return;
+      // A quarter turn around the middle; for a door that also swaps the side it opens to.
+      const cx = (line.x1 + line.x2) / 2;
+      const cy = (line.y1 + line.y2) / 2;
+      const hx = (line.x2 - line.x1) / 2;
+      const hy = (line.y2 - line.y1) / 2;
+      const turned = {
+        ...line,
+        x1: clamp(snap(cx + hy), 0, width),
+        y1: clamp(snap(cy - hx), 0, height),
+        x2: clamp(snap(cx - hy), 0, width),
+        y2: clamp(snap(cy + hx), 0, height),
+      };
+      void commitLayout({ lines: lines.map((l) => (l.id === line.id ? turned : l)) });
+      return;
+    }
     const box = boxOf(selected);
     if (!box) return;
     const turned = {
@@ -249,9 +349,9 @@ export function FloorPlan() {
       h: Math.min(box.w, height - box.y),
     };
     if (selected.type === "room") {
-      void commitRooms(
-        rooms.map((room) => (room.id === selected.id ? { ...room, ...turned } : room)),
-      );
+      void commitLayout({
+        rooms: rooms.map((room) => (room.id === selected.id ? { ...room, ...turned } : room)),
+      });
     } else {
       const id = selected.id;
       setDeskDraft((prev) => new Map(prev).set(id, turned));
@@ -264,7 +364,7 @@ export function FloorPlan() {
     if (selected.type === "room") {
       const room = rooms.find((r) => r.id === selected.id);
       if (room) setRoomDialog(room);
-    } else {
+    } else if (selected.type === "desk") {
       setDesk(selected.id);
     }
   }
@@ -272,7 +372,10 @@ export function FloorPlan() {
   function deleteSelected() {
     if (!selected) return;
     if (selected.type === "room") {
-      void commitRooms(rooms.filter((room) => room.id !== selected.id));
+      void commitLayout({ rooms: rooms.filter((room) => room.id !== selected.id) });
+      setSelected(null);
+    } else if (selected.type === "line") {
+      void commitLayout({ lines: lines.filter((line) => line.id !== selected.id) });
       setSelected(null);
     } else {
       const desk = desks.find((d) => d._id === selected.id);
@@ -280,21 +383,107 @@ export function FloorPlan() {
     }
   }
 
-  const hasPlan = shownRooms.length > 0 || desks.length > 0;
+  const hasPlan = shownRooms.length > 0 || shownLines.length > 0 || desks.length > 0;
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start">
-      <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card p-2 sm:p-4 lg:h-[calc(100dvh-10rem)] lg:min-h-[36rem]">
+    <div className="space-y-4">
+      <aside className="space-y-3">
+        <KpiStrip>
+          <Kpi label={t("kpi.desks")} value={desks.length} />
+          <Kpi
+            label={t("kpi.checked")}
+            value={`${checked} / ${desks.length}`}
+            tone={desks.length && checked < desks.length ? "warn" : "neutral"}
+          />
+          <Kpi label={t("kpi.inStorage")} value={plan.inStorage} href="/office/lager" />
+          <Kpi
+            label={t("kpi.defective")}
+            value={defective}
+            tone={defective ? "critical" : "neutral"}
+          />
+        </KpiStrip>
+        {canEdit && (
+          <div className="sticky top-0 z-10 -mx-1 flex flex-wrap items-center gap-2 bg-background/95 px-1 py-2 backdrop-blur">
+            {editing ? (
+              <>
+                <Button size="sm" variant="outline" onClick={addRoom}>
+                  <Square className="size-4" />
+                  {t("plan.addRoom")}
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => addLine("wall")}>
+                  <Minus className="size-4" />
+                  {t("plan.addWall")}
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => addLine("door")}>
+                  <DoorOpen className="size-4" />
+                  {t("plan.addDoor")}
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => void addDesk()}>
+                  <Monitor className="size-4" />
+                  {t("plan.addDesk")}
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setSizeOpen(true)}>
+                  <Ruler className="size-4" />
+                  {t("plan.size")}
+                </Button>
+                {selected && (
+                  <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-0.5">
+                    {selected.type !== "line" && (
+                      <Button size="sm" variant="ghost" onClick={editSelected}>
+                        <Pencil className="size-4" />
+                        {t("plan.rename")}
+                      </Button>
+                    )}
+                    <Button size="sm" variant="ghost" onClick={rotate}>
+                      <RotateCw className="size-4" />
+                      {t("plan.rotate")}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-destructive"
+                      onClick={deleteSelected}
+                    >
+                      <Trash2 className="size-4" />
+                      {t("plan.delete")}
+                    </Button>
+                  </div>
+                )}
+                <Button size="sm" onClick={stopEditing}>
+                  <Check className="size-4" />
+                  {t("plan.done")}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button size="sm" variant="outline" onClick={startEditing}>
+                  <Maximize2 className="size-4" />
+                  {t("plan.edit")}
+                </Button>
+                {desks.length > 0 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setQrDesks(desks.map((d) => d._id))}
+                  >
+                    <QrCode className="size-4" />
+                    {t("plan.printQr")}
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
+        )}
+        {editing && <p className="text-xs text-muted-foreground">{t("plan.editHint")}</p>}
+      </aside>
+      <div className="overflow-hidden rounded-2xl border border-border bg-card p-2 sm:p-4">
         {!hasPlan && !editing && (
           <p className="px-2 pb-3 text-sm text-muted-foreground">{t("plan.empty")}</p>
         )}
         <svg
           ref={svgRef}
           viewBox={`-10 -10 ${width + 20} ${height + 20}`}
-          className={cn(
-            "block h-auto w-full select-none lg:h-0 lg:min-h-0 lg:flex-1",
-            editing && "touch-none",
-          )}
+          className={cn("block h-auto w-full select-none", editing && "touch-none")}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
@@ -353,6 +542,19 @@ export function FloorPlan() {
               </g>
             );
           })}
+
+          {[...shownLines]
+            .sort((a, b) => (a.kind === b.kind ? 0 : a.kind === "wall" ? -1 : 1))
+            .map((line) => (
+              <PlanLine
+                key={line.id}
+                line={line}
+                editing={editing}
+                selected={sameTarget(selected, { type: "line", id: line.id })}
+                handle={font * 0.45}
+                onPointerDown={(e, mode) => onPointerDown(e, { type: "line", id: line.id }, mode)}
+              />
+            ))}
 
           {desks.map((desk) => {
             const isSelected = sameTarget(selected, { type: "desk", id: desk._id });
@@ -432,85 +634,6 @@ export function FloorPlan() {
           </span>
         </div>
       </div>
-      <aside className="order-first space-y-4 lg:sticky lg:top-4 lg:order-none">
-        <KpiStrip className="lg:grid-cols-2">
-          <Kpi label={t("kpi.desks")} value={desks.length} />
-          <Kpi
-            label={t("kpi.checked")}
-            value={`${checked} / ${desks.length}`}
-            tone={desks.length && checked < desks.length ? "warn" : "neutral"}
-          />
-          <Kpi label={t("kpi.inStorage")} value={plan.inStorage} href="/office/lager" />
-          <Kpi
-            label={t("kpi.defective")}
-            value={defective}
-            tone={defective ? "critical" : "neutral"}
-          />
-        </KpiStrip>
-        {canEdit && (
-          <div className="flex flex-wrap items-center gap-2">
-            {editing ? (
-              <>
-                <Button size="sm" variant="outline" onClick={addRoom}>
-                  <DoorOpen className="size-4" />
-                  {t("plan.addRoom")}
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => void addDesk()}>
-                  <Monitor className="size-4" />
-                  {t("plan.addDesk")}
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => setSizeOpen(true)}>
-                  <Ruler className="size-4" />
-                  {t("plan.size")}
-                </Button>
-                {selected && (
-                  <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-0.5">
-                    <Button size="sm" variant="ghost" onClick={editSelected}>
-                      <Pencil className="size-4" />
-                      {t("plan.rename")}
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={rotate}>
-                      <RotateCw className="size-4" />
-                      {t("plan.rotate")}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-destructive"
-                      onClick={deleteSelected}
-                    >
-                      <Trash2 className="size-4" />
-                      {t("plan.delete")}
-                    </Button>
-                  </div>
-                )}
-                <Button size="sm" onClick={stopEditing}>
-                  <Check className="size-4" />
-                  {t("plan.done")}
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button size="sm" variant="outline" onClick={startEditing}>
-                  <Maximize2 className="size-4" />
-                  {t("plan.edit")}
-                </Button>
-                {desks.length > 0 && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setQrDesks(desks.map((d) => d._id))}
-                  >
-                    <QrCode className="size-4" />
-                    {t("plan.printQr")}
-                  </Button>
-                )}
-              </>
-            )}
-          </div>
-        )}
-        {editing && <p className="text-xs text-muted-foreground">{t("plan.editHint")}</p>}
-      </aside>
 
       <DeskPanel
         deskId={openDesk && desks.some((desk) => desk._id === openDesk) ? openDesk : null}
@@ -528,9 +651,9 @@ export function FloorPlan() {
         room={roomDialog}
         onClose={() => setRoomDialog(null)}
         onSave={(name) =>
-          void commitRooms(
-            rooms.map((room) => (room.id === roomDialog?.id ? { ...room, name } : room)),
-          )
+          void commitLayout({
+            rooms: rooms.map((room) => (room.id === roomDialog?.id ? { ...room, name } : room)),
+          })
         }
       />
       <SizeDialog
@@ -538,9 +661,19 @@ export function FloorPlan() {
         onOpenChange={setSizeOpen}
         width={width}
         height={height}
-        minWidth={Math.max(0, ...rooms.map((r) => r.x + r.w), ...desks.map((d) => d.x + d.w))}
-        minHeight={Math.max(0, ...rooms.map((r) => r.y + r.h), ...desks.map((d) => d.y + d.h))}
-        onSave={(size) => void commitRooms(rooms, size)}
+        minWidth={Math.max(
+          0,
+          ...rooms.map((r) => r.x + r.w),
+          ...lines.map((l) => Math.max(l.x1, l.x2)),
+          ...desks.map((d) => d.x + d.w),
+        )}
+        minHeight={Math.max(
+          0,
+          ...rooms.map((r) => r.y + r.h),
+          ...lines.map((l) => Math.max(l.y1, l.y2)),
+          ...desks.map((d) => d.y + d.h),
+        )}
+        onSave={(size) => void commitLayout(size)}
       />
       <ResponsiveDialog
         open={!!removing}
@@ -570,6 +703,93 @@ export function FloorPlan() {
         {null}
       </ResponsiveDialog>
     </div>
+  );
+}
+
+/** A wall is a thick black line; a door is an opening in whatever it sits on,
+ *  with its leaf and swing drawn the way floor plans do. */
+function PlanLine({
+  line,
+  editing,
+  selected,
+  handle,
+  onPointerDown,
+}: {
+  line: Line;
+  editing: boolean;
+  selected: boolean;
+  handle: number;
+  onPointerDown: (event: ReactPointerEvent, mode: DragMode) => void;
+}) {
+  const length = Math.hypot(line.x2 - line.x1, line.y2 - line.y1) || 1;
+  const ux = (line.x2 - line.x1) / length;
+  const uy = (line.y2 - line.y1) / length;
+  const leafX = line.x1 + uy * length;
+  const leafY = line.y1 - ux * length;
+  const ink = selected ? "stroke-primary" : "stroke-foreground";
+  return (
+    <g className={cn(editing && "cursor-move")}>
+      {line.kind === "wall" ? (
+        <line
+          x1={line.x1}
+          y1={line.y1}
+          x2={line.x2}
+          y2={line.y2}
+          className={ink}
+          strokeWidth={10}
+          strokeLinecap="square"
+        />
+      ) : (
+        <>
+          <line
+            x1={line.x1}
+            y1={line.y1}
+            x2={line.x2}
+            y2={line.y2}
+            className="stroke-background"
+            strokeWidth={14}
+          />
+          <line x1={line.x1} y1={line.y1} x2={leafX} y2={leafY} className={ink} strokeWidth={4} />
+          <path
+            d={`M ${line.x2} ${line.y2} A ${length} ${length} 0 0 0 ${leafX} ${leafY}`}
+            className={cn("fill-none", ink)}
+            strokeWidth={2}
+            strokeDasharray="8 6"
+          />
+        </>
+      )}
+      {editing && (
+        <line
+          x1={line.x1}
+          y1={line.y1}
+          x2={line.x2}
+          y2={line.y2}
+          stroke="transparent"
+          strokeWidth={40}
+          onPointerDown={(e) => onPointerDown(e, "move")}
+        />
+      )}
+      {editing && selected && (
+        <>
+          <circle
+            cx={line.x1}
+            cy={line.y1}
+            r={handle}
+            className="cursor-crosshair fill-primary stroke-background"
+            strokeWidth={2}
+            onPointerDown={(e) => onPointerDown(e, "end1")}
+          />
+          <circle
+            cx={line.x2}
+            cy={line.y2}
+            r={handle}
+            className="cursor-crosshair fill-primary stroke-background"
+            strokeWidth={2}
+            onPointerDown={(e) => onPointerDown(e, "end2")}
+          />
+        </>
+      )}
+    </g>
   );
 }
 

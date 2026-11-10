@@ -3,7 +3,10 @@
   "intro": "Office floor plan: open a desk to see its devices, cables and adapters.",
   "adminsOnly": "Visible to admins only",
   "adminsOnlyHint": "To open it for everyone: set the Convex env OFFICE_MODE=live and add /office to OPEN_PREFIXES.",
-  "tabs": { "plan": "Floor plan", "storage": "Storage" },
+  "tabs": {
+    "plan": "Floor plan",
+    "storage": "Storage"
+  },
   "kpi": {
     "desks": "Desks",
     "checked": "Inventory done",
@@ -17,7 +20,7 @@
     "addDesk": "Desk",
     "size": "Office size",
     "printQr": "Print QR labels",
-    "editHint": "Drag to move, bottom-right corner to resize. 10 cm grid.",
+    "editHint": "Drag to move, bottom-right corner to resize. Walls and doors: drag the ends, “Rotate” turns by 90°. 10 cm grid.",
     "rename": "Edit",
     "rotate": "Rotate",
     "delete": "Remove",
@@ -27,7 +30,9 @@
     "legendDefect": "Defective device",
     "newRoom": "Room",
     "free": "free",
-    "saveError": "Couldn't save the floor plan."
+    "saveError": "Couldn't save the floor plan.",
+    "addWall": "Wall",
+    "addDoor": "Door"
   },
   "sizeDialog": {
     "title": "Office size",
@@ -127,7 +132,11 @@
     "intro": "Everything not set up at a desk right now.",
     "add": "Add to storage",
     "search": "Search …",
-    "scope": { "storage": "In storage", "all": "All equipment", "retired": "Retired" },
+    "scope": {
+      "storage": "In storage",
+      "all": "All equipment",
+      "retired": "Retired"
+    },
     "empty": "Nothing found.",
     "col": {
       "kind": "Type",
@@ -148,7 +157,9 @@
     "dialogDescription": "One label per desk. Scanning it opens the desk in the intranet.",
     "all": "All desks ({count})"
   },
-  "place": { "storage": "Storage" },
+  "place": {
+    "storage": "Storage"
+  },
   "kinds": {
     "computer": "PC",
     "laptop": "Laptop",
