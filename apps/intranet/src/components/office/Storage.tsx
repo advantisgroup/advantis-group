@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
-import { Plus } from "lucide-react";
+import { Plus, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/table";
 import { matchesSearch } from "@/lib/format";
 
+import { AiCaptureDialog } from "./AiCapture";
 import { ItemMenu } from "./ItemMenu";
 import { HistoryDialog, ItemDialog, MoveDialog } from "./OfficeDialogs";
 import { itemDetails, KindIcon, type OfficeItem } from "./shared";
@@ -37,6 +38,7 @@ export function Storage() {
   const rows = useQuery(api.office.items, { scope });
   const [search, setSearch] = useState("");
   const [adding, setAdding] = useState(false);
+  const [capturing, setCapturing] = useState(false);
   const [editing, setEditing] = useState<OfficeItem | null>(null);
   const [moving, setMoving] = useState<OfficeItem | null>(null);
   const [history, setHistory] = useState<OfficeItem | null>(null);
@@ -78,10 +80,16 @@ export function Storage() {
           className="w-full sm:ml-auto sm:w-64"
         />
         {canEdit && (
-          <Button onClick={() => setAdding(true)}>
-            <Plus className="size-4" />
-            {t("storage.add")}
-          </Button>
+          <>
+            <Button variant="outline" onClick={() => setAdding(true)}>
+              <Plus className="size-4" />
+              {t("storage.add")}
+            </Button>
+            <Button onClick={() => setCapturing(true)}>
+              <Sparkles className="size-4" />
+              {t("ai.open")}
+            </Button>
+          </>
         )}
       </div>
 
@@ -146,6 +154,7 @@ export function Storage() {
       )}
 
       <ItemDialog open={adding} onOpenChange={setAdding} placeName={storage} />
+      <AiCaptureDialog open={capturing} onOpenChange={setCapturing} placeName={storage} />
       <ItemDialog
         open={!!editing}
         onOpenChange={(open) => !open && setEditing(null)}

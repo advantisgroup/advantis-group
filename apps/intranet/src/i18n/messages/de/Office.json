@@ -200,5 +200,25 @@
     "title": "Beschriftung",
     "name": "Text",
     "placeholder": "z. B. Küche, Empfang, Flur"
+  },
+  "ai": {
+    "open": "Mit Foto/Sprache erfassen",
+    "title": "Mit KI erfassen",
+    "description": "Fotos machen und/oder erzählen, was da ist – die KI schlägt eine Liste für „{place}“ vor.",
+    "camera": "Foto aufnehmen",
+    "gallery": "Aus Galerie",
+    "removePhoto": "Foto entfernen",
+    "textPlaceholder": "Was ist da? z. B. „zwei Dell-Monitore, ein Lenovo-Dock, drei HDMI-Kabel“ – am Handy aufs Mikrofon der Tastatur tippen und sprechen.",
+    "hint": "Bis zu 6 Fotos. Stecker und Aufdrucke gut sichtbar machen. Fotos werden nur zum Erkennen an die KI geschickt und nicht gespeichert.",
+    "recognize": "Erkennen",
+    "recognizing": "Wird erkannt …",
+    "nothing": "Nichts erkannt – anderes Foto oder kurz beschreiben.",
+    "failed": "Erkennen hat nicht geklappt.",
+    "review": "Vorschlag prüfen: Häkchen weg bei allem, was nicht stimmt, Namen und Details anpassen.",
+    "unsure": "unsicher",
+    "back": "Zurück",
+    "save": "{count, plural, =0 {Nichts ausgewählt} one {1 Teil speichern} other {# Teile speichern}}",
+    "saved": "{count, plural, one {1 Teil gespeichert} other {# Teile gespeichert}} – weiter mit dem nächsten.",
+    "done": "Fertig"
   }
 }
