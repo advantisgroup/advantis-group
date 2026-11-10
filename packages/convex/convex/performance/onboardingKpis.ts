@@ -134,23 +134,33 @@ async function periods(
 async function personCalls(
   ctx: Ctx,
   companyId: Id<"companies">,
-  person: { employeeId: Id<"performanceEmployees">; userId: string | null },
+  person: { employeeId: Id<"performanceEmployees">; name: string; userId: string | null },
   period: Period,
   cache: QueryCache,
 ): Promise<Snapshot | undefined> {
   const rows: { employeeId: Id<"performanceEmployees">; companyId: Id<"companies"> }[] = [
     { employeeId: person.employeeId, companyId },
   ];
+  const add = (e: Doc<"performanceEmployees">) => {
+    if (e.companyId && !rows.some((r) => r.employeeId === e._id)) {
+      rows.push({ employeeId: e._id, companyId: e.companyId });
+    }
+  };
   if (person.userId) {
     const others = await ctx.db
       .query("performanceEmployees")
       .withIndex("by_userId", (q) => q.eq("userId", person.userId as Id<"users">))
       .collect();
-    for (const e of others) {
-      if (e._id !== person.employeeId && e.companyId) {
-        rows.push({ employeeId: e._id, companyId: e.companyId });
-      }
-    }
+    others.forEach(add);
+  }
+  // The same name on another dashboard, not (yet) linked to an account.
+  for (const c of await ctx.db.query("companies").collect()) {
+    if (c._id === companyId) continue;
+    const same = await ctx.db
+      .query("performanceEmployees")
+      .withIndex("by_company_name", (q) => q.eq("companyId", c._id).eq("name", person.name))
+      .collect();
+    same.filter((e) => !e.userId || e.userId === person.userId).forEach(add);
   }
   for (const r of rows) {
     const totals = await teamTotals(ctx, r.companyId, period.ym, cache, period.callsCutoff);
@@ -264,7 +274,13 @@ export const employee = userQuery({
     const valuesFor = async (period: Period) => {
       const events = await cockpitEvents(ctx, period.from, period.to);
       const counts = cockpitCounts(events, period.from, period.to);
-      const own = await personCalls(ctx, companyId, { employeeId, userId }, period, cache);
+      const own = await personCalls(
+        ctx,
+        companyId,
+        { employeeId, name: employee.name, userId },
+        period,
+        cache,
+      );
       return onboardingValues(
         userId ? counts.get(userId) : undefined,
         since !== null && since <= period.to,
