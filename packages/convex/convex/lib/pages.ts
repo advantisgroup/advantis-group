@@ -353,6 +353,30 @@ export const INTRANET_PAGES: IntranetPage[] = [
     visible: (caller) => caller.isAdmin || process.env.ONBOARDING_MODE === "live",
   },
   {
+    href: "/office",
+    label: "Office",
+    description:
+      "Büro-Grundriss mit allen Arbeitsplätzen: wer wo sitzt und welche Geräte, Kabel und Adapter dort angeschlossen sind.",
+    keywords: [
+      "office",
+      "büro",
+      "grundriss",
+      "arbeitsplatz",
+      "inventur",
+      "geräte",
+      "hardware",
+      "kabel",
+    ],
+    visible: (caller) => caller.isAdmin || process.env.OFFICE_MODE === "live",
+  },
+  {
+    href: "/office/lager",
+    label: "Lager",
+    description: "Alle Geräte, Kabel und Adapter, die gerade an keinem Arbeitsplatz hängen.",
+    keywords: ["lager", "inventar", "bestand", "kabel", "adapter", "hardware", "ersatz"],
+    visible: (caller) => caller.isAdmin || process.env.OFFICE_MODE === "live",
+  },
+  {
     href: "/hr",
     label: "Bewerbermanagement",
     description: "Bewerbungen, Termine und Mitarbeiterakten.",

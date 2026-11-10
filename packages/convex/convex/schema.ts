@@ -15,6 +15,7 @@ import { aiTables } from "./tables/ai";
 import { salesTables } from "./tables/sales";
 import { timeTables } from "./tables/time";
 import { mailTables } from "./tables/mail";
+import { officeTables } from "./tables/office";
 
 // Validators live in lib/validators.ts; re-exported here so the many
 // `from "./schema"` imports keep working.
@@ -36,4 +37,5 @@ export default defineSchema({
   ...salesTables,
   ...timeTables,
   ...mailTables,
+  ...officeTables,
 });

@@ -29,6 +29,8 @@ const OPEN_PREFIXES = [
   // „Verteilung → Team“ und die Teamleitung – Zugriff regelt Convex
   // (ONBOARDING_MODE=live + Teamliste), nicht diese Liste.
   "/onboarding-cockpit",
+  // Office (Grundriss/Lager, 10.11.2026): bewusst noch NICHT hier – nur Admins.
+  // Freigabe für alle: Convex-Env OFFICE_MODE=live setzen und "/office" ergänzen.
   // Wissen: Wiki und KI-Assistent für alle freigegeben (19.10. / 21.10.2026, Vahan).
   "/guidebooks",
   "/wiki-chat",

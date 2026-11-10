@@ -9,6 +9,7 @@ import { useMutation, useQuery } from "convex/react";
 import {
   AlertTriangle,
   BookOpen,
+  Building2,
   Calendar,
   CheckCheck,
   ClipboardList,
@@ -197,6 +198,7 @@ export function Sidebar() {
   // Test mode: only the testers named in Convex (TIME_TESTERS) see it.
   const timeMode = useQuery(api.time.mode.status);
   const onboardingCockpit = useQuery(api.performance.onboarding.me);
+  const office = useQuery(api.office.me);
   const hasApprovalCover = (approvalCover?.length ?? 0) > 0;
   const pendingAbsences = usePendingAbsenceCount(isAdmin);
   const { setOpenMobile, state, isMobile, editing, setEditing } = useSidebar();
@@ -269,6 +271,18 @@ export function Sidebar() {
       icon: Calendar,
       tourAttr: "tour-nav-calendar",
     },
+    // Office (Grundriss, Arbeitsplätze, Lager): admins only until OFFICE_MODE is live.
+    ...(office?.access
+      ? [
+          {
+            section: "planning" as const,
+            href: "/office",
+            labelKey: "office",
+            icon: Building2,
+            isNew: true,
+          },
+        ]
+      : []),
     // Own time tracking (replaces Clockodo). Test stage: only admins and
     // testers see it; preview: everyone, marked as new.
     ...(timeMode?.canUse

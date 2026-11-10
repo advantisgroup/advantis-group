@@ -1,0 +1,174 @@
+{
+  "title": "Office",
+  "intro": "Office floor plan: open a desk to see its devices, cables and adapters.",
+  "adminsOnly": "Visible to admins only",
+  "adminsOnlyHint": "To open it for everyone: set the Convex env OFFICE_MODE=live and add /office to OPEN_PREFIXES.",
+  "tabs": { "plan": "Floor plan", "storage": "Storage" },
+  "kpi": {
+    "desks": "Desks",
+    "checked": "Inventory done",
+    "inStorage": "Parts in storage",
+    "defective": "Reported defective"
+  },
+  "plan": {
+    "edit": "Edit floor plan",
+    "done": "Done",
+    "addRoom": "Room",
+    "addDesk": "Desk",
+    "size": "Office size",
+    "printQr": "Print QR labels",
+    "editHint": "Drag to move, bottom-right corner to resize. 10 cm grid.",
+    "rename": "Edit",
+    "rotate": "Rotate",
+    "delete": "Remove",
+    "empty": "No floor plan yet. Tap “Edit floor plan” and draw the rooms and desks.",
+    "legendChecked": "Inventory done",
+    "legendOpen": "Not recorded yet",
+    "legendDefect": "Defective device",
+    "newRoom": "Room",
+    "free": "free",
+    "saveError": "Couldn't save the floor plan."
+  },
+  "sizeDialog": {
+    "title": "Office size",
+    "description": "Outer dimensions of the office in centimetres.",
+    "width": "Width (cm)",
+    "height": "Depth (cm)"
+  },
+  "roomDialog": {
+    "title": "Room",
+    "name": "Name",
+    "placeholder": "e.g. open space, kitchen, storage"
+  },
+  "deskDialog": {
+    "title": "Desk",
+    "name": "Label",
+    "person": "Person",
+    "nobody": "Nobody",
+    "note": "Note"
+  },
+  "removeDesk": {
+    "title": "Remove desk?",
+    "description": "“{name}” disappears from the plan. Everything set up there goes to storage."
+  },
+  "desk": {
+    "person": "Person",
+    "nobody": "Not assigned",
+    "checked": "Inventory",
+    "checkedValue": "{date} · {name}",
+    "notChecked": "Not recorded yet",
+    "note": "Note",
+    "equipment": "Set up here",
+    "none": "Nothing recorded here yet.",
+    "addItem": "New device",
+    "fromStorage": "From storage",
+    "markChecked": "Finish inventory",
+    "markedChecked": "Inventory saved for this desk.",
+    "edit": "Edit desk",
+    "qr": "QR label"
+  },
+  "item": {
+    "edit": "Edit",
+    "move": "Move",
+    "toStorage": "To storage",
+    "retire": "Retire",
+    "restore": "Back to storage",
+    "history": "History",
+    "defective": "Defective",
+    "serial": "SN {value}",
+    "inventory": "Inv. {value}",
+    "movedToStorage": "Moved to storage.",
+    "retired": "Retired.",
+    "restored": "Back in storage."
+  },
+  "itemDialog": {
+    "createTitle": "Record device",
+    "editTitle": "Edit device",
+    "createAt": "Recorded at “{place}”.",
+    "kind": "Type",
+    "name": "Label",
+    "namePlaceholder": "e.g. Dell P2422H, HDMI cable",
+    "spec": "Details",
+    "specPlaceholder": "e.g. USB-C → HDMI, 2 m",
+    "serial": "Serial number",
+    "inventory": "Inventory number",
+    "quantity": "Quantity",
+    "defective": "Defective",
+    "note": "Note",
+    "storage": "Storage",
+    "addAnother": "Save + another",
+    "saved": "Saved."
+  },
+  "moveDialog": {
+    "title": "Move",
+    "description": "“{name}” to a desk or to storage.",
+    "target": "Where to",
+    "quantity": "How many (of {total})"
+  },
+  "pickDialog": {
+    "title": "Take from storage",
+    "description": "Set up a part from storage at “{place}”.",
+    "search": "Search …",
+    "empty": "Nothing matching in storage.",
+    "quantity": "Quantity (of {total})",
+    "take": "Take"
+  },
+  "history": {
+    "title": "History",
+    "empty": "No history yet.",
+    "created": "Recorded",
+    "moved": "Moved",
+    "updated": "Edited",
+    "retired": "Retired",
+    "restored": "Restored",
+    "route": "{from} → {to}"
+  },
+  "storage": {
+    "intro": "Everything not set up at a desk right now.",
+    "add": "Add to storage",
+    "search": "Search …",
+    "scope": { "storage": "In storage", "all": "All equipment", "retired": "Retired" },
+    "empty": "Nothing found.",
+    "col": {
+      "kind": "Type",
+      "name": "Label",
+      "details": "Details",
+      "quantity": "Qty",
+      "place": "Location"
+    }
+  },
+  "qr": {
+    "title": "Desk QR labels",
+    "area": "Office",
+    "kind": "QR labels",
+    "scan": "Scan → desk in the intranet",
+    "notice": "Stick on the desk. Scan with a phone to record its equipment.",
+    "print": "Print",
+    "dialogTitle": "QR labels",
+    "dialogDescription": "One label per desk. Scanning it opens the desk in the intranet.",
+    "all": "All desks ({count})"
+  },
+  "place": { "storage": "Storage" },
+  "kinds": {
+    "computer": "PC",
+    "laptop": "Laptop",
+    "monitor": "Monitor",
+    "dock": "Docking station",
+    "keyboard": "Keyboard",
+    "mouse": "Mouse",
+    "headset": "Headset",
+    "webcam": "Webcam",
+    "phone": "Phone",
+    "cable": "Cable",
+    "adapter": "Adapter",
+    "power": "Power",
+    "network": "Network",
+    "printer": "Printer",
+    "furniture": "Furniture",
+    "other": "Other"
+  },
+  "cancel": "Cancel",
+  "save": "Save",
+  "close": "Close",
+  "error": "That didn't work."
+}
