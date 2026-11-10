@@ -212,6 +212,16 @@ export const plan = userQuery({
         }))
         .sort((a, b) => a.name.localeCompare(b.name, "de", { numeric: true })),
       inStorage,
+      // Today's kitchen duty, also when that person has no desk on the plan.
+      kitchen: kitchen
+        ? {
+            userId: kitchen.userId,
+            firstName:
+              users.find((user) => user._id === kitchen.userId)?.firstName ??
+              names.get(kitchen.userId) ??
+              null,
+          }
+        : null,
       people: ctx.caller.isAdmin
         ? users
             .filter((user) => user.status === "active")

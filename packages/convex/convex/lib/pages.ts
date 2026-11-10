@@ -354,7 +354,7 @@ export const INTRANET_PAGES: IntranetPage[] = [
   },
   {
     href: "/office",
-    label: "Office",
+    label: "The Office",
     description:
       "Büro-Grundriss mit allen Arbeitsplätzen: wer wo sitzt und welche Geräte, Kabel und Adapter dort angeschlossen sind.",
     keywords: [
@@ -366,6 +366,8 @@ export const INTRANET_PAGES: IntranetPage[] = [
       "geräte",
       "hardware",
       "kabel",
+      "küchendienst",
+      "eingestempelt",
     ],
     visible: (caller) => caller.isAdmin || process.env.OFFICE_MODE === "live",
   },

@@ -4,7 +4,7 @@
   "adminsOnly": "Visible to admins only",
   "adminsOnlyHint": "To open it for everyone: set the Convex env OFFICE_MODE=live and add /office to OPEN_PREFIXES.",
   "tabs": {
-    "plan": "Floor plan",
+    "plan": "The Office",
     "storage": "Storage"
   },
   "kpi": {
@@ -44,7 +44,8 @@
     "clockIn": "Clocked in",
     "clockBreak": "On a break",
     "clockOut": "Not clocked in",
-    "kitchen": "Kitchen duty today"
+    "kitchen": "Kitchen duty today",
+    "kitchenBanner": "{name} is in charge of the kitchen!"
   },
   "sizeDialog": {
     "title": "Office size",

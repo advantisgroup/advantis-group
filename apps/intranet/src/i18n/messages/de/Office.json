@@ -4,7 +4,7 @@
   "adminsOnly": "Nur für Admins sichtbar",
   "adminsOnlyHint": "Freigabe für alle: Convex-Env OFFICE_MODE=live und /office in OPEN_PREFIXES eintragen.",
   "tabs": {
-    "plan": "Grundriss",
+    "plan": "The Office",
     "storage": "Lager"
   },
   "kpi": {
@@ -44,7 +44,8 @@
     "clockIn": "Eingestempelt",
     "clockBreak": "Pause",
     "clockOut": "Nicht eingestempelt",
-    "kitchen": "Küchendienst heute"
+    "kitchen": "Küchendienst heute",
+    "kitchenBanner": "{name} ist zuständig für die Küche!"
   },
   "sizeDialog": {
     "title": "Bürogröße",
