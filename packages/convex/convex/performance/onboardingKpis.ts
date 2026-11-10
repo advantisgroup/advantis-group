@@ -28,8 +28,10 @@ import {
   type Ctx,
   type Cutoff,
   loadRoster,
+  monthRows,
   newQueryCache,
   type QueryCache,
+  summarizeMonth,
   teamTotals,
 } from "./lib/reports";
 import { todayBerlin, toISODate } from "./lib/workdays";
@@ -162,9 +164,14 @@ async function personCalls(
       .collect();
     same.filter((e) => !e.userId || e.userId === person.userId).forEach(add);
   }
+  // Just this one row of the other dashboard — that dashboard's roster may
+  // leave it out (e.g. "team only" without a linked account there).
   for (const r of rows) {
-    const totals = await teamTotals(ctx, r.companyId, period.ym, cache, period.callsCutoff);
-    const snap = totals.snaps.find((s) => s.employeeId === r.employeeId);
+    const monthly = await monthRows(ctx, r.companyId, period.ym, cache);
+    const summary = summarizeMonth(monthly, new Map([[r.employeeId, person.name]]), period.ym, {
+      cutoff: period.callsCutoff,
+    });
+    const snap = summary.snaps.find((s) => s.employeeId === r.employeeId);
     if (snap?.callsToday !== undefined) return snap;
   }
   return undefined;
