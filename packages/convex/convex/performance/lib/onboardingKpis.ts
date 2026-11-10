@@ -82,6 +82,53 @@ function emptyCockpit(): Record<CockpitKey, number> {
   return Object.fromEntries(COCKPIT_KEYS.map((k) => [k, 0])) as Record<CockpitKey, number>;
 }
 
+/** What contact an entry is, if any. The cockpit logs a contact as its
+ * situation ("outcome": channel in `fromValue`); the first version logged
+ * reached / not reached / e-mail. */
+export function contactOf(e: CockpitEvent): "reached" | "not_reached" | "email" | null {
+  if (e.kind === "outcome") {
+    if (!e.outcomeKind || e.outcomeKind === "other") return null;
+    if (e.fromValue === "email") return "email";
+    return e.outcomeKind === "notReached" ? "not_reached" : "reached";
+  }
+  return e.kind === "reached" || e.kind === "not_reached" || e.kind === "email" ? e.kind : null;
+}
+
+export interface ContactDay {
+  date: string;
+  reached: number;
+  notReached: number;
+  emails: number;
+}
+
+/** Contacts per day `from`–`to` of the given users (every day listed). */
+export function contactDays(
+  events: readonly CockpitEvent[],
+  from: string,
+  to: string,
+  users: ReadonlySet<string>,
+): ContactDay[] {
+  const byDay = new Map<string, ContactDay>();
+  for (let d = from; d <= to; d = nextDay(d)) {
+    byDay.set(d, { date: d, reached: 0, notReached: 0, emails: 0 });
+  }
+  for (const e of events) {
+    const day = byDay.get(e.day);
+    if (!day || !users.has(e.byUserId)) continue;
+    const c = contactOf(e);
+    if (c === "reached") day.reached++;
+    else if (c === "not_reached") day.notReached++;
+    else if (c === "email") day.emails++;
+  }
+  return [...byDay.values()];
+}
+
+function nextDay(iso: string): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
 /**
  * Cockpit counts per user for the days `from`–`to` (inclusive):
  * - attempts = reached + not reached + e-mails; reachRate = reached ÷
@@ -101,20 +148,7 @@ export function cockpitCounts(
     if (e.day < from || e.day > to) continue;
     const c = out.get(e.byUserId) ?? emptyCockpit();
     out.set(e.byUserId, c);
-    // The cockpit logs a contact as its situation ("outcome": channel in
-    // `fromValue`); the first version logged reached / not reached / e-mail.
-    const contact =
-      e.kind === "outcome"
-        ? e.outcomeKind && e.outcomeKind !== "other"
-          ? e.fromValue === "email"
-            ? "email"
-            : e.outcomeKind === "notReached"
-              ? "not_reached"
-              : "reached"
-          : null
-        : e.kind === "reached" || e.kind === "not_reached" || e.kind === "email"
-          ? e.kind
-          : null;
+    const contact = contactOf(e);
     if (contact) {
       c.attempts++;
       if (contact === "reached") c.reached++;

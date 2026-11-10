@@ -704,9 +704,28 @@
       "talkTotalSec": "Summe der Gesprächszeit laut Genesys.",
       "talkAvgSec": "Gesprächszeit ÷ Calls.",
       "loginSec": "Angemeldete Zeit laut Genesys-Agentenstatus."
-    }
+    },
+    "subtitle": "Onboarding-Team im {ym} – {count} Personen",
+    "reachSubtitle": "{reached} von {dialled} Anrufen erreicht",
+    "attemptsSubtitle": "{cases} Fälle bearbeitet",
+    "perDayTitle": "Kontaktversuche pro Arbeitstag",
+    "perDaySubtitle": "Hochrechnung bis Monatsende: {fc} Kontaktversuche",
+    "perDaySubtitleDone": "Monat abgeschlossen – {total} Kontaktversuche insgesamt",
+    "perDayInfo": "Kontaktversuche des Teams (erreicht, nicht erreicht, E-Mail) geteilt durch die bisherigen Arbeitstage des Monats. Die Hochrechnung nimmt dieses Tempo bis zum Monatsende an.",
+    "dailyTitle": "Kontakte pro Tag",
+    "devSubtitle": "Das Team über die letzten sechs Monate; der laufende Monat bis heute.",
+    "devContacts": "Kontakte pro Monat",
+    "devReach": "Erreichbarkeit pro Monat",
+    "devMilestones": "Meilensteine pro Monat",
+    "devClosed": "Abgänge pro Monat",
+    "devCalls": "Calls pro Monat (Genesys)"
   },
   "settingsCockpit": "Mit dem Onboarding-Cockpit verknüpfen",
   "settingsCockpitHint": "Team und Teamleitung kommen aus dem Cockpit; Kontakte, Meilensteine und Abgänge erscheinen als eigener Reiter „Onboarding“ neben den Calls.",
-  "settingsCockpitBadge": "Cockpit"
+  "settingsCockpitBadge": "Cockpit",
+  "settingsCallHistory": "Call-Historie übernehmen",
+  "settingsCallHistoryHint": "Holt frühere Calls und Interaktionen der Personen aus anderen Dashboards (z. B. Sales) – für alle, die später ins Team gekommen sind. Schon vorhandene Tage bleiben unverändert.",
+  "settingsCallHistoryBusy": "Wird übernommen …",
+  "settingsCallHistoryDone": "Übernommen: {days} Tage Call-Zahlen, {interactions} Interaktionen.",
+  "settingsCallHistoryError": "Übernahme fehlgeschlagen."
 }

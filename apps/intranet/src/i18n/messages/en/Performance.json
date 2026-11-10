@@ -704,9 +704,28 @@
       "talkTotalSec": "Total talk time from Genesys.",
       "talkAvgSec": "Talk time ÷ calls.",
       "loginSec": "Logged-in time from the Genesys agent status report."
-    }
+    },
+    "subtitle": "Onboarding team in {ym} – {count} people",
+    "reachSubtitle": "{reached} of {dialled} calls reached",
+    "attemptsSubtitle": "{cases} cases worked",
+    "perDayTitle": "Contact attempts per workday",
+    "perDaySubtitle": "Projection to month end: {fc} contact attempts",
+    "perDaySubtitleDone": "Month closed – {total} contact attempts in total",
+    "perDayInfo": "The team's contact attempts (reached, not reached, e-mail) divided by the month's workdays so far. The projection assumes this pace until month end.",
+    "dailyTitle": "Contacts per day",
+    "devSubtitle": "The team over the last six months; the running month to date.",
+    "devContacts": "Contacts per month",
+    "devReach": "Reachability per month",
+    "devMilestones": "Milestones per month",
+    "devClosed": "Closed cases per month",
+    "devCalls": "Calls per month (Genesys)"
   },
   "settingsCockpit": "Link to the onboarding cockpit",
   "settingsCockpitHint": "Team and team lead come from the cockpit; contacts, milestones and closed cases show as an \"Onboarding\" tab next to the calls.",
-  "settingsCockpitBadge": "Cockpit"
+  "settingsCockpitBadge": "Cockpit",
+  "settingsCallHistory": "Adopt call history",
+  "settingsCallHistoryHint": "Brings earlier calls and interactions of the people over from other dashboards (e.g. Sales) – for everyone who joined the team later. Days already present stay unchanged.",
+  "settingsCallHistoryBusy": "Adopting …",
+  "settingsCallHistoryDone": "Adopted: {days} days of call figures, {interactions} interactions.",
+  "settingsCallHistoryError": "Adopting failed."
 }

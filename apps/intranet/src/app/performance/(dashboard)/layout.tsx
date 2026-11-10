@@ -5,6 +5,7 @@ import { useEffect, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
+import { type Id } from "@advantis/convex/dataModel";
 import { useQuery } from "convex/react";
 import {
   Activity,
@@ -13,7 +14,6 @@ import {
   LayoutDashboard,
   Phone,
   Presentation,
-  Rocket,
   TrendingUp,
   Users,
 } from "lucide-react";
@@ -34,6 +34,7 @@ import {
   teamHome,
   usePerformanceAccess,
 } from "@/components/performance/PerformanceAccess";
+import { OnboardingDailyChart } from "@/components/performance/OnboardingDashboard";
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
 import { PerformanceDashboardDataProvider } from "@/components/performance/PerformanceDashboardContext";
 import {
@@ -60,7 +61,16 @@ import {
 } from "@/components/ui/select";
 import { usePerformanceApi } from "@/lib/performance";
 
-const CALLS_ONLY_TABS = new Set(["onboarding", "calls", "team", "interaktionen"]);
+const CALLS_ONLY_TABS = new Set(["calls", "team", "interaktionen"]);
+/** A calls dashboard linked to the Onboarding-Cockpit is laid out like
+ * Sales: Überblick and Entwicklung from the cockpit, plus the call tabs. */
+const COCKPIT_TABS = new Set(["ueberblick", "calls", "team", "interaktionen", "entwicklung"]);
+
+function tabAllowed(dashboard: PerformanceDashboard | null, tab: string): boolean {
+  if (tab === "onboarding") return false; // folded into Überblick
+  if (dashboard?.kind !== "calls") return true;
+  return (dashboard.cockpit ? COCKPIT_TABS : CALLS_ONLY_TABS).has(tab);
+}
 
 interface DashboardTopData {
   hasCalls: boolean;
@@ -82,10 +92,14 @@ function DashboardTopSection({
   interactionDays,
   activeTab,
   kind,
+  cockpit,
+  companyId,
   t,
   locale,
 }: {
   data: DashboardTopData;
+  cockpit: boolean;
+  companyId: Id<"companies">;
   interactionDays: LastDayInteractionRow[] | undefined;
   activeTab: string;
   kind: PerformanceDashboardKind;
@@ -154,6 +168,8 @@ function DashboardTopSection({
   // (over its own trailing-3-month window) further down the page — no
   // top-of-page chart needed here too.
   if (activeTab === "entwicklung") return null;
+  // Onboarding: the cockpit's contacts day by day.
+  if (cockpit) return <OnboardingDailyChart companyId={companyId} />;
   // Closed won is Salesforce data; Wallbox shows its own numbers below.
   if (kind !== "sales") return null;
   return <ClosedWonTrendChart days={data.wonTrend.days} avg={data.wonTrend.avg} />;
@@ -233,17 +249,6 @@ function DashboardChrome({
 
   const kind = dashboard.kind;
   const allTabs: RouteTab[] = [
-    // Dashboards linked to the Onboarding-Cockpit: its KPIs first.
-    ...(dashboard.cockpit
-      ? [
-          {
-            value: "onboarding",
-            href: "/performance/onboarding",
-            label: t("onboarding.tab"),
-            icon: Rocket,
-          },
-        ]
-      : []),
     {
       value: "ueberblick",
       href: "/performance/ueberblick",
@@ -293,7 +298,7 @@ function DashboardChrome({
       },
     );
   }
-  const tabs = kind === "calls" ? allTabs.filter((tab) => CALLS_ONLY_TABS.has(tab.value)) : allTabs;
+  const tabs = allTabs.filter((tab) => tabAllowed(dashboard, tab.value));
 
   // Entwicklung always shows the last 3 months and Interaktionen has its own
   // period filter — a month picker there would only mislead. Wallbox's
@@ -301,7 +306,9 @@ function DashboardChrome({
   const usesMonth =
     kind === "sales"
       ? !["entwicklung", "interaktionen", "monitoring", "business-review"].includes(activeTab)
-      : activeTab === "calls" || activeTab === "team" || activeTab === "onboarding";
+      : activeTab === "calls" ||
+        activeTab === "team" ||
+        (dashboard.cockpit === true && activeTab === "ueberblick");
 
   return (
     <div className="min-h-screen bg-muted/20">
@@ -358,6 +365,8 @@ function DashboardChrome({
             interactionDays={interactions?.days}
             activeTab={activeTab}
             kind={kind}
+            cockpit={dashboard.cockpit === true}
+            companyId={companyId}
             t={t}
             locale={locale}
           />
@@ -382,9 +391,7 @@ export default function PerformanceDashboardLayout({ children }: { children: Rea
   const { me, dashboard } = usePerformanceAccess();
   const activeTab = pathname.split("/").filter(Boolean)[1] ?? "ueberblick";
   // A calls-only dashboard has no Überblick or Entwicklung.
-  const offTab =
-    (dashboard?.kind === "calls" && !CALLS_ONLY_TABS.has(activeTab)) ||
-    (activeTab === "onboarding" && !dashboard?.cockpit);
+  const offTab = !tabAllowed(dashboard, activeTab);
 
   // People without the team view have their own detail page instead.
   useEffect(() => {

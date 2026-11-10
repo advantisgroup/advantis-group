@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
-import { useMutation, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import { type FunctionReturnType } from "convex/server";
 import { Pencil, Plus, Settings2, Sparkles, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -234,6 +234,7 @@ function DashboardDialog({
               </span>
             </label>
           )}
+          {dashboard && kind === "calls" && <CallHistoryButton companyId={dashboard.companyId} />}
         </div>
         <DialogFooter>
           {dashboard && (
@@ -473,5 +474,48 @@ export default function PerformanceSettingsPage() {
         />
       )}
     </PerformanceShell>
+  );
+}
+
+/** Earlier calls of people who joined this calls team later (they sit on
+ * the dashboard they were on before, e.g. Sales). */
+function CallHistoryButton({ companyId }: { companyId: Id<"companies"> }) {
+  const t = useTranslations("Performance");
+  const adopt = useAction(api.performance.callHistory.adoptForDashboard);
+  const [state, setState] = useState<
+    "idle" | "busy" | "error" | { days: number; interactions: number }
+  >("idle");
+  return (
+    <div className="flex flex-col gap-2 rounded-md border px-3 py-2 text-sm">
+      <span>
+        <span className="font-medium">{t("settingsCallHistory")}</span>
+        <span className="block text-xs text-muted-foreground">{t("settingsCallHistoryHint")}</span>
+      </span>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={state === "busy"}
+          onClick={() => {
+            setState("busy");
+            adopt({ companyId }).then(
+              (r) => setState({ days: r.days, interactions: r.interactions }),
+              () => setState("error"),
+            );
+          }}
+        >
+          {state === "busy" ? t("settingsCallHistoryBusy") : t("settingsCallHistory")}
+        </Button>
+        {typeof state === "object" && (
+          <span className="text-xs text-muted-foreground">
+            {t("settingsCallHistoryDone", { days: state.days, interactions: state.interactions })}
+          </span>
+        )}
+        {state === "error" && (
+          <span className="text-xs text-destructive">{t("settingsCallHistoryError")}</span>
+        )}
+      </div>
+    </div>
   );
 }

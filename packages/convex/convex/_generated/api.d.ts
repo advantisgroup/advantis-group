@@ -188,6 +188,7 @@ import type * as people_tourProgress from "../people/tourProgress.js";
 import type * as people_users from "../people/users.js";
 import type * as performance_access from "../performance/access.js";
 import type * as performance_auth from "../performance/auth.js";
+import type * as performance_callHistory from "../performance/callHistory.js";
 import type * as performance_checks from "../performance/checks.js";
 import type * as performance_companies from "../performance/companies.js";
 import type * as performance_dashboards from "../performance/dashboards.js";
@@ -497,6 +498,7 @@ declare const fullApi: ApiFromModules<{
   "people/users": typeof people_users;
   "performance/access": typeof performance_access;
   "performance/auth": typeof performance_auth;
+  "performance/callHistory": typeof performance_callHistory;
   "performance/checks": typeof performance_checks;
   "performance/companies": typeof performance_companies;
   "performance/dashboards": typeof performance_dashboards;

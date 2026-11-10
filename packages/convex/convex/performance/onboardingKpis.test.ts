@@ -183,6 +183,11 @@ describe("onboarding tab", () => {
     expect(data.total.cur.reached).toBe(2);
     expect(data.rows[1].cur).toMatchObject({ attempts: 2, notReached: 1 });
     expect(data.trend.at(-1)?.ym).toBe("2026-11");
+    expect(data.workdays).toEqual({ elapsed: 3, total: 21 });
+    expect(data.days.find((d) => d.date === "2026-11-04")).toMatchObject({
+      reached: 1,
+      notReached: 1,
+    });
 
     // Dalia sees her own figures, not the team.
     await expect(

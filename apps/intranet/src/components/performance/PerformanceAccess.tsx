@@ -77,7 +77,7 @@ export type PerformanceDashboardKind = PerformanceDashboard["kind"];
 /** The team view's first tab: a calls-only dashboard has no Überblick; one
  * linked to the Onboarding-Cockpit opens on its Onboarding tab. */
 export function teamHome(kind: PerformanceDashboardKind, cockpit = false): string {
-  if (cockpit) return "/performance/onboarding";
+  if (cockpit) return "/performance/ueberblick";
   return kind === "calls" ? "/performance/calls" : "/performance/ueberblick";
 }
 

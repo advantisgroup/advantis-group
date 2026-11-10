@@ -18,6 +18,7 @@
  */
 import { ConvexError, v } from "convex/values";
 
+import { internal } from "../_generated/api";
 import { type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "../_generated/server";
 import { userMutation, userQuery } from "../functions";
@@ -504,7 +505,11 @@ export const saveSettings = userMutation({
     else await ctx.db.insert("onboardingSettings", next);
     // New team members get their row on the linked Performance dashboard.
     for (const company of await ctx.db.query("companies").collect()) {
-      if (company.onboardingCockpit) await syncTeamRoster(ctx, company);
+      if (!company.onboardingCockpit) continue;
+      await syncTeamRoster(ctx, company);
+      await ctx.scheduler.runAfter(0, internal.performance.callHistory.adoptInternal, {
+        companyId: company._id,
+      });
     }
   },
 });

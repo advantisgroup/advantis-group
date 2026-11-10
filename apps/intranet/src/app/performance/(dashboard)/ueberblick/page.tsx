@@ -11,21 +11,15 @@ import {
   MissingReportWarning,
   StaleComparisonWarning,
 } from "@/components/performance/ComparisonNotes";
+import { OnboardingOverview } from "@/components/performance/OnboardingDashboard";
 import { usePerformanceAccess } from "@/components/performance/PerformanceAccess";
 import { useDashboardData } from "@/components/performance/PerformanceDashboardContext";
-import {
-  DeltaBadge,
-  type DeltaFormat,
-  DeltaPair,
-  fmtNum,
-  fmtPct,
-  fmtYm,
-} from "@/components/performance/PerformanceFormat";
+import { DeltaBadge, fmtNum, fmtPct, fmtYm } from "@/components/performance/PerformanceFormat";
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
+import { PrimaryKpiCard, StatCard } from "@/components/performance/KpiCards";
 import { TeamTable } from "@/components/performance/TeamTable";
 import { UnqualifiedReasonsChart } from "@/components/performance/UnqualifiedReasonsChart";
 import { WallboxOverview } from "@/components/performance/WallboxOverview";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { InfoTip } from "@/components/ui/info-tip";
@@ -33,81 +27,6 @@ import { formatIsoDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const LIST_KEYS = ["analysis30", "opp_overdue", "opp30", "leads14", "opps14"] as const;
-
-function PrimaryKpiCard({
-  accent,
-  label,
-  value,
-  subtitle,
-  dVm,
-  dVj,
-  format,
-  info,
-}: {
-  accent: "emerald" | "purple" | "slate" | "amber";
-  label: string;
-  /** Explanation behind the "i" in the corner. */
-  info: string;
-  value: string;
-  subtitle?: string;
-  dVm?: number;
-  dVj?: number;
-  format?: DeltaFormat;
-}) {
-  const border = {
-    emerald: "border-t-emerald-500",
-    purple: "border-t-purple-500",
-    slate: "border-t-foreground/60",
-    amber: "border-t-amber-500",
-  }[accent];
-  return (
-    <Card className={cn("relative border-t-2", border)}>
-      <InfoTip text={info} className="absolute right-3 top-3" />
-      <CardContent className="flex flex-col gap-1.5 p-4 pr-8">
-        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          {label}
-        </span>
-        <span className="text-3xl font-semibold tabular-nums">{value}</span>
-        {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
-        <DeltaPair dVm={dVm} dVj={dVj} format={format} />
-      </CardContent>
-    </Card>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  badge,
-  dVm,
-  dVj,
-  info,
-}: {
-  label: string;
-  value: string;
-  badge?: string;
-  info: string;
-  dVm?: number;
-  dVj?: number;
-}) {
-  return (
-    <Card className="relative">
-      <InfoTip text={info} className="absolute right-3 top-3" />
-      <CardContent className="flex flex-col gap-1.5 p-4 pr-8">
-        <span className="text-xs text-muted-foreground">{label}</span>
-        <div className="flex items-baseline gap-2">
-          <span className="text-xl font-semibold tabular-nums">{value}</span>
-          {badge && (
-            <Badge variant="muted" className="text-[10px]">
-              {badge}
-            </Badge>
-          )}
-        </div>
-        <DeltaPair dVm={dVm} dVj={dVj} />
-      </CardContent>
-    </Card>
-  );
-}
 
 function ListStatCard({
   href,
@@ -143,6 +62,7 @@ function ListStatCard({
 
 export default function DashboardOverviewPage() {
   const dashboard = usePerformanceAccess().dashboard;
+  if (dashboard?.cockpit) return <OnboardingOverview companyId={dashboard.companyId} />;
   if (dashboard?.kind === "wallbox") return <WallboxOverview companyId={dashboard.companyId} />;
   // Calls-only dashboards have no Überblick; the layout redirects.
   if (dashboard?.kind === "calls") return null;

@@ -5,6 +5,7 @@
  */
 import { ConvexError, v } from "convex/values";
 
+import { internal } from "../_generated/api";
 import { type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "../_generated/server";
 import { userMutation, userQuery } from "../functions";
@@ -160,7 +161,15 @@ export const update = userMutation({
       updatedAt: Date.now(),
     });
     const company = await ctx.db.get(companyId);
-    if (company) await syncTeamRoster(ctx, company);
+    if (company) {
+      await syncTeamRoster(ctx, company);
+      // Someone new on a calls team: bring their earlier calls along.
+      if (dashboardKind(company) === "calls") {
+        await ctx.scheduler.runAfter(0, internal.performance.callHistory.adoptInternal, {
+          companyId,
+        });
+      }
+    }
   },
 });
 

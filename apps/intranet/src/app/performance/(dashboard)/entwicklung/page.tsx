@@ -18,6 +18,7 @@ import {
 
 import { FilterableBarChart } from "@/components/charts/FilterableBarChart";
 import { CHART, tooltipStyle } from "@/components/charts/theme";
+import { OnboardingDevelopment } from "@/components/performance/OnboardingDashboard";
 import { usePerformanceAccess } from "@/components/performance/PerformanceAccess";
 import { ClosedWonTrendChart } from "@/components/performance/ClosedWonTrendChart";
 import { fmtDayShort, fmtYm } from "@/components/performance/PerformanceFormat";
@@ -27,6 +28,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function DashboardDevelopmentPage() {
   const dashboard = usePerformanceAccess().dashboard;
+  if (dashboard?.cockpit) return <OnboardingDevelopment companyId={dashboard.companyId} />;
   if (dashboard?.kind === "wallbox") return <WallboxDevelopment companyId={dashboard.companyId} />;
   // Calls-only dashboards have no Entwicklung; the layout redirects.
   if (dashboard?.kind === "calls") return null;

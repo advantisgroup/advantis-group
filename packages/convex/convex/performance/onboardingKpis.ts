@@ -21,6 +21,7 @@ import {
   COCKPIT_KEYS,
   type CockpitEvent,
   cockpitCounts,
+  contactDays,
   onboardingValues,
   sumCockpit,
 } from "./lib/onboardingKpis";
@@ -34,7 +35,7 @@ import {
   summarizeMonth,
   teamTotals,
 } from "./lib/reports";
-import { todayBerlin, toISODate } from "./lib/workdays";
+import { parseISODate, todayBerlin, toISODate, workdaysBetween } from "./lib/workdays";
 import { cutoffFor, currentYm } from "./queries";
 
 const YM = /^\d{4}-\d{2}$/;
@@ -229,6 +230,20 @@ export const team = userQuery({
 
     const [cur, vm, vj] = await Promise.all([valuesFor(p.cur), valuesFor(p.vm), valuesFor(p.vj)]);
 
+    // The month day by day (chart) and its workdays (per-day rates, forecast).
+    const team = new Set(persons.flatMap((pp) => (pp.userId ? [pp.userId] : [])));
+    const bounds = monthBounds(ym);
+    const days = contactDays(
+      await cockpitEvents(ctx, p.cur.from, p.cur.to),
+      p.cur.from,
+      p.cur.to,
+      team,
+    );
+    const workdays = {
+      elapsed: workdaysBetween(parseISODate(p.cur.from), parseISODate(p.cur.to)),
+      total: workdaysBetween(parseISODate(bounds.start), parseISODate(bounds.end)),
+    };
+
     // Trend: whole months before, the running one to date.
     const trend = [];
     for (let i = TREND_MONTHS - 1; i >= 0; i--) {
@@ -260,6 +275,8 @@ export const team = userQuery({
         vj: vj.rows[i].values,
       })),
       total: { cur: cur.total, vm: vm.total, vj: vj.total },
+      days,
+      workdays,
       trend,
     };
   },
