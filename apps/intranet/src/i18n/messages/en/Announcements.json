@@ -79,5 +79,10 @@
   "scheduledToast": "Announcement scheduled",
   "expired": "Expired",
   "reactions": "Reactions",
-  "optionsHint": "Category, audience, attachments, relevant date and scheduling for this announcement."
+  "optionsHint": "Category, audience, attachments, relevant date and scheduling for this announcement.",
+  "popup": {
+    "confirm": "Read and understood",
+    "more": "{count} more",
+    "attachments": "{count, plural, one {Has one attachment} other {Has # attachments}} – you'll find them under “Announcements”."
+  }
 }

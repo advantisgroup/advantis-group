@@ -29,6 +29,7 @@ export function ResponsiveDialog({
   footer,
   children,
   contentClassName,
+  locked = false,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -38,12 +39,14 @@ export function ResponsiveDialog({
   children: ReactNode;
   /** Desktop dialog width, e.g. "max-w-lg" — defaults to max-w-md. */
   contentClassName?: string;
+  /** No close button and no swipe-down: only the footer's own buttons close it. */
+  locked?: boolean;
 }) {
   const isMobile = useIsMobile();
 
   if (isMobile) {
     return (
-      <Drawer.Root open={open} onOpenChange={onOpenChange}>
+      <Drawer.Root open={open} onOpenChange={onOpenChange} dismissible={!locked}>
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 z-50 bg-black/45 backdrop-blur-[8px]" />
           <Drawer.Content
@@ -85,6 +88,7 @@ export function ResponsiveDialog({
       {/* Column layout, not the base grid: the header and footer stay put and
           only the body scrolls. */}
       <DialogContent
+        hideClose={locked}
         className={cn("flex max-w-md flex-col gap-0 overflow-hidden p-0", contentClassName)}
       >
         <div className="shrink-0 px-7 pb-2 pr-14 pt-7">

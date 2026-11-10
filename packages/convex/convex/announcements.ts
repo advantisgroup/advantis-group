@@ -781,3 +781,93 @@ export const nonReaders = userQuery({
     );
   },
 });
+
+/**
+ * New announcements pop up for everyone in their audience until confirmed
+ * with "Gelesen und verstanden" (Vahan, 10.11.2026). Only announcements
+ * published from this day on — older ones stay in the feed as before.
+ */
+export const POPUP_SINCE = Date.UTC(2026, 10, 9, 23, 0); // 10.11.2026 00:00 Berlin
+
+function isOwnAnnouncement(userId: Id<"users">, a: Doc<"announcements">): boolean {
+  return a.authorUserId === userId || announcementOwnerUserId(a) === userId;
+}
+
+/** The caller's announcements still waiting for the pop-up confirmation, oldest first. */
+export const popupQueue = userQuery({
+  args: {},
+  handler: async (ctx) => {
+    const user = ctx.caller.user;
+    const now = Date.now();
+    const recent = await ctx.db
+      .query("announcements")
+      .withIndex("by_publishedAt", (q) => q.gte("publishedAt", POPUP_SINCE))
+      .collect();
+    const candidates = recent.filter(
+      (a) =>
+        a.publishedAt <= now &&
+        (!a.expiresAt || a.expiresAt > now) &&
+        !a.deletedAt &&
+        !isOwnAnnouncement(user._id, a) &&
+        userMatchesAudience(user, a.audience),
+    );
+    const acks = await Promise.all(
+      candidates.map((a) =>
+        ctx.db
+          .query("announcementAcks")
+          .withIndex("by_announcement_user", (q) =>
+            q.eq("announcementId", a._id).eq("userId", user._id),
+          )
+          .first(),
+      ),
+    );
+    const open = candidates.filter((_, i) => !acks[i]);
+    return Promise.all(
+      open.map(async (a) => {
+        const author = await ctx.db.get(a.authorUserId);
+        return {
+          _id: a._id,
+          title: a.title,
+          body: a.body,
+          publishedAt: a.publishedAt,
+          authorName: author ? displayName(author) : null,
+          attachmentCount: a.attachments?.length ?? a.attachmentStorageIds.length,
+        };
+      }),
+    );
+  },
+});
+
+/** "Gelesen und verstanden" in the pop-up: counts as read and as confirmed. */
+export const confirmPopup = userMutation({
+  args: { announcementId: v.id("announcements") },
+  handler: async (ctx, { announcementId }) => {
+    const user = ctx.caller.user;
+    const announcement = await ctx.db.get(announcementId);
+    if (!announcement || !userMatchesAudience(user, announcement.audience)) {
+      throw new ConvexError({ code: "not_found", message: "Not found" });
+    }
+    const now = Date.now();
+    const [read, ack] = await Promise.all([
+      ctx.db
+        .query("announcementReads")
+        .withIndex("by_announcement_user", (q) =>
+          q.eq("announcementId", announcementId).eq("userId", user._id),
+        )
+        .first(),
+      ctx.db
+        .query("announcementAcks")
+        .withIndex("by_announcement_user", (q) =>
+          q.eq("announcementId", announcementId).eq("userId", user._id),
+        )
+        .first(),
+    ]);
+    if (!read) {
+      await ctx.db.insert("announcementReads", { announcementId, userId: user._id, readAt: now });
+    }
+    if (!ack) {
+      await ctx.db.insert("announcementAcks", { announcementId, userId: user._id, ackedAt: now });
+    }
+    return { ok: true };
+  },
+});
