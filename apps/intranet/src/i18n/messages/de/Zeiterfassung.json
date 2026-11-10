@@ -50,6 +50,10 @@
       "afterIn": "Bitte mach vor Feierabend die Küche.",
       "ok": "Alles klar",
       "beforeOut": "Du hast heute Küchendienst – ist die Küche gemacht?"
+    },
+    "forgotten": {
+      "text": "Am {date} hast du vergessen auszustempeln – das System hat dich um {end} automatisch ausgestempelt. Bitte trag deine echte Endzeit nach.",
+      "fix": "Tag jetzt korrigieren"
     }
   },
   "overview": {

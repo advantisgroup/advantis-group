@@ -14,15 +14,17 @@ import {
   Thermometer,
   TriangleAlert,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Link } from "@/components/Link";
 import { Button } from "@/components/ui/button";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { SwipeToConfirm } from "@/components/zeiterfassung/SwipeToConfirm";
 import { ErrorFallback } from "@/components/ErrorFallback";
 import { InfoTip } from "@/components/ui/info-tip";
+import { formatIsoDate, formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import {
   type AbsenceStatus,
@@ -240,6 +242,45 @@ export function KitchenNotice({ children }: { children: ReactNode }) {
   );
 }
 
+export interface ForgottenClockOut {
+  date: string;
+  start: number;
+  end: number;
+}
+
+/** "Am Mi., 14.10. wurdest du automatisch ausgestempelt – bitte korrigieren."
+ *  Shown when clocking in after a day the 18:00 rule had to close. */
+export function ForgottenClockOutNotice({
+  day,
+  onNavigate,
+}: {
+  day: ForgottenClockOut;
+  onNavigate?: () => void;
+}) {
+  const t = useTranslations("Zeiterfassung.clock.forgotten");
+  const locale = useLocale();
+  return (
+    <div className="flex items-start gap-2 rounded-lg bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-100">
+      <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+      <div className="min-w-0 space-y-1">
+        <p className="font-medium">
+          {t("text", {
+            date: formatIsoDate(day.date, locale),
+            end: formatTime(day.end, locale),
+          })}
+        </p>
+        <Link
+          href={`/zeiterfassung/arbeitszeiten?date=${day.date}`}
+          onClick={onNavigate}
+          className="font-semibold underline underline-offset-2"
+        >
+          {t("fix")}
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export function useTimeClock() {
   const t = useTranslations("Zeiterfassung");
   const state = useQuery(api.time.clock.state);
@@ -254,6 +295,8 @@ export function useTimeClock() {
   const [kitchenAfterIn, setKitchenAfterIn] = useState(false);
   const kitchenToday =
     useQuery(api.kitchen.myDay, state ? { date: berlinParts(now).date } : "skip") === true;
+  const forgotten =
+    useQuery(api.time.clock.forgottenClockOut, state?.status === "out" ? {} : "skip") ?? null;
 
   const run = (action: () => Promise<unknown>, done: string) => async () => {
     setBusy(true);
@@ -312,6 +355,9 @@ export function useTimeClock() {
           {pending === "out" && kitchenToday && (
             <KitchenNotice>{t("clock.kitchen.beforeOut")}</KitchenNotice>
           )}
+          {pending === "in" && forgotten && (
+            <ForgottenClockOutNotice day={forgotten} onNavigate={() => setPending(null)} />
+          )}
           <SwipeToConfirm
             key={pending}
             label={t(`clock.confirm.slide.${pending}`)}
@@ -349,6 +395,7 @@ export function useTimeClock() {
     clockInNow: actions.in,
     confirmDialog,
     kitchenToday,
+    forgotten,
   };
 }
 

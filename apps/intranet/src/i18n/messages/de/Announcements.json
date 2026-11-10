@@ -79,5 +79,10 @@
   "scheduledToast": "Ankündigung geplant",
   "expired": "Abgelaufen",
   "reactions": "Reaktionen",
-  "optionsHint": "Kategorie, Zielgruppe, Anhänge, relevantes Datum und Zeitplanung für diese Ankündigung."
+  "optionsHint": "Kategorie, Zielgruppe, Anhänge, relevantes Datum und Zeitplanung für diese Ankündigung.",
+  "popup": {
+    "confirm": "Gelesen und verstanden",
+    "more": "noch {count} weitere",
+    "attachments": "{count, plural, one {Enthält einen Anhang} other {Enthält # Anhänge}} – du findest sie unter „Ankündigungen“."
+  }
 }

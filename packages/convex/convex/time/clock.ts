@@ -3,11 +3,13 @@ import { v } from "convex/values";
 import { userMutation, userQuery } from "../functions";
 import { clockDeviceValidator } from "../tables/time";
 import { assertTimeAccess, assertTimeClock } from "./lib/mode";
-import { berlinDate } from "./lib/berlin";
+import { addDays, berlinDate } from "./lib/berlin";
 import {
   assertDatesOpen,
   invalidateTotals,
+  isActive,
   isClockingOff,
+  loadEntries,
   noteMissingBreak,
   notePhoneBooking,
   openEntries,
@@ -33,6 +35,37 @@ export const state = userQuery({
       workStart: work?.start ?? null,
       breakStart: pause?.start ?? null,
     };
+  },
+});
+
+/**
+ * The last day before today that has any booked time, if the 18:00 rule
+ * ended it ("vergessen auszustempeln") and nobody has asked for a
+ * correction yet — the clock reminds the person when they clock in next.
+ */
+export const forgottenClockOut = userQuery({
+  args: {},
+  handler: async (ctx) => {
+    assertTimeAccess(ctx);
+    const today = berlinDate(Date.now());
+    const rows = await loadEntries(ctx, ctx.caller.id, addDays(today, -14), addDays(today, -1));
+    const active = rows.filter(isActive);
+    const lastDay = active.reduce<string | null>((latest, row) => {
+      const date = berlinDate(row.start);
+      return latest === null || date > latest ? date : latest;
+    }, null);
+    if (!lastDay) return null;
+    const auto = active.find(
+      (row) =>
+        row.kind === "work" &&
+        row.source === "auto18" &&
+        row.end !== undefined &&
+        berlinDate(row.start) === lastDay,
+    );
+    if (!auto) return null;
+    const corrected = rows.some((row) => row.status === "pending" && row.correctionOf === auto._id);
+    if (corrected) return null;
+    return { date: lastDay, start: auto.start, end: auto.end! };
   },
 });
 

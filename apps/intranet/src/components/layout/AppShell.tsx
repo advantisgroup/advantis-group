@@ -25,6 +25,7 @@ import { BottomNavTabsProvider } from "@/components/layout/bottom-nav-tabs";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { TimeClockHeaderControl } from "@/components/layout/TimeClockHeaderControl";
 import { ClockInPrompt } from "@/components/zeiterfassung/ClockInPrompt";
+import { AnnouncementPopup } from "@/components/announcements/AnnouncementPopup";
 import { useFillPagePresent } from "@/components/layout/fill-page";
 import { NotificationsMenu } from "@/components/layout/NotificationsMenu";
 import { MailHeaderButton } from "@/components/mail/MailPanel";
@@ -107,6 +108,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
   // Remember in-app pages for back arrows (see lib/nav-history). Read from
   // window so query-only changes on the same path are kept as well.
   const [canGoBack, setCanGoBack] = useState(false);
+  const [clockPromptOpen, setClockPromptOpen] = useState(false);
   useEffect(() => {
     recordVisit(window.location.pathname + window.location.search);
     setCanGoBack(hasPreviousVisit());
@@ -393,9 +395,12 @@ function AppShellInner({ children }: { children: ReactNode }) {
       <KeyboardShortcuts />
       {timeEnabled && (
         <ErrorBoundary fallback={() => null}>
-          <ClockInPrompt />
+          <ClockInPrompt onOpenChange={setClockPromptOpen} />
         </ErrorBoundary>
       )}
+      <ErrorBoundary fallback={() => null}>
+        <AnnouncementPopup paused={clockPromptOpen} />
+      </ErrorBoundary>
       <AiDock />
       <AskPanel />
       <StartPageRedirect />

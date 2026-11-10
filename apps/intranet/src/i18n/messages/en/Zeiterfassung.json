@@ -50,6 +50,10 @@
       "afterIn": "Please take care of the kitchen before closing time.",
       "ok": "Got it",
       "beforeOut": "You're on kitchen duty today – is the kitchen done?"
+    },
+    "forgotten": {
+      "text": "On {date} you forgot to clock out – the system clocked you out automatically at {end}. Please enter your real end time.",
+      "fix": "Fix that day now"
     }
   },
   "overview": {

@@ -4,6 +4,7 @@ import { internal } from "../_generated/api";
 import { type Doc } from "../_generated/dataModel";
 import { type QueryCtx } from "../_generated/server";
 import { userMutation, userQuery } from "../functions";
+import { recalcAutoClosed } from "./lib/autoCloseDb";
 import { assertTimeAccess, assertTimeWrite } from "./lib/mode";
 import { addDays, berlinDate, berlinInstant, isIsoDate } from "./lib/berlin";
 import { absenceWorkingDays } from "./lib/days";
@@ -299,6 +300,8 @@ export const setSchedule = userMutation({
       reason: reason?.trim() || undefined,
     });
     await invalidateTotalsFrom(ctx, userId, validFrom);
+    // Days the 18:00 rule booked with the old hours follow the new schedule.
+    await recalcAutoClosed(ctx, userId, validFrom, ctx.caller.id);
     return id;
   },
 });
@@ -321,6 +324,7 @@ export const removeSchedule = userMutation({
       reason: reason?.trim() || undefined,
     });
     await invalidateTotalsFrom(ctx, existing.userId, existing.validFrom);
+    await recalcAutoClosed(ctx, existing.userId, existing.validFrom, ctx.caller.id);
   },
 });
 
