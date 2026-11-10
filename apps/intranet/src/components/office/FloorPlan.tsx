@@ -682,6 +682,11 @@ export function FloorPlan() {
           aria-label={t("tabs.plan")}
         >
           <defs>
+            {/* Same violet fade as the intranet's default profile pictures. */}
+            <linearGradient id="office-face-fade" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#6d28d9" />
+              <stop offset="100%" stopColor="#c4b5fd" />
+            </linearGradient>
             <filter id="office-desk-shadow" x="-20%" y="-20%" width="140%" height="160%">
               <feDropShadow dx={0} dy={4} stdDeviation={5} floodOpacity={0.18} />
             </filter>
@@ -1192,7 +1197,7 @@ function SizeDialog({
   );
 }
 
-/** Initials and a steady colour per person, for desks without a photo. */
+/** Initials for people without a photo. */
 function initials(name: string) {
   const parts = name.trim().split(/\s+/);
   return (
@@ -1201,14 +1206,10 @@ function initials(name: string) {
 }
 
 /** Desks are numbered P1, P2 … on creation; anything else is a call name. */
-function callName(deskName: string, userName: string) {
-  return /^p\d+$/i.test(deskName.trim()) ? (userName.split(" ")[0] ?? userName) : deskName.trim();
-}
+const AUTO_NAME = /^p\d+$/i;
 
-function hue(name: string) {
-  let h = 0;
-  for (const char of name) h = (h * 31 + char.charCodeAt(0)) % 360;
-  return h;
+function callName(deskName: string, userName: string) {
+  return AUTO_NAME.test(deskName.trim()) ? (userName.split(" ")[0] ?? userName) : deskName.trim();
 }
 
 /**
@@ -1243,7 +1244,10 @@ function DeskShape({
 }) {
   const { x, y, w, h } = desk;
   const name = desk.userName;
-  const first = name ? callName(desk.name, name) : freeLabel;
+  // No one sits here but the desk has its own name (e.g. „Meetingraum“): a
+  // place for equipment, not a free desk.
+  const spot = !name && !AUTO_NAME.test(desk.name.trim());
+  const first = name ? callName(desk.name, name) : spot ? desk.name.trim() : freeLabel;
   const wide = w >= h * 1.4;
   const pad = Math.min(w, h) * 0.12;
   // Face: left of the name on wide desks, above it on narrow ones.
@@ -1302,7 +1306,7 @@ function DeskShape({
           </>
         ) : (
           <>
-            <circle cx={cx} cy={cy} r={r} fill={`hsl(${hue(name)} 55% 52%)`} />
+            <circle cx={cx} cy={cy} r={r} fill="url(#office-face-fade)" />
             <text
               x={cx}
               y={cy + r * 0.28}
@@ -1314,6 +1318,29 @@ function DeskShape({
             </text>
           </>
         )
+      ) : spot ? (
+        <>
+          <circle cx={cx} cy={cy} r={r} className="fill-muted" />
+          {/* A small screen on a stand. */}
+          <rect
+            x={cx - r * 0.5}
+            y={cy - r * 0.42}
+            width={r}
+            height={r * 0.66}
+            rx={r * 0.08}
+            className="fill-none stroke-muted-foreground"
+            strokeWidth={Math.max(r * 0.09, 1.5)}
+          />
+          <line
+            x1={cx - r * 0.28}
+            y1={cy + r * 0.48}
+            x2={cx + r * 0.28}
+            y2={cy + r * 0.48}
+            className="stroke-muted-foreground"
+            strokeWidth={Math.max(r * 0.09, 1.5)}
+            strokeLinecap="round"
+          />
+        </>
       ) : (
         <circle
           cx={cx}

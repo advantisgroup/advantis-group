@@ -59,7 +59,7 @@
     "person": "Person",
     "nobody": "Nobody",
     "note": "Note",
-    "nameHint": "Left as P1, P2 …, the plan shows the person's first name. Otherwise what you enter here – e.g. \"Alex\"."
+    "nameHint": "Left as P1, P2 …, the plan shows the person's first name. Otherwise what you enter here – e.g. \"Alex\". With no person and a name of its own (e.g. \"Meeting room\") it's an equipment spot instead of \"free\"."
   },
   "removeDesk": {
     "title": "Remove desk?",
