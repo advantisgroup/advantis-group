@@ -116,4 +116,38 @@ describe("office", () => {
       }),
     ).rejects.toThrow();
   });
+
+  test("rooms keep open sides, blocked areas and moved names; free labels are stored", async () => {
+    const { ada } = await setup();
+    const kitchen = {
+      id: "k",
+      name: "Küche",
+      x: 0,
+      y: 0,
+      w: 400,
+      h: 300,
+      open: ["bottom" as const],
+    };
+    const corner = { id: "c", name: "", x: 1100, y: 0, w: 100, h: 100, blocked: true };
+    const office = {
+      id: "o",
+      name: "Büro",
+      x: 0,
+      y: 400,
+      w: 400,
+      h: 300,
+      labelX: 150,
+      labelY: 550,
+    };
+    const label = { id: "l", text: "Empfang", x: 600, y: 1500 };
+    await ada.mutation(api.office.saveLayout, {
+      width: 1200,
+      height: 3000,
+      rooms: [kitchen, corner, office],
+      labels: [label],
+    });
+    const { layout } = await ada.query(api.office.plan, {});
+    expect(layout.rooms).toEqual([kitchen, corner, office]);
+    expect(layout.labels).toEqual([label]);
+  });
 });

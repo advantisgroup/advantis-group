@@ -17,7 +17,9 @@ import {
   RotateCw,
   Ruler,
   Square,
+  SquareSlash,
   Trash2,
+  Type,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -37,6 +39,9 @@ import { type DeskId } from "./shared";
 const GRID = 10;
 const NEW_DESK = { w: 160, h: 80 };
 const NEW_ROOM = { w: 400, h: 300 };
+const NEW_BLOCK = { w: 100, h: 100 };
+const SIDES = ["top", "right", "bottom", "left"] as const;
+type Side = (typeof SIDES)[number];
 
 interface Box {
   x: number;
@@ -47,6 +52,16 @@ interface Box {
 interface Room extends Box {
   id: string;
   name: string;
+  open?: Side[];
+  blocked?: boolean;
+  labelX?: number;
+  labelY?: number;
+}
+interface PlanLabel {
+  id: string;
+  text: string;
+  x: number;
+  y: number;
 }
 interface Line {
   id: string;
@@ -59,8 +74,18 @@ interface Line {
 type Target =
   | { type: "room"; id: string }
   | { type: "desk"; id: DeskId }
-  | { type: "line"; id: string };
-type DragMode = "move" | "resize" | "end1" | "end2";
+  | { type: "line"; id: string }
+  | { type: "label"; id: string };
+type DragMode = "move" | "resize" | "end1" | "end2" | "label";
+
+function sideLine(room: Box, side: Side) {
+  const right = room.x + room.w;
+  const bottom = room.y + room.h;
+  if (side === "top") return { x1: room.x, y1: room.y, x2: right, y2: room.y };
+  if (side === "right") return { x1: right, y1: room.y, x2: right, y2: bottom };
+  if (side === "bottom") return { x1: room.x, y1: bottom, x2: right, y2: bottom };
+  return { x1: room.x, y1: room.y, x2: room.x, y2: bottom };
+}
 
 const NEW_LINE = { wall: 300, door: 90 };
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
@@ -84,9 +109,14 @@ export function FloorPlan() {
   const [editing, setEditing] = useState(false);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [lines, setLines] = useState<Line[]>([]);
+  const [labels, setLabels] = useState<PlanLabel[]>([]);
   const [deskDraft, setDeskDraft] = useState<Map<string, Box>>(new Map());
   const [selected, setSelected] = useState<Target | null>(null);
-  const [roomDialog, setRoomDialog] = useState<Room | null>(null);
+  const [nameDialog, setNameDialog] = useState<{
+    kind: "room" | "label";
+    id: string;
+    name: string;
+  } | null>(null);
   const [sizeOpen, setSizeOpen] = useState(false);
   const [removing, setRemoving] = useState<{ id: DeskId; name: string } | null>(null);
   const [qrDesks, setQrDesks] = useState<DeskId[] | null>(null);
@@ -97,6 +127,8 @@ export function FloorPlan() {
     start: { x: number; y: number };
     box: Box;
     line?: Line;
+    /** Where a dragged name started. */
+    point?: { x: number; y: number };
     moved: boolean;
   } | null>(null);
 
@@ -105,6 +137,7 @@ export function FloorPlan() {
   const layout = plan?.layout;
   const shownRooms = editing ? rooms : (layout?.rooms ?? []);
   const shownLines = editing ? lines : (layout?.lines ?? []);
+  const shownLabels = editing ? labels : (layout?.labels ?? []);
   const desks = useMemo(
     () => (plan?.desks ?? []).map((desk) => ({ ...desk, ...deskDraft.get(desk._id) })),
     [plan?.desks, deskDraft],
@@ -116,8 +149,11 @@ export function FloorPlan() {
 
   const width = layout.width;
   const height = layout.height;
-  // Sized to the width: the plan always spans the full width of the page.
-  const font = width / 45;
+  const font = width / 30;
+  const roomLabelAt = (room: Room) => ({
+    x: room.labelX ?? room.x + font * 0.6,
+    y: room.labelY ?? room.y + font * 1.3,
+  });
   const checked = desks.filter((desk) => desk.checkedAt).length;
   const defective = desks.reduce((sum, desk) => sum + desk.defective, 0);
 
@@ -132,6 +168,7 @@ export function FloorPlan() {
   function startEditing() {
     setRooms(layout!.rooms);
     setLines(layout!.lines);
+    setLabels(layout!.labels);
     setEditing(true);
   }
 
@@ -143,19 +180,23 @@ export function FloorPlan() {
   async function commitLayout(change: {
     rooms?: Room[];
     lines?: Line[];
+    labels?: PlanLabel[];
     width?: number;
     height?: number;
   }) {
     const nextRooms = change.rooms ?? rooms;
     const nextLines = change.lines ?? lines;
+    const nextLabels = change.labels ?? labels;
     setRooms(nextRooms);
     setLines(nextLines);
+    setLabels(nextLabels);
     try {
       await saveLayout({
         width: change.width ?? width,
         height: change.height ?? height,
         rooms: nextRooms,
         lines: nextLines,
+        labels: nextLabels,
       });
     } catch (e) {
       handleError(e, t("plan.saveError"));
@@ -179,6 +220,10 @@ export function FloorPlan() {
   function boxOf(target: Target): Box | undefined {
     if (target.type === "room") return rooms.find((room) => room.id === target.id);
     if (target.type === "desk") return desks.find((desk) => desk._id === target.id);
+    if (target.type === "label") {
+      const label = labels.find((l) => l.id === target.id);
+      return label && { x: label.x, y: label.y, w: 0, h: 0 };
+    }
     const line = lines.find((l) => l.id === target.id);
     return (
       line && {
@@ -207,12 +252,20 @@ export function FloorPlan() {
     svgRef.current?.setPointerCapture(event.pointerId);
     setSelected(target);
     const line = target.type === "line" ? lines.find((l) => l.id === target.id) : undefined;
+    const room = target.type === "room" ? rooms.find((r) => r.id === target.id) : undefined;
+    const point =
+      target.type === "label"
+        ? { x: box.x, y: box.y }
+        : mode === "label" && room
+          ? roomLabelAt(room)
+          : undefined;
     drag.current = {
       target,
       mode,
       start: toPlan(event),
       box: { ...box },
       line: line && { ...line },
+      point,
       moved: false,
     };
   }
@@ -242,6 +295,19 @@ export function FloorPlan() {
     const dy = point.y - current.start.y;
     if (!current.moved && Math.hypot(dx, dy) < GRID / 2) return;
     current.moved = true;
+    if (current.point) {
+      const x = clamp(Math.round(current.point.x + dx), 0, width);
+      const y = clamp(Math.round(current.point.y + dy), 0, height);
+      const id = current.target.id;
+      if (current.target.type === "label") {
+        setLabels((prev) => prev.map((label) => (label.id === id ? { ...label, x, y } : label)));
+      } else {
+        setRooms((prev) =>
+          prev.map((room) => (room.id === id ? { ...room, labelX: x, labelY: y } : room)),
+        );
+      }
+      return;
+    }
     if (current.line) {
       const next = draggedLine(current.line, current.mode, point, dx, dy);
       setLines((prev) => prev.map((line) => (line.id === next.id ? next : line)));
@@ -262,7 +328,25 @@ export function FloorPlan() {
           };
     if (current.target.type === "room") {
       const id = current.target.id;
-      setRooms((prev) => prev.map((room) => (room.id === id ? { ...room, ...next } : room)));
+      const shiftX = next.x - box.x;
+      const shiftY = next.y - box.y;
+      // A name the admin placed moves with its room.
+      setRooms((prev) =>
+        prev.map((room) =>
+          room.id === id
+            ? {
+                ...room,
+                ...next,
+                ...(room.labelX !== undefined && (box as Room).labelX !== undefined
+                  ? {
+                      labelX: (box as Room).labelX! + shiftX,
+                      labelY: (box as Room).labelY! + shiftY,
+                    }
+                  : {}),
+              }
+            : room,
+        ),
+      );
     } else {
       const id = current.target.id;
       setDeskDraft((prev) => new Map(prev).set(id, next));
@@ -288,15 +372,40 @@ export function FloorPlan() {
     };
   }
 
-  function addRoom() {
-    const room = {
+  function addRoom(blocked = false) {
+    const room: Room = {
       id: crypto.randomUUID().slice(0, 8),
-      name: t("plan.newRoom"),
-      ...centered(NEW_ROOM),
+      name: blocked ? "" : t("plan.newRoom"),
+      ...centered(blocked ? NEW_BLOCK : NEW_ROOM),
+      ...(blocked && { blocked: true }),
     };
     void commitLayout({ rooms: [...rooms, room] });
     setSelected({ type: "room", id: room.id });
-    setRoomDialog(room);
+    if (!blocked) setNameDialog({ kind: "room", id: room.id, name: room.name });
+  }
+
+  function addLabel() {
+    const label = {
+      id: crypto.randomUUID().slice(0, 8),
+      text: t("plan.newLabel"),
+      x: snap(width / 2),
+      y: snap(height / 2),
+    };
+    void commitLayout({ labels: [...labels, label] });
+    setSelected({ type: "label", id: label.id });
+    setNameDialog({ kind: "label", id: label.id, name: label.text });
+  }
+
+  function toggleSide(roomId: string, side: Side) {
+    void commitLayout({
+      rooms: rooms.map((room) => {
+        if (room.id !== roomId) return room;
+        const open = new Set(room.open ?? []);
+        if (open.has(side)) open.delete(side);
+        else open.add(side);
+        return { ...room, open: SIDES.filter((s) => open.has(s)) };
+      }),
+    });
   }
 
   function addLine(kind: Line["kind"]) {
@@ -352,7 +461,7 @@ export function FloorPlan() {
       void commitLayout({
         rooms: rooms.map((room) => (room.id === selected.id ? { ...room, ...turned } : room)),
       });
-    } else {
+    } else if (selected.type === "desk") {
       const id = selected.id;
       setDeskDraft((prev) => new Map(prev).set(id, turned));
       void commitDesk(id, turned);
@@ -363,7 +472,10 @@ export function FloorPlan() {
     if (!selected) return;
     if (selected.type === "room") {
       const room = rooms.find((r) => r.id === selected.id);
-      if (room) setRoomDialog(room);
+      if (room) setNameDialog({ kind: "room", id: room.id, name: room.name });
+    } else if (selected.type === "label") {
+      const label = labels.find((l) => l.id === selected.id);
+      if (label) setNameDialog({ kind: "label", id: label.id, name: label.text });
     } else if (selected.type === "desk") {
       setDesk(selected.id);
     }
@@ -377,18 +489,39 @@ export function FloorPlan() {
     } else if (selected.type === "line") {
       void commitLayout({ lines: lines.filter((line) => line.id !== selected.id) });
       setSelected(null);
+    } else if (selected.type === "label") {
+      void commitLayout({ labels: labels.filter((label) => label.id !== selected.id) });
+      setSelected(null);
     } else {
       const desk = desks.find((d) => d._id === selected.id);
       if (desk) setRemoving({ id: desk._id, name: desk.name });
     }
   }
 
-  const hasPlan = shownRooms.length > 0 || shownLines.length > 0 || desks.length > 0;
+  const hasPlan =
+    shownRooms.length > 0 || shownLines.length > 0 || shownLabels.length > 0 || desks.length > 0;
+  const selectedRoom =
+    selected?.type === "room" ? rooms.find((room) => room.id === selected.id) : undefined;
+  const selectedName = !selected
+    ? ""
+    : selected.type === "room"
+      ? selectedRoom?.blocked
+        ? t("plan.addBlock")
+        : (selectedRoom?.name ?? "")
+      : selected.type === "label"
+        ? (labels.find((l) => l.id === selected.id)?.text ?? "")
+        : selected.type === "line"
+          ? t(
+              lines.find((l) => l.id === selected.id)?.kind === "door"
+                ? "plan.addDoor"
+                : "plan.addWall",
+            )
+          : (desks.find((d) => d._id === selected.id)?.name ?? "");
 
   return (
-    <div className="space-y-4">
-      <aside className="space-y-3">
-        <KpiStrip>
+    <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+      <aside className="min-w-0 space-y-3 lg:sticky lg:top-4 lg:order-last lg:flex-1">
+        <KpiStrip className="lg:grid-cols-2">
           <Kpi label={t("kpi.desks")} value={desks.length} />
           <Kpi
             label={t("kpi.checked")}
@@ -402,88 +535,140 @@ export function FloorPlan() {
             tone={defective ? "critical" : "neutral"}
           />
         </KpiStrip>
-        {canEdit && (
-          <div className="sticky top-0 z-10 -mx-1 flex flex-wrap items-center gap-2 bg-background/95 px-1 py-2 backdrop-blur">
-            {editing ? (
-              <>
-                <Button size="sm" variant="outline" onClick={addRoom}>
-                  <Square className="size-4" />
-                  {t("plan.addRoom")}
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => addLine("wall")}>
-                  <Minus className="size-4" />
-                  {t("plan.addWall")}
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => addLine("door")}>
-                  <DoorOpen className="size-4" />
-                  {t("plan.addDoor")}
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => void addDesk()}>
-                  <Monitor className="size-4" />
-                  {t("plan.addDesk")}
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => setSizeOpen(true)}>
-                  <Ruler className="size-4" />
-                  {t("plan.size")}
-                </Button>
-                {selected && (
-                  <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-0.5">
-                    {selected.type !== "line" && (
-                      <Button size="sm" variant="ghost" onClick={editSelected}>
-                        <Pencil className="size-4" />
-                        {t("plan.rename")}
-                      </Button>
-                    )}
+        {canEdit && !editing && (
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" onClick={startEditing}>
+              <Maximize2 className="size-4" />
+              {t("plan.edit")}
+            </Button>
+            {desks.length > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setQrDesks(desks.map((d) => d._id))}
+              >
+                <QrCode className="size-4" />
+                {t("plan.printQr")}
+              </Button>
+            )}
+          </div>
+        )}
+        {canEdit && editing && (
+          <div className="space-y-3 rounded-xl border border-border bg-card p-3">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-semibold">{t("plan.edit")}</p>
+              <Button size="sm" onClick={stopEditing}>
+                <Check className="size-4" />
+                {t("plan.done")}
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Button size="sm" variant="outline" onClick={() => addRoom()}>
+                <Square className="size-4" />
+                {t("plan.addRoom")}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => void addDesk()}>
+                <Monitor className="size-4" />
+                {t("plan.addDesk")}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => addLine("wall")}>
+                <Minus className="size-4" />
+                {t("plan.addWall")}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => addLine("door")}>
+                <DoorOpen className="size-4" />
+                {t("plan.addDoor")}
+              </Button>
+              <Button size="sm" variant="outline" onClick={addLabel}>
+                <Type className="size-4" />
+                {t("plan.addLabel")}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => addRoom(true)}>
+                <SquareSlash className="size-4" />
+                {t("plan.addBlock")}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="col-span-2"
+                onClick={() => setSizeOpen(true)}
+              >
+                <Ruler className="size-4" />
+                {t("plan.size")}
+              </Button>
+            </div>
+            {selected ? (
+              <div className="space-y-3 border-t border-border pt-3">
+                <p className="truncate text-xs text-muted-foreground">
+                  {t("plan.selection")}:{" "}
+                  <span className="font-medium text-foreground">{selectedName}</span>
+                </p>
+                {selectedRoom && !selectedRoom.blocked && (
+                  <div className="space-y-1.5">
+                    <p className="text-xs text-muted-foreground">{t("plan.walls")}</p>
+                    <div className="grid grid-cols-4 gap-1">
+                      {SIDES.map((side) => {
+                        const hasWall = !selectedRoom.open?.includes(side);
+                        return (
+                          <Button
+                            key={side}
+                            size="sm"
+                            variant={hasWall ? "default" : "outline"}
+                            aria-pressed={hasWall}
+                            onClick={() => toggleSide(selectedRoom.id, side)}
+                          >
+                            {t(`sides.${side}`)}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                <div className="flex flex-wrap gap-1">
+                  {!(selected.type === "line" || selectedRoom?.blocked) && (
+                    <Button size="sm" variant="ghost" onClick={editSelected}>
+                      <Pencil className="size-4" />
+                      {t("plan.rename")}
+                    </Button>
+                  )}
+                  {selected.type !== "label" && (
                     <Button size="sm" variant="ghost" onClick={rotate}>
                       <RotateCw className="size-4" />
                       {t("plan.rotate")}
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-destructive"
-                      onClick={deleteSelected}
-                    >
-                      <Trash2 className="size-4" />
-                      {t("plan.delete")}
-                    </Button>
-                  </div>
-                )}
-                <Button size="sm" onClick={stopEditing}>
-                  <Check className="size-4" />
-                  {t("plan.done")}
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button size="sm" variant="outline" onClick={startEditing}>
-                  <Maximize2 className="size-4" />
-                  {t("plan.edit")}
-                </Button>
-                {desks.length > 0 && (
+                  )}
                   <Button
                     size="sm"
-                    variant="outline"
-                    onClick={() => setQrDesks(desks.map((d) => d._id))}
+                    variant="ghost"
+                    className="text-destructive"
+                    onClick={deleteSelected}
                   >
-                    <QrCode className="size-4" />
-                    {t("plan.printQr")}
+                    <Trash2 className="size-4" />
+                    {t("plan.delete")}
                   </Button>
-                )}
-              </>
+                </div>
+              </div>
+            ) : (
+              <p className="border-t border-border pt-3 text-xs text-muted-foreground">
+                {t("plan.selectHint")}
+              </p>
             )}
+            <p className="text-xs text-muted-foreground">{t("plan.editHint")}</p>
           </div>
         )}
-        {editing && <p className="text-xs text-muted-foreground">{t("plan.editHint")}</p>}
       </aside>
-      <div className="overflow-hidden rounded-2xl border border-border bg-card p-2 sm:p-4">
+      <div className="max-w-full overflow-hidden rounded-2xl border border-border bg-card p-2 sm:p-4 lg:w-fit lg:shrink-0">
         {!hasPlan && !editing && (
           <p className="px-2 pb-3 text-sm text-muted-foreground">{t("plan.empty")}</p>
         )}
         <svg
           ref={svgRef}
           viewBox={`-10 -10 ${width + 20} ${height + 20}`}
-          className={cn("block h-auto w-full select-none", editing && "touch-none")}
+          className={cn(
+            // Desktop: a bit taller than the window, so the whole office is one short scroll away.
+            "block h-auto w-full select-none lg:h-[calc((100dvh-9rem)*1.2)] lg:w-auto lg:max-w-full",
+            editing && "touch-none",
+          )}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
@@ -508,6 +693,8 @@ export function FloorPlan() {
 
           {shownRooms.map((room) => {
             const isSelected = sameTarget(selected, { type: "room", id: room.id });
+            const open = new Set(room.open ?? []);
+            const at = roomLabelAt(room);
             return (
               <g key={room.id}>
                 <rect
@@ -516,22 +703,48 @@ export function FloorPlan() {
                   width={room.w}
                   height={room.h}
                   className={cn(
-                    "fill-muted/40 stroke-foreground/70",
+                    room.blocked ? "fill-foreground/85" : "fill-muted/40",
                     editing && "cursor-move",
-                    isSelected && "stroke-primary",
                   )}
-                  strokeWidth={isSelected ? 6 : 4}
                   onPointerDown={(e) => onPointerDown(e, { type: "room", id: room.id }, "move")}
                 />
-                <text
-                  x={room.x + font * 0.6}
-                  y={room.y + font * 1.3}
-                  fontSize={font * 0.9}
-                  className="pointer-events-none fill-muted-foreground font-semibold uppercase"
-                  letterSpacing={font * 0.05}
-                >
-                  {room.name}
-                </text>
+                {!room.blocked &&
+                  SIDES.filter((side) => !open.has(side)).map((side) => (
+                    <line
+                      key={side}
+                      {...sideLine(room, side)}
+                      className="pointer-events-none stroke-foreground/70"
+                      strokeWidth={4}
+                      strokeLinecap="square"
+                    />
+                  ))}
+                {editing && isSelected && (
+                  <rect
+                    x={room.x}
+                    y={room.y}
+                    width={room.w}
+                    height={room.h}
+                    className="pointer-events-none fill-none stroke-primary"
+                    strokeWidth={6}
+                    strokeDasharray="14 8"
+                  />
+                )}
+                {!room.blocked && room.name && (
+                  <text
+                    x={at.x}
+                    y={at.y}
+                    fontSize={font * 0.8}
+                    className={cn(
+                      "fill-muted-foreground font-semibold uppercase",
+                      editing ? "cursor-move" : "pointer-events-none",
+                      editing && isSelected && "fill-primary",
+                    )}
+                    letterSpacing={font * 0.04}
+                    onPointerDown={(e) => onPointerDown(e, { type: "room", id: room.id }, "label")}
+                  >
+                    {room.name}
+                  </text>
+                )}
                 {editing && isSelected && (
                   <ResizeHandle
                     box={room}
@@ -555,6 +768,25 @@ export function FloorPlan() {
                 onPointerDown={(e, mode) => onPointerDown(e, { type: "line", id: line.id }, mode)}
               />
             ))}
+
+          {shownLabels.map((label) => (
+            <text
+              key={label.id}
+              x={label.x}
+              y={label.y}
+              fontSize={font * 0.8}
+              textAnchor="middle"
+              letterSpacing={font * 0.04}
+              className={cn(
+                "fill-muted-foreground font-semibold uppercase",
+                editing ? "cursor-move" : "pointer-events-none",
+                editing && sameTarget(selected, { type: "label", id: label.id }) && "fill-primary",
+              )}
+              onPointerDown={(e) => onPointerDown(e, { type: "label", id: label.id }, "move")}
+            >
+              {label.text}
+            </text>
+          ))}
 
           {desks.map((desk) => {
             const isSelected = sameTarget(selected, { type: "desk", id: desk._id });
@@ -629,6 +861,10 @@ export function FloorPlan() {
             <span className="size-2.5 rounded-full bg-destructive" />
             {t("plan.legendDefect")}
           </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-2.5 w-4 rounded-sm bg-foreground/85" />
+            {t("plan.legendBlocked")}
+          </span>
           <span className="ml-auto tabular-nums">
             {(width / 100).toLocaleString("de-DE")} × {(height / 100).toLocaleString("de-DE")} m
           </span>
@@ -647,14 +883,22 @@ export function FloorPlan() {
         desks={qrDesks ? desks.filter((desk) => qrDesks.includes(desk._id)) : null}
         onClose={() => setQrDesks(null)}
       />
-      <RoomDialog
-        room={roomDialog}
-        onClose={() => setRoomDialog(null)}
-        onSave={(name) =>
-          void commitLayout({
-            rooms: rooms.map((room) => (room.id === roomDialog?.id ? { ...room, name } : room)),
-          })
-        }
+      <NameDialog
+        target={nameDialog}
+        onClose={() => setNameDialog(null)}
+        onSave={(name) => {
+          if (!nameDialog) return;
+          const id = nameDialog.id;
+          void commitLayout(
+            nameDialog.kind === "room"
+              ? { rooms: rooms.map((room) => (room.id === id ? { ...room, name } : room)) }
+              : {
+                  labels: labels.map((label) =>
+                    label.id === id ? { ...label, text: name } : label,
+                  ),
+                },
+          );
+        }}
       />
       <SizeDialog
         open={sizeOpen}
@@ -665,12 +909,14 @@ export function FloorPlan() {
           0,
           ...rooms.map((r) => r.x + r.w),
           ...lines.map((l) => Math.max(l.x1, l.x2)),
+          ...labels.map((l) => l.x),
           ...desks.map((d) => d.x + d.w),
         )}
         minHeight={Math.max(
           0,
           ...rooms.map((r) => r.y + r.h),
           ...lines.map((l) => Math.max(l.y1, l.y2)),
+          ...labels.map((l) => l.y),
           ...desks.map((d) => d.y + d.h),
         )}
         onSave={(size) => void commitLayout(size)}
@@ -826,27 +1072,28 @@ function Legend({ className, label }: { className: string; label: string }) {
   );
 }
 
-function RoomDialog({
-  room,
+function NameDialog({
+  target,
   onClose,
   onSave,
 }: {
-  room: Room | null;
+  target: { kind: "room" | "label"; id: string; name: string } | null;
   onClose: () => void;
   onSave: (name: string) => void;
 }) {
   const t = useTranslations("Office");
   const [name, setName] = useState("");
   const [forId, setForId] = useState<string | null>(null);
-  if (room && room.id !== forId) {
-    setForId(room.id);
-    setName(room.name);
+  if (target && target.id !== forId) {
+    setForId(target.id);
+    setName(target.name);
   }
+  const dialog = target?.kind === "label" ? "labelDialog" : "roomDialog";
   return (
     <ResponsiveDialog
-      open={!!room}
+      open={!!target}
       onOpenChange={(open) => !open && onClose()}
-      title={t("roomDialog.title")}
+      title={t(`${dialog}.title`)}
       footer={
         <div className="flex w-full justify-end gap-2">
           <Button variant="outline" onClick={onClose}>
@@ -864,12 +1111,12 @@ function RoomDialog({
       }
     >
       <div className="space-y-1.5">
-        <Label htmlFor="office-room-name">{t("roomDialog.name")}</Label>
+        <Label htmlFor="office-room-name">{t(`${dialog}.name`)}</Label>
         <Input
           id="office-room-name"
           value={name}
           autoFocus
-          placeholder={t("roomDialog.placeholder")}
+          placeholder={t(`${dialog}.placeholder`)}
           onChange={(e) => setName(e.target.value)}
         />
       </div>

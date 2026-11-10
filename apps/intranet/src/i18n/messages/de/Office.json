@@ -20,7 +20,7 @@
     "addDesk": "Arbeitsplatz",
     "size": "Bürogröße",
     "printQr": "QR-Etiketten drucken",
-    "editHint": "Ziehen zum Verschieben, Ecke unten rechts zum Größe ändern. Wände und Türen: Enden ziehen, „Drehen“ dreht um 90°. Raster 10 cm.",
+    "editHint": "Ziehen zum Verschieben, Ecke unten rechts = Größe. Namen lassen sich einzeln verschieben. Wände/Türen: Enden ziehen. Raster 10 cm.",
     "rename": "Bearbeiten",
     "rotate": "Drehen",
     "delete": "Entfernen",
@@ -32,7 +32,14 @@
     "free": "frei",
     "saveError": "Grundriss konnte nicht gespeichert werden.",
     "addWall": "Wand",
-    "addDoor": "Tür"
+    "addDoor": "Tür",
+    "addLabel": "Beschriftung",
+    "addBlock": "Sperrfläche",
+    "newLabel": "Bereich",
+    "selection": "Ausgewählt",
+    "walls": "Wände (an = Wand, aus = offen)",
+    "selectHint": "Element im Plan antippen, um es zu bearbeiten.",
+    "legendBlocked": "Sperrfläche"
   },
   "sizeDialog": {
     "title": "Bürogröße",
@@ -181,5 +188,16 @@
   "cancel": "Abbrechen",
   "save": "Speichern",
   "close": "Schließen",
-  "error": "Das hat nicht geklappt."
+  "error": "Das hat nicht geklappt.",
+  "sides": {
+    "top": "oben",
+    "right": "rechts",
+    "bottom": "unten",
+    "left": "links"
+  },
+  "labelDialog": {
+    "title": "Beschriftung",
+    "name": "Text",
+    "placeholder": "z. B. Küche, Empfang, Flur"
+  }
 }
