@@ -597,6 +597,39 @@ describe("18:00 rule", () => {
   });
 });
 
+describe("forgotten clock-out reminder", () => {
+  test("the next clock-in reminds of an auto-closed last day until a correction is filed", async () => {
+    const s = await setup();
+    setNow("2026-10-16", "08:00");
+    const id = await s.alice.mutation(api.time.clock.clockIn, {});
+    setNow("2026-10-16", "18:00");
+    await s.t.mutation(internal.time.jobs.autoCloseOpenEntries, {});
+
+    // Monday after the weekend: Friday is the last day with time.
+    setNow("2026-10-19", "07:55");
+    expect(await s.alice.query(api.time.clock.forgottenClockOut, {})).toMatchObject({
+      date: "2026-10-16",
+      end: local("2026-10-16", "16:00"),
+    });
+
+    await s.alice.mutation(api.time.entries.save, {
+      entryId: id,
+      kind: "work",
+      start: local("2026-10-16", "08:00"),
+      end: local("2026-10-16", "16:45"),
+      reason: "Vergessen auszustempeln",
+    });
+    expect(await s.alice.query(api.time.clock.forgottenClockOut, {})).toBeNull();
+  });
+
+  test("no reminder after a normal day", async () => {
+    const s = await setup();
+    await clockedDay(s, "2026-10-16");
+    setNow("2026-10-19", "07:55");
+    expect(await s.alice.query(api.time.clock.forgottenClockOut, {})).toBeNull();
+  });
+});
+
 describe("hours account and settings", () => {
   test("opening balance plus worked minus target through yesterday", async () => {
     const s = await setup();

@@ -11,7 +11,11 @@ import { useTranslations } from "next-intl";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
-import { KitchenNotice, useTimeClock } from "@/components/zeiterfassung/parts";
+import {
+  ForgottenClockOutNotice,
+  KitchenNotice,
+  useTimeClock,
+} from "@/components/zeiterfassung/parts";
 import { SwipeToConfirm } from "@/components/zeiterfassung/SwipeToConfirm";
 
 /** Berlin hours during which the first visit of the day gets the prompt. */
@@ -43,7 +47,12 @@ function rememberDismissed(date: string) {
  * as the small version. Mounted in the app shell so it appears wherever the
  * person lands.
  */
-export function ClockInPrompt() {
+export function ClockInPrompt({
+  onOpenChange,
+}: {
+  /** Lets the shell hold back other pop-ups while this one is open. */
+  onOpenChange?: (open: boolean) => void;
+}) {
   const t = useTranslations("Zeiterfassung.prompt");
   const tk = useTranslations("Zeiterfassung.clock.kitchen");
   const user = useCurrentUser();
@@ -55,6 +64,10 @@ export function ClockInPrompt() {
   // The clock's status flips before the mutation resolves; without this the
   // effect below would close the dialog before it can show the kitchen note.
   const clockingIn = useRef(false);
+
+  useEffect(() => {
+    onOpenChange?.(open);
+  }, [open, onOpenChange]);
 
   const status = clock.state?.status;
   const today = berlinParts(Date.now());
@@ -114,6 +127,9 @@ export function ClockInPrompt() {
         <KitchenNotice>{tk("afterIn")}</KitchenNotice>
       ) : (
         <div className="space-y-4">
+          {clock.forgotten && (
+            <ForgottenClockOutNotice day={clock.forgotten} onNavigate={dismiss} />
+          )}
           <p className="text-sm text-muted-foreground">{t("hint")}</p>
           <SwipeToConfirm
             label={t("slide")}
