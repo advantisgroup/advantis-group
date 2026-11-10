@@ -11,7 +11,9 @@ import {
   officeLineValidator,
   officeRoomValidator,
 } from "./tables/office";
-import { displayName } from "./time/lib/store";
+import { berlinDate } from "./time/lib/berlin";
+import { isTimeTestMode } from "./time/lib/mode";
+import { displayName, openEntries } from "./time/lib/store";
 
 /**
  * Office: the floor plan with its desks, what is plugged in at each desk, and
@@ -153,6 +155,21 @@ export const plan = userQuery({
       ),
     );
     const titles = new Map(users.map((user) => [user._id, user.jobTitle ?? null]));
+    // Who is clocked in, on a break or out right now — the same open entries
+    // the directory's „Im Büro“ uses; nothing while time tracking is in test.
+    const clock = new Map<Id<"users">, "in" | "break">();
+    if (!isTimeTestMode()) {
+      for (const row of await openEntries(ctx)) {
+        if (row.kind === "break") clock.set(row.userId, "break");
+        else if (row.kind === "work" && !clock.has(row.userId)) clock.set(row.userId, "in");
+      }
+    }
+    const clockOf = (userId: Id<"users">): "in" | "break" | "out" | null =>
+      isTimeTestMode() ? null : (clock.get(userId) ?? "out");
+    const kitchen = await ctx.db
+      .query("kitchenDuties")
+      .withIndex("by_date", (q) => q.eq("date", berlinDate(Date.now())))
+      .first();
     const counts = new Map<DeskId, { items: number; defective: number }>();
     let inStorage = 0;
     for (const item of items) {
@@ -187,6 +204,8 @@ export const plan = userQuery({
           userName: desk.userId ? (names.get(desk.userId) ?? null) : null,
           userAvatar: desk.userId ? (avatars.get(desk.userId) ?? null) : null,
           userTitle: desk.userId ? (titles.get(desk.userId) ?? null) : null,
+          clock: desk.userId ? clockOf(desk.userId) : null,
+          kitchenToday: !!desk.userId && kitchen?.userId === desk.userId,
           checkedAt: desk.checkedAt ?? null,
           items: counts.get(desk._id)?.items ?? 0,
           defective: counts.get(desk._id)?.defective ?? 0,

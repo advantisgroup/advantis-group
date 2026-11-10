@@ -126,6 +126,13 @@ if (process.env.DISABLE_CRONS !== "true") {
   );
 
   crons.hourly(
+    "people: fetch missing profile pictures from Clerk",
+    { minuteUTC: 20 },
+    internal.people.clerkSync.backfillAvatars,
+    {},
+  );
+
+  crons.hourly(
     "passkeys: purge expired challenges",
     { minuteUTC: 55 },
     internal.security.passkeys.purgeExpiredChallenges,

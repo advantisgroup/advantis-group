@@ -86,6 +86,24 @@ export async function updateClerkUserName(
 }
 
 /**
+ * A Clerk user's current profile picture — the uploaded one, or Clerk's
+ * default (the violet fade) for people who never uploaded one. `null` when
+ * Clerk doesn't know the user.
+ */
+export async function clerkUserImage(clerkUserId: string): Promise<string | null> {
+  const res = await clerkFetch(`/users/${encodeURIComponent(clerkUserId)}`, { method: "GET" });
+  if (res.status === 404) return null;
+  if (!res.ok) {
+    throw new ConvexError({
+      code: "upstream",
+      message: `Clerk user lookup failed (HTTP ${res.status}).`,
+    });
+  }
+  const user = (await res.json()) as { image_url?: string | null };
+  return user.image_url || null;
+}
+
+/**
  * Update a Clerk user's profile image by fetching from a URL and re-uploading.
  * Best-effort — the avatar is already saved in Convex storage, so failures here
  * don't affect the app display.
