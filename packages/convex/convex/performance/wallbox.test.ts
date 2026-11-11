@@ -87,7 +87,7 @@ async function setup() {
       active: true,
       companyId: sales,
     });
-    return { admin, lead, nadine, vahan, olga, sales, wallbox, onboarding };
+    return { admin, lead, nadine, vahan, olga, sales, wallbox, onboarding, evTeam };
   });
 
   let n = 0;
@@ -351,6 +351,29 @@ describe("wallbox dashboard", () => {
     const similar = rows.find((r) => r.name === "Nadine Weidenhammerer");
     expect(similar?.userId).toBeUndefined();
     expect(rows.find((r) => r.userId === ids.nadine)?.name).toBe("Nadine Weidenhammer");
+  });
+
+  test("a Sales dashboard's team members get a row even without own Salesforce rows", async () => {
+    const { t, ids, upload } = await setup();
+    // 11/2026: the EV team moved to Sales; Nadine has no Salesforce leads of
+    // her own, only Genesys calls.
+    await t.run((ctx) => ctx.db.patch(ids.sales, { teamIds: [ids.evTeam] }));
+    await upload(ids.sales, "calls.csv", callCsv([["WEIDENHAMMER Nadine", 20]]));
+    const rows = await t.run((ctx) =>
+      ctx.db
+        .query("performanceEmployees")
+        .withIndex("by_company", (q) => q.eq("companyId", ids.sales))
+        .collect(),
+    );
+    const nadine = rows.find((r) => r.userId === ids.nadine);
+    expect(nadine?.name).toBe("Nadine Weidenhammer");
+    const calls = await t.run((ctx) =>
+      ctx.db
+        .query("performanceReports")
+        .withIndex("by_employee_date", (q) => q.eq("employeeId", nadine!._id))
+        .collect(),
+    );
+    expect(calls.reduce((a, r) => a + (r.callsToday ?? 0), 0)).toBe(20);
   });
 });
 

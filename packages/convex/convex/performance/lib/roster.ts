@@ -71,18 +71,20 @@ export async function dashboardMembers(
 }
 
 /**
- * For Wallbox and calls-only dashboards the roster is the linked intranet
- * team itself (their reports don't name everyone the way Salesforce owner
- * columns do): every member gets an employee row linked to their account,
- * reusing an unlinked row with the same name (e.g. one an earlier report
- * created) before adding a new one. Never unlinks or deletes anything.
- * Sales dashboards keep building their roster from the Salesforce exports.
+ * Every member of a dashboard's linked teams/departments gets an employee
+ * row linked to their account, reusing an unlinked row with the same name
+ * (e.g. one an earlier report created) before adding a new one. Never
+ * unlinks or deletes anything. Wallbox and calls-only dashboards have no
+ * other roster (their reports don't name everyone the way Salesforce owner
+ * columns do). Sales dashboards also add names from the Salesforce exports,
+ * but a member without own Salesforce rows (own Genesys login, someone
+ * else's Salesforce account — 11/2026: Nadine, Rukshan) needs this row too,
+ * or their calls are skipped and nobody can link them.
  */
 export async function syncTeamRoster(
   ctx: MutationCtx,
   company: Doc<"companies">,
 ): Promise<{ added: number; linked: number }> {
-  if (dashboardKind(company) === "sales") return { added: 0, linked: 0 };
   const members = (await dashboardMembers(ctx, company)).filter((u) => !u.external);
   if (members.length === 0) return { added: 0, linked: 0 };
   const employees = await ctx.db
