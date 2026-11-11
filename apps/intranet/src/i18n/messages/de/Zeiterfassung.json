@@ -65,6 +65,7 @@
     "ofTarget": "von {target} Soll",
     "week": "Diese Woche",
     "balance": "Stundenkonto",
+    "balanceYesterday": "bis gestern",
     "balanceHint": "Stand jetzt, inkl. heute",
     "vacation": "Resturlaub",
     "vacationPending": "{days} Tage beantragt",

@@ -65,6 +65,7 @@
     "ofTarget": "of {target} target",
     "week": "This week",
     "balance": "Hours account",
+    "balanceYesterday": "until yesterday",
     "balanceHint": "Right now, incl. today",
     "vacation": "Vacation left",
     "vacationPending": "{days} days requested",

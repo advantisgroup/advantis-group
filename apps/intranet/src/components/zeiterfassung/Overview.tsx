@@ -113,9 +113,17 @@ export function Overview() {
         <Kpi
           label={t("overview.balance")}
           value={
-            liveBalance !== undefined ? (
-              <span className={balanceClassName(liveBalance)}>
-                {formatMinutes(liveBalance, true)}
+            liveBalance !== undefined && summary ? (
+              <span className="flex items-baseline justify-between gap-2">
+                <span className={balanceClassName(liveBalance)}>
+                  {formatMinutes(liveBalance, true)}
+                </span>
+                <span className="text-right text-xs font-normal tracking-normal text-muted-foreground">
+                  {t("overview.balanceYesterday")}{" "}
+                  <span className={cn("font-semibold", balanceClassName(summary.balance.minutes))}>
+                    {formatMinutes(summary.balance.minutes, true)}
+                  </span>
+                </span>
               </span>
             ) : (
               "–"
