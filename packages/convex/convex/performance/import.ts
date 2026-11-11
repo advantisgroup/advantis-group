@@ -26,7 +26,7 @@ import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "../_generated/server";
-import { EXCLUDED_OWNERS } from "./lib/salesforceImport";
+import { EXCLUDED_OWNERS, type OwnerHandover } from "./lib/salesforceImport";
 import { type SnapshotFields } from "./lib/types";
 
 /** A one-shot URL `apps/api` POSTs the original report file to (Convex
@@ -309,6 +309,20 @@ export const getTeamEmployeeNames = internalQuery({
       .withIndex("by_company", (q) => q.eq("companyId", companyId))
       .collect();
     return employees.filter((e) => !EXCLUDED_OWNERS.has(e.name.toLowerCase())).map((e) => e.name);
+  },
+});
+
+/** The dashboard's Salesforce account handovers (`performanceEmployees.handover`). */
+export const getOwnerHandovers = internalQuery({
+  args: { companyId: v.id("companies") },
+  handler: async (ctx, { companyId }): Promise<OwnerHandover[]> => {
+    const employees = await ctx.db
+      .query("performanceEmployees")
+      .withIndex("by_company", (q) => q.eq("companyId", companyId))
+      .collect();
+    return employees.flatMap((e) =>
+      e.handover ? [{ fromName: e.name, toName: e.handover.toName, from: e.handover.from }] : [],
+    );
   },
 });
 
