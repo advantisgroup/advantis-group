@@ -230,6 +230,11 @@ export const performanceTables = {
      * account — someone who left the intranet but whose report numbers
      * still belong in the team's KPIs. Nobody sees these as "own" numbers. */
     countWithoutAccount: v.optional(v.boolean()),
+    /** Someone else works this Salesforce account from `from` on (11/2026:
+     * Rukshan sells through Vahan's account). Salesforce rows dated on or
+     * after `from` are imported under `toName` instead of this name; older
+     * rows and calls stay here. Set under Performance → Einstellungen. */
+    handover: v.optional(v.object({ toName: v.string(), from: v.string() })),
   })
     .index("by_company", ["companyId"])
     .index("by_userId", ["userId"])

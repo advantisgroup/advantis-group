@@ -4,6 +4,7 @@ import { decodeCsvBytes, parseCsvText, readCallCsv } from "./callImport";
 import {
   aggregateLeadReport,
   aggregateOppReport,
+  handoverResolver,
   readSalesforceExport,
   toDate,
 } from "./salesforceImport";
@@ -142,5 +143,43 @@ describe("CSV encoding", () => {
     const utf8 = new Uint8Array([0xef, 0xbb, 0xbf, ...new TextEncoder().encode("Müller")]);
     expect(decodeCsvBytes(utf8)).toBe("Müller");
     expect(decodeCsvBytes(new Uint8Array([0x80, 0x20, 0x31]))).toBe("€ 1");
+  });
+});
+
+describe("account handover", () => {
+  const resolve = handoverResolver([
+    { fromName: "Doreen Boateng", toName: "Philipp Suft", from: "2026-11-02" },
+  ]);
+
+  test("resolver: by date, case- and space-insensitive, others untouched", () => {
+    expect(resolve("doreen  boateng", "2026-11-02")).toBe("Philipp Suft");
+    expect(resolve("Doreen Boateng", "2026-11-01")).toBe("Doreen Boateng");
+    expect(resolve("Anna Müller", "2026-11-05")).toBe("Anna Müller");
+  });
+
+  test("opps: open state goes to the new person, wins by close date", () => {
+    const sf = readSalesforceExport([
+      ["Opportunity Owner", "Stage", "Stage Details", "Created Date", "Close Date"],
+      ["Doreen Boateng", "Negotiation", "", "01.10.2026", "20.11.2026"],
+      ["Doreen Boateng", "Closed Won", "", "01.09.2026", "30.10.2026"],
+      ["Doreen Boateng", "Closed Won", "", "01.10.2026", "04.11.2026"],
+    ])!;
+    if (sf.kind !== "opp") throw new Error("opp expected");
+    const { snapshots, raw, wonOpps } = aggregateOppReport(
+      sf.rows,
+      new Date(Date.UTC(2026, 10, 5)),
+      resolve,
+    );
+    expect(raw.map((r) => r.owner)).toEqual(["Philipp Suft"]);
+    expect(wonOpps).toEqual([
+      { owner: "Doreen Boateng", closeDate: "2026-10-30" },
+      { owner: "Philipp Suft", closeDate: "2026-11-04" },
+    ]);
+    const at = (name: string, date: string) =>
+      snapshots.find((s) => s.employeeName === name && s.reportDate === date)?.fields;
+    expect(at("Philipp Suft", "2026-11-05")).toMatchObject({ oppsOpen: 1, wonMonth: 1 });
+    expect(at("Doreen Boateng", "2026-10-31")).toMatchObject({ wonMonth: 1 });
+    // No zero state row for the handed-over account on the report date.
+    expect(at("Doreen Boateng", "2026-11-05")).toBeUndefined();
   });
 });

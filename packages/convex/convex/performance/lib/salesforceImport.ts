@@ -50,6 +50,33 @@ export function isExcludedOwner(owner: CellValue): boolean {
   return EXCLUDED_OWNERS.has(norm(owner));
 }
 
+// ------------------------------------------------------------- handovers
+
+/** "From `from` on, `toName` works the Salesforce account `fromName`." */
+export interface OwnerHandover {
+  fromName: string;
+  toName: string;
+  /** ISO "YYYY-MM-DD", inclusive. */
+  from: string;
+}
+
+/** Maps a report owner to the person who worked the account on `dateIso`. */
+export type OwnerResolver = (owner: string, dateIso: string) => string;
+
+export const keepOwner: OwnerResolver = (owner) => owner;
+
+/** Resolver for a dashboard's handovers. Owner names match case- and
+ * space-insensitively; a row dated before `from` keeps its owner. */
+export function handoverResolver(handovers: OwnerHandover[]): OwnerResolver {
+  if (handovers.length === 0) return keepOwner;
+  const key = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
+  const byOwner = new Map(handovers.map((h) => [key(h.fromName), h]));
+  return (owner, dateIso) => {
+    const h = byOwner.get(key(owner));
+    return h && dateIso >= h.from ? h.toName.trim() : owner;
+  };
+}
+
 // --------------------------------------------------------------- headers
 // Salesforce writes column labels in the exporting user's language, so each
 // field accepts the English and the German label (matched case-, space- and
@@ -302,6 +329,7 @@ const LEAD_STATE_FIELDS: (keyof MetricFields)[] = [
 export function aggregateLeadReport(
   rows: LeadRecord[],
   reportDate: Date,
+  resolveOwner: OwnerResolver = keepOwner,
 ): { snapshots: EmployeeSnapshot[]; raw: RawLead[]; days: LeadDay[] } {
   const curYm = ym(reportDate);
   const daysFrom = leadDaysFrom(reportDate);
@@ -317,21 +345,30 @@ export function aggregateLeadReport(
     const ownerRaw = r.owner;
     const status = norm(r.status);
     if (status === "total" || status === "summe" || !isPerson(ownerRaw)) continue;
-    const owner = String(ownerRaw).trim();
+    const accountOwner = String(ownerRaw).trim();
     const created = toDate(r.createDate);
     const last = toDate(r.lastActivity);
     const details = norm(r.statusDetails);
+    // Current state belongs to whoever works the account on the report
+    // date; created leads to whoever worked it on the creation day.
+    const owner = resolveOwner(accountOwner, reportDateIso);
+    const creator = created ? resolveOwner(accountOwner, toISODate(created)) : owner;
 
     if (created) {
       const createdYm = ym(created);
-      const key = `${owner}\n${createdYm}`;
-      monthlyOwnerYm.set(key, { owner, ym: createdYm });
+      const key = `${creator}\n${createdYm}`;
+      monthlyOwnerYm.set(key, { owner: creator, ym: createdYm });
       bump(monthly, key, "leadsCreated");
       if (WORKABLE_STATUS.has(status)) bump(monthly, key, "workableCreated");
       const day = toISODate(created);
       if (day >= daysFrom && day <= reportDateIso) {
-        const dayKey = `${owner}\n${day}`;
-        const entry = dayCounts.get(dayKey) ?? { owner, date: day, created: 0, workable: 0 };
+        const dayKey = `${creator}\n${day}`;
+        const entry = dayCounts.get(dayKey) ?? {
+          owner: creator,
+          date: day,
+          created: 0,
+          workable: 0,
+        };
         entry.created++;
         if (WORKABLE_STATUS.has(status)) entry.workable++;
         dayCounts.set(dayKey, entry);
@@ -359,17 +396,21 @@ export function aggregateLeadReport(
 
     if (status === "unqualified" && created && ym(created) === curYm) {
       const reasonKey = text(r.statusDetails) || "Ohne Angabe";
-      const ownerReasons = reasons.get(owner) ?? new Map<string, number>();
+      const ownerReasons = reasons.get(creator) ?? new Map<string, number>();
       ownerReasons.set(reasonKey, (ownerReasons.get(reasonKey) ?? 0) + 1);
-      reasons.set(owner, ownerReasons);
+      reasons.set(creator, ownerReasons);
     }
   }
 
   // Also write explicit 0s for the state fields, so month-over-month
   // deltas stay correct for an owner with monthly creation data but no
   // current "state" (e.g. zero open Analysis leads today).
+  // An account handed over by the report date gets no current state of
+  // its own — its state belongs to the new person.
   const allStateOwners = new Set<string>([
-    ...[...monthlyOwnerYm.values()].map((v) => v.owner),
+    ...[...monthlyOwnerYm.values()]
+      .map((v) => v.owner)
+      .filter((o) => resolveOwner(o, reportDateIso) === o),
     ...state.keys(),
   ]);
 
@@ -425,6 +466,7 @@ export interface WonOpp {
 export function aggregateOppReport(
   rows: OppRecord[],
   reportDate: Date,
+  resolveOwner: OwnerResolver = keepOwner,
 ): { snapshots: EmployeeSnapshot[]; raw: RawOpp[]; wonOpps: WonOpp[] } {
   const curYm = ym(reportDate);
   const reportDateIso = toISODate(reportDate);
@@ -438,7 +480,8 @@ export function aggregateOppReport(
     const ownerRaw = r.owner;
     const stage = canonicalStage(r.stage);
     if (!isPerson(ownerRaw) || stage === "" || stage === "total" || stage === "summe") continue;
-    const owner = String(ownerRaw).trim();
+    const accountOwner = String(ownerRaw).trim();
+    const owner = resolveOwner(accountOwner, reportDateIso);
     const created = toDate(r.createdDate);
     const close = toDate(r.closeDate);
     const last = toDate(r.lastActivity);
@@ -447,11 +490,13 @@ export function aggregateOppReport(
     const age = ageNum !== null ? Math.trunc(ageNum) : daysSince(created, reportDate);
 
     if (stage === "closed won" && close) {
+      // A won opp counts for whoever worked the account on the close date.
+      const winner = resolveOwner(accountOwner, toISODate(close));
       const closeYm = ym(close);
-      const key = `${owner}\n${closeYm}`;
-      monthlyOwnerYm.set(key, { owner, ym: closeYm });
+      const key = `${winner}\n${closeYm}`;
+      monthlyOwnerYm.set(key, { owner: winner, ym: closeYm });
       bump(monthly, key, "wonMonth");
-      wonOpps.push({ owner, closeDate: toISODate(close) });
+      wonOpps.push({ owner: winner, closeDate: toISODate(close) });
     }
 
     if (!CLOSED_STAGES.has(stage)) {
@@ -483,8 +528,12 @@ export function aggregateOppReport(
     }
   }
 
+  // An account handed over by the report date gets no current state of
+  // its own — its state belongs to the new person.
   const allStateOwners = new Set<string>([
-    ...[...monthlyOwnerYm.values()].map((v) => v.owner),
+    ...[...monthlyOwnerYm.values()]
+      .map((v) => v.owner)
+      .filter((o) => resolveOwner(o, reportDateIso) === o),
     ...state.keys(),
   ]);
 

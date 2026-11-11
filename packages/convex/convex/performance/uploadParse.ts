@@ -43,6 +43,7 @@ import {
 import {
   aggregateLeadReport,
   aggregateOppReport,
+  handoverResolver,
   readSalesforceExport,
   type LeadDay,
   type RawLead,
@@ -664,14 +665,17 @@ async function processReport(
     }
     const reportDate = toISODate(sf.reportDate);
     const sfBase = { ...base, reportDate, sourceRowCount: sf.rows.length };
+    const resolveOwner = handoverResolver(
+      await ctx.runQuery(internal.performance.import.getOwnerHandovers, { companyId }),
+    );
     if (sf.kind === "lead") {
-      const { snapshots, raw, days } = aggregateLeadReport(sf.rows, sf.reportDate);
+      const { snapshots, raw, days } = aggregateLeadReport(sf.rows, sf.reportDate, resolveOwner);
       return importSalesforce(ctx, sfBase, "lead", snapshots, async () => {
         await writeRawLeads(ctx, companyId, raw);
         await writeLeadDays(ctx, companyId, days);
       });
     }
-    const { snapshots, raw, wonOpps } = aggregateOppReport(sf.rows, sf.reportDate);
+    const { snapshots, raw, wonOpps } = aggregateOppReport(sf.rows, sf.reportDate, resolveOwner);
     return importSalesforce(ctx, sfBase, "opp", snapshots, async () => {
       await writeRawOpps(ctx, companyId, raw);
       await writeWonOpps(ctx, companyId, wonOpps);

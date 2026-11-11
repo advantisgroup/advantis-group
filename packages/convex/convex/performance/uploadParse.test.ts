@@ -324,3 +324,113 @@ describe("interactions import", () => {
     });
   });
 });
+
+describe("Salesforce account handover", () => {
+  test("rows from the handover date on move to the new person, older ones and the clean-up stay right", async () => {
+    const { t, ids, upload } = await setup(["Vahan Hovhannisyan"]);
+    await t.run((ctx) =>
+      ctx.db.insert("users", {
+        clerkUserId: "admin",
+        email: "admin@advantisgroup.de",
+        firstName: "Ada",
+        lastName: "Admin",
+        role: "admin",
+        status: "active",
+        external: false,
+        createdAt: Date.now(),
+      }),
+    );
+    const admin = t.withIdentity({ subject: "admin" });
+    const [vahan] = ids.employees;
+
+    // Imported before the handover was set up: all under Vahan.
+    await upload(
+      "lead-0311.csv",
+      leadCsv("2026-11-03", [
+        ["Vahan Hovhannisyan", "Analysis", "15.10.2026"],
+        ["Vahan Hovhannisyan", "Open", "03.11.2026"],
+      ]),
+    );
+    // Some call numbers on the same day must survive the clean-up.
+    await t.run((ctx) =>
+      ctx.db.insert("performanceReports", {
+        employeeId: vahan,
+        companyId: ids.companyId,
+        reportDate: "2026-11-04",
+        callsToday: 7,
+        leadsAnalysis: 2,
+        sourceFile: "mix",
+        uploadedAt: Date.now(),
+      }),
+    );
+
+    const { cleared } = await admin.mutation(api.performance.dashboards.setHandover, {
+      employeeId: vahan,
+      handover: { toName: "  Rukshan   Mahathevan ", from: "2026-11-02" },
+    });
+    expect(cleared).toBe(2);
+    await t.run(async (ctx) => {
+      const rows = await ctx.db
+        .query("performanceReports")
+        .withIndex("by_employee_date", (q) => q.eq("employeeId", vahan))
+        .collect();
+      // 03.11. held only Salesforce numbers → gone; 04.11. keeps the calls.
+      expect(rows.find((r) => r.reportDate === "2026-11-03")).toBeUndefined();
+      const mixed = rows.find((r) => r.reportDate === "2026-11-04")!;
+      expect(mixed.callsToday).toBe(7);
+      expect(mixed.leadsAnalysis).toBeUndefined();
+      // October month-end snapshot is before the handover and stays.
+      expect(rows.find((r) => r.reportDate === "2026-10-31")?.leadsCreated).toBe(1);
+      expect((await ctx.db.get(vahan))?.handover).toEqual({
+        toName: "Rukshan Mahathevan",
+        from: "2026-11-02",
+      });
+    });
+
+    // Re-import: current state and November leads → Rukshan.
+    await upload(
+      "lead-0311b.csv",
+      leadCsv("2026-11-03", [
+        ["Vahan Hovhannisyan", "Analysis", "15.10.2026"],
+        ["Vahan Hovhannisyan", "Open", "03.11.2026"],
+      ]),
+      { force: true },
+    );
+    await t.run(async (ctx) => {
+      const employees = await ctx.db
+        .query("performanceEmployees")
+        .withIndex("by_company", (q) => q.eq("companyId", ids.companyId))
+        .collect();
+      const rukshan = employees.find((e) => e.name === "Rukshan Mahathevan")!;
+      expect(rukshan).toBeDefined();
+      const reports = await ctx.db.query("performanceReports").collect();
+      const of = (id: Id<"performanceEmployees">, date: string) =>
+        reports.find((r) => r.employeeId === id && r.reportDate === date);
+      expect(of(rukshan._id, "2026-11-03")).toMatchObject({ leadsCreated: 1, leadsAnalysis: 1 });
+      expect(of(vahan, "2026-11-03")).toBeUndefined();
+      expect(of(vahan, "2026-10-31")?.leadsCreated).toBe(1);
+      expect(of(rukshan._id, "2026-10-31")).toBeUndefined();
+      const raw = await ctx.db.query("performanceRawLeads").collect();
+      expect(new Set(raw.map((r) => r.owner))).toEqual(new Set(["Rukshan Mahathevan"]));
+      const days = await ctx.db.query("performanceLeadDays").collect();
+      expect(days.map((d) => [d.owner, d.date]).sort()).toEqual([
+        ["Rukshan Mahathevan", "2026-11-03"],
+        ["Vahan Hovhannisyan", "2026-10-15"],
+      ]);
+    });
+
+    await expect(
+      admin.mutation(api.performance.dashboards.setHandover, {
+        employeeId: vahan,
+        handover: { toName: "vahan  hovhannisyan", from: "2026-11-02" },
+      }),
+    ).rejects.toThrow("unterscheiden");
+    await admin.mutation(api.performance.dashboards.setHandover, {
+      employeeId: vahan,
+      handover: null,
+    });
+    await t.run(async (ctx) => {
+      expect((await ctx.db.get(vahan))?.handover).toBeUndefined();
+    });
+  });
+});

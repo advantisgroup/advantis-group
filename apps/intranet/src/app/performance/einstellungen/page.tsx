@@ -6,7 +6,7 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { type FunctionReturnType } from "convex/server";
-import { Pencil, Plus, Settings2, Sparkles, Trash2 } from "lucide-react";
+import { ArrowRightLeft, Pencil, Plus, Settings2, Sparkles, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -50,6 +50,7 @@ import {
 import { useErrorHandler } from "@/hooks/use-error-handler";
 
 type DashboardRow = FunctionReturnType<typeof api.performance.dashboards.list>[number];
+type EmployeeRow = FunctionReturnType<typeof api.performance.dashboards.employees>[number];
 type DashboardKind = DashboardRow["kind"];
 const KINDS: DashboardKind[] = ["sales", "wallbox", "calls"];
 
@@ -260,6 +261,81 @@ function DashboardDialog({
   );
 }
 
+/** "From date X on, someone else works this Salesforce account." */
+function HandoverDialog({
+  employee,
+  onOpenChange,
+}: {
+  employee: EmployeeRow | null;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const t = useTranslations("Performance");
+  const handleError = useErrorHandler();
+  const setHandover = useMutation(api.performance.dashboards.setHandover);
+  const [toName, setToName] = useState("");
+  const [from, setFrom] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function save() {
+    if (!employee) return;
+    setSaving(true);
+    try {
+      await setHandover({ employeeId: employee.id, handover: { toName, from } });
+      toast.success(t("settingsHandoverSaved"));
+      onOpenChange(false);
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog
+      open={employee !== null}
+      onOpenChange={(open) => {
+        if (!open) {
+          setToName("");
+          setFrom("");
+        }
+        onOpenChange(open);
+      }}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t("settingsHandoverTitle", { name: employee?.name ?? "" })}</DialogTitle>
+          <DialogDescription>{t("settingsHandoverHint")}</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="handover-name">{t("settingsHandoverToName")}</Label>
+            <Input
+              id="handover-name"
+              value={toName}
+              onChange={(e) => setToName(e.target.value)}
+              placeholder={t("settingsHandoverToNamePlaceholder")}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="handover-from">{t("settingsHandoverFrom")}</Label>
+            <Input
+              id="handover-from"
+              type="date"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button onClick={() => void save()} disabled={saving || !toName.trim() || !from}>
+            {t("settingsHandoverSave")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 /** Report names on one dashboard and the intranet person behind each. */
 function EmployeeLinks({ dashboard }: { dashboard: DashboardRow }) {
   const t = useTranslations("Performance");
@@ -271,6 +347,19 @@ function EmployeeLinks({ dashboard }: { dashboard: DashboardRow }) {
   const setActive = useMutation(api.performance.dashboards.setEmployeeActive);
   const setCountWithout = useMutation(api.performance.dashboards.setCountWithoutAccount);
   const autoLink = useMutation(api.performance.dashboards.autoLink);
+  const setHandover = useMutation(api.performance.dashboards.setHandover);
+  const confirm = useConfirm();
+  const [handoverFor, setHandoverFor] = useState<EmployeeRow | null>(null);
+
+  async function endHandover(e: EmployeeRow) {
+    const ok = await confirm({
+      title: t("settingsHandoverEndTitle", { name: e.name }),
+      description: t("settingsHandoverEndHint"),
+      confirmLabel: t("settingsHandoverEnd"),
+    });
+    if (!ok) return;
+    await setHandover({ employeeId: e.id, handover: null }).catch(handleError);
+  }
 
   async function runAutoLink() {
     try {
@@ -346,6 +435,34 @@ function EmployeeLinks({ dashboard }: { dashboard: DashboardRow }) {
                           <InfoTip text={t("settingsCountWithoutAccountHint")} />
                         </label>
                       )}
+                      {e.handover ? (
+                        <Badge variant="secondary" className="gap-1.5 font-normal">
+                          <ArrowRightLeft className="h-3 w-3" />
+                          {t("settingsHandoverActive", {
+                            name: e.handover.toName,
+                            date: new Date(`${e.handover.from}T12:00:00`).toLocaleDateString(
+                              "de-DE",
+                            ),
+                          })}
+                          <button
+                            type="button"
+                            className="ml-1 underline-offset-2 hover:underline"
+                            onClick={() => void endHandover(e)}
+                          >
+                            {t("settingsHandoverEnd")}
+                          </button>
+                        </Badge>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() => setHandoverFor(e)}
+                        >
+                          <ArrowRightLeft className="mr-1.5 h-3.5 w-3.5" />
+                          {t("settingsHandoverOpen")}
+                        </Button>
+                      )}
                       {e.suggestion && (
                         <Button
                           variant="ghost"
@@ -377,6 +494,10 @@ function EmployeeLinks({ dashboard }: { dashboard: DashboardRow }) {
           </Table>
         )}
       </CardContent>
+      <HandoverDialog
+        employee={handoverFor}
+        onOpenChange={(open) => !open && setHandoverFor(null)}
+      />
     </Card>
   );
 }

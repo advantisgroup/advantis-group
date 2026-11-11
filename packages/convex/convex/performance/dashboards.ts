@@ -282,6 +282,7 @@ export const employees = userQuery({
           /** Linked to an account that is still active in the intranet. */
           userActive: user?.status === "active",
           countWithoutAccount: e.countWithoutAccount === true,
+          handover: e.handover ?? null,
           suggestion:
             !user && candidates.length === 1
               ? { id: candidates[0]._id, name: displayName(candidates[0]) }
@@ -350,6 +351,103 @@ export const setCountWithoutAccount = userMutation({
       countWithoutAccount: count || undefined,
       ...(count ? { active: true } : {}),
     });
+  },
+});
+
+/** The Salesforce-only fields of `performanceReports` (calls stay with the
+ * Genesys agent, whoever's Salesforce account they use). */
+const SALESFORCE_FIELDS = [
+  "leadsCreated",
+  "workableCreated",
+  "leadsAnalysis",
+  "leadsDetailsIdent",
+  "oppsOpen",
+  "oppsClose7d",
+  "oppsPending",
+  "wonMonth",
+  "overduesAnalysis",
+  "overduesOpps",
+  "oppsOver30",
+  "leadsNoAction14",
+  "oppsNoAction14",
+  "unqualifiedReasons",
+] as const satisfies readonly (keyof Doc<"performanceReports">)[];
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Hands a Salesforce account over to someone else from a date on (Rukshan
+ * sells through Vahan's account from 02.11.2026). Future Salesforce imports
+ * file rows dated on/after `from` under `toName`. The account's own
+ * Salesforce numbers from `from` on are cleared here, so the admin only has
+ * to re-import the Salesforce reports since `from` (upload log → "Neu
+ * importieren") to move them over. `handover: null` ends it; numbers already
+ * filed under the new name stay there until those reports are re-imported.
+ */
+export const setHandover = userMutation({
+  role: "admin",
+  args: {
+    employeeId: v.id("performanceEmployees"),
+    handover: v.union(v.object({ toName: v.string(), from: v.string() }), v.null()),
+  },
+  handler: async (ctx, { employeeId, handover }): Promise<{ cleared: number }> => {
+    const employee = await ctx.db.get(employeeId);
+    if (!employee) throw notFound("Mitarbeiter nicht gefunden.");
+    if (!handover) {
+      await ctx.db.patch(employeeId, { handover: undefined });
+      return { cleared: 0 };
+    }
+    const toName = handover.toName.trim().replace(/\s+/g, " ");
+    if (!toName || !ISO_DATE.test(handover.from)) {
+      throw new ConvexError({
+        code: "validation",
+        message: "Bitte Namen und Datum der Übernahme angeben.",
+      });
+    }
+    if (nameKey(toName) === nameKey(employee.name)) {
+      throw new ConvexError({
+        code: "validation",
+        message: "Der neue Name muss sich vom Report-Namen unterscheiden.",
+      });
+    }
+    const siblings = await ctx.db
+      .query("performanceEmployees")
+      .withIndex("by_company", (q) => q.eq("companyId", employee.companyId))
+      .collect();
+    if (
+      siblings.some(
+        (s) => s._id !== employeeId && s.handover && nameKey(s.name) === nameKey(toName),
+      )
+    ) {
+      throw new ConvexError({
+        code: "validation",
+        message: `${toName} gibt selbst ein Konto ab – Übergaben lassen sich nicht verketten.`,
+      });
+    }
+    await ctx.db.patch(employeeId, { handover: { toName, from: handover.from } });
+
+    const rows = await ctx.db
+      .query("performanceReports")
+      .withIndex("by_employee_date", (q) =>
+        q.eq("employeeId", employeeId).gte("reportDate", handover.from),
+      )
+      .collect();
+    let cleared = 0;
+    for (const row of rows) {
+      if (SALESFORCE_FIELDS.every((f) => row[f] === undefined)) continue;
+      const clearedFields = Object.fromEntries(SALESFORCE_FIELDS.map((f) => [f, undefined]));
+      const rest = { ...row, ...clearedFields };
+      const hasCalls = (Object.keys(rest) as (keyof typeof rest)[]).some(
+        (k) =>
+          !k.startsWith("_") &&
+          !["employeeId", "companyId", "reportDate", "sourceFile", "uploadedAt"].includes(k) &&
+          rest[k] !== undefined,
+      );
+      if (hasCalls) await ctx.db.patch(row._id, clearedFields);
+      else await ctx.db.delete(row._id);
+      cleared++;
+    }
+    return { cleared };
   },
 });
 
