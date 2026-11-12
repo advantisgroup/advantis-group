@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { locales } from "@/i18n/config";
 import { initials, roleLabel } from "@/lib/format";
+import { isArchived } from "@/lib/maintenance";
 import { cn } from "@/lib/utils";
 import { activeStatusMessage } from "@/lib/status-message";
 
@@ -216,10 +217,12 @@ export function AccountMenu({
           </DropdownMenuItem>
           {/* No onNavigate: it closes the mobile sidebar sheet, which would take
             this menu — and the dialog it owns — down with it. */}
-          <DropdownMenuItem onClick={() => setFeedbackOpen(true)}>
-            <MessageSquareHeart className="mr-2 h-4 w-4" />
-            {tDesign("menuItem")}
-          </DropdownMenuItem>
+          {!isArchived("/admin/design-feedback") && (
+            <DropdownMenuItem onClick={() => setFeedbackOpen(true)}>
+              <MessageSquareHeart className="mr-2 h-4 w-4" />
+              {tDesign("menuItem")}
+            </DropdownMenuItem>
+          )}
           <DropdownMenuSeparator />
           {user.canUseSandbox &&
             (user.sandboxRole ? (

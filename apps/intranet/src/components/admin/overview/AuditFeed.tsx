@@ -10,6 +10,7 @@ import { Link } from "@/components/Link";
 import { useIsAdmin, useIsManager } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { relativeTime } from "@/lib/format";
+import { isArchived } from "@/lib/maintenance";
 
 import { Panel, PanelSkeleton } from "./primitives";
 
@@ -80,7 +81,10 @@ export function JumpTo() {
 
   const items = ADMIN_NAV_GROUPS.filter((g) => g.labelKey !== "nav.groupGeneral")
     .flatMap((g) => g.items)
-    .filter((item) => (!item.managerOnly || isManager) && (!item.adminOnly || isAdmin));
+    .filter(
+      (item) =>
+        (!item.managerOnly || isManager) && (!item.adminOnly || isAdmin) && !isArchived(item.href),
+    );
 
   return (
     <Panel title={t("overview.jumpTo")} description={t("overview.jumpToHint")} bodyClassName="p-3">

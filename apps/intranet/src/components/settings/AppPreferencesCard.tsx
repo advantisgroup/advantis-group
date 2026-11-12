@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SettingsRow, SettingsSection } from "@/components/ui/settings-rows";
+import { isArchived } from "@/lib/maintenance";
 import { START_PAGES } from "@/lib/startPages";
 
 export function AppPreferencesCard() {
@@ -66,7 +67,7 @@ export function AppPreferenceRows() {
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        {START_PAGES.map((p) => (
+        {START_PAGES.filter((p) => !isArchived(p)).map((p) => (
           <SelectItem key={p} value={p}>
             {pageLabel[p]}
           </SelectItem>

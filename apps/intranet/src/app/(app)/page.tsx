@@ -255,7 +255,9 @@ export default function DashboardPage() {
     ...(hasApplicantPipelineHealth
       ? [widget("applicantpipeline", <ApplicantPipelineHealthCard />)]
       : []),
-    ...(isAdmin ? [widget("adminactivity", <RecentActivityCard />)] : []),
+    ...(isAdmin && !isArchived("/admin/audit")
+      ? [widget("adminactivity", <RecentActivityCard />)]
+      : []),
   ]);
 
   const availableCardIds = CARD_IDS.filter((id) => {
@@ -406,12 +408,14 @@ export default function DashboardPage() {
             </Button>
           </>
         )}
-        <Button variant="outline" size="sm" className="h-10 shrink-0 sm:h-8" asChild>
-          <Link href="/files">
-            <Upload className="mr-1.5 size-3.5" />
-            {t("actionUpload")}
-          </Link>
-        </Button>
+        {!isArchived("/files") && (
+          <Button variant="outline" size="sm" className="h-10 shrink-0 sm:h-8" asChild>
+            <Link href="/files">
+              <Upload className="mr-1.5 size-3.5" />
+              {t("actionUpload")}
+            </Link>
+          </Button>
+        )}
         <button
           type="button"
           onClick={() => window.dispatchEvent(new Event("command-palette:open"))}
