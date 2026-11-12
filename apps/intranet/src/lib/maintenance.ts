@@ -76,6 +76,11 @@ const ARCHIVED_PREFIXES = [
   "/admin/integrations",
   "/admin/audit",
   "/admin/access-review",
+  // Nachtrag 12.11.2026: Passwort-Resets (Performance und HR-Tresor haben
+  // keine eigenen Passwörter mehr) und Feature-Flags (Schalter bleiben in der
+  // Admin-Übersicht).
+  "/admin/password-resets",
+  "/admin/feature-flags",
 ] as const;
 
 function matchesPrefix(pathname: string, prefix: string): boolean {

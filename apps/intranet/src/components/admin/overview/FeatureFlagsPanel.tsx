@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 
 import { MetricRow, Panel, PanelSkeleton } from "./primitives";
+import { isArchived } from "@/lib/maintenance";
 
 /**
  * Every kill switch at a glance, flippable in place. Flipping one runs the
@@ -38,9 +39,11 @@ export function FeatureFlagsPanel() {
       }
       bodyClassName="p-3"
       action={
-        <Button asChild variant="outline" size="xs">
-          <Link href="/admin/feature-flags">{t("panel.manage")}</Link>
-        </Button>
+        isArchived("/admin/feature-flags") ? undefined : (
+          <Button asChild variant="outline" size="xs">
+            <Link href="/admin/feature-flags">{t("panel.manage")}</Link>
+          </Button>
+        )
       }
     >
       {flags === undefined ? (

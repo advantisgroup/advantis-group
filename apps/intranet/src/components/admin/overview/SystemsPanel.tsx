@@ -132,7 +132,7 @@ export function SystemsPanel() {
                     <span className="whitespace-nowrap">{relativeTime(flag.updatedAt)}</span>
                   }
                   tone="warn"
-                  href="/admin/feature-flags"
+                  href={isArchived("/admin/feature-flags") ? undefined : "/admin/feature-flags"}
                 />
               ))}
             </>

@@ -6,7 +6,7 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { Search, X } from "lucide-react";
-import { useFormatter, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { Switch } from "@/components/notifications/NotificationPreferences";
@@ -326,11 +326,8 @@ function appliesRetroactively(scope: Scope, retroactive: boolean) {
  */
 export function AuthenticationPolicyPanel() {
   const t = useTranslations("Admin");
-  const format = useFormatter();
   const policy = useQuery(api.security.stepUp.orgPolicy);
   const setPolicy = useMutation(api.security.stepUp.setOrgPolicy);
-  const areaStandard = useQuery(api.security.stepUp.areaStandard);
-  const legacy = useQuery(api.security.stepUp.legacyPasswordStandard);
   const handleError = useErrorHandler();
   const confirm = useConfirm();
   const [form, setForm] = useState<PolicyForm | null>(null);
@@ -577,113 +574,6 @@ export function AuthenticationPolicyPanel() {
             />
           </SettingsRow>
         </SettingsSection>
-        <SettingsSection
-          title={t("authenticationAreaReverifyTitle")}
-          description={t("authenticationAreaReverifyHint")}
-        >
-          <SettingsRow
-            title={t("authenticationAreaReverifyDays")}
-            control={
-              <Input
-                type="number"
-                inputMode="numeric"
-                min={1}
-                max={90}
-                className="w-24 tabular-nums"
-                value={form.areaReverifyDays}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    areaReverifyDays: Math.min(90, Math.max(1, Number(e.target.value) || 1)),
-                  })
-                }
-                onBlur={commitNumbers}
-              />
-            }
-          />
-          {areaStandard && (
-            <p className="px-4 py-3 text-xs text-muted-foreground text-pretty">
-              {t("authenticationAreaStats", {
-                performance:
-                  areaStandard.byArea.find((a) => a.area === "performance")?.alwaysStepUpCount ?? 0,
-                vault:
-                  areaStandard.byArea.find((a) => a.area === "applicant_vault")
-                    ?.alwaysStepUpCount ?? 0,
-                optedOut: areaStandard.deviceTrackingOptOutCount,
-              })}
-            </p>
-          )}
-        </SettingsSection>
-        <SettingsSection
-          title={t("authenticationLegacyPasswordTitle")}
-          description={t("authenticationLegacyPasswordHint")}
-        >
-          {(
-            [
-              {
-                key: "performanceLegacyPasswordSunsetEnabled",
-                title: t("authenticationAreaPerformance"),
-                hint: t("authenticationLegacyPasswordPerformanceHint"),
-                standard: legacy?.performance,
-              },
-              {
-                key: "applicantVaultLegacyPasswordSunsetEnabled",
-                title: t("authenticationAreaApplicantVault"),
-                hint: t("authenticationLegacyPasswordApplicantVaultHint"),
-                standard: legacy?.applicantVault,
-              },
-            ] as const
-          ).map((row) => (
-            <SettingsRow
-              key={row.key}
-              title={row.title}
-              description={
-                form[row.key] && row.standard?.deadlineAt
-                  ? t(
-                      row.standard.deadlineAt > Date.now()
-                        ? "authenticationLegacyPasswordRunning"
-                        : "authenticationLegacyPasswordEnded",
-                      {
-                        date: format.dateTime(new Date(row.standard.deadlineAt), {
-                          day: "numeric",
-                          month: "long",
-                          year: "numeric",
-                        }),
-                        count: row.standard.accountsStillOnLegacyPassword,
-                      },
-                    )
-                  : row.hint
-              }
-              control={
-                <Switch
-                  checked={form[row.key]}
-                  onToggle={() => void change({ [row.key]: !form[row.key] })}
-                  label={row.title}
-                />
-              }
-            />
-          ))}
-          <SettingsRow
-            title={t("authenticationLegacyPasswordGraceDays")}
-            control={
-              <Input
-                type="number"
-                inputMode="numeric"
-                min={1}
-                max={90}
-                className="w-24 tabular-nums"
-                value={form.legacyPasswordGraceDays}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    legacyPasswordGraceDays: Math.min(90, Math.max(1, Number(e.target.value) || 1)),
-                  })
-                }
-                onBlur={commitNumbers}
-              />
-            }
-          />
-        </SettingsSection>{" "}
       </div>
     </SettingsLayoutProvider>
   );
