@@ -620,6 +620,20 @@ export const INTRANET_PAGES: IntranetPage[] = [
     visible: admin,
   },
   {
+    href: "/admin/schluessel",
+    label: "Schlüssel",
+    description: "Welcher Schlüssel bei welchem Mitarbeiter ist – ausgeben, zurücknehmen, Verlauf.",
+    keywords: [
+      "schlüssel",
+      "schluessel",
+      "keys",
+      "haupteingang",
+      "briefkasten",
+      "schlüsselausgabe",
+    ],
+    visible: admin,
+  },
+  {
     href: "/admin/design-feedback",
     label: "Seiten-Feedback",
     description: "Rückmeldungen zu einzelnen Seiten, mit der Seite, auf der sie geschickt wurden.",

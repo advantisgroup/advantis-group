@@ -12,8 +12,9 @@ import {
   Building2,
   Calendar,
   ClipboardList,
+  Asterisk,
   Cloud,
-  KeyRound,
+  Key,
   Contact,
   ExternalLink,
   GraduationCap,
@@ -262,18 +263,6 @@ export function Sidebar() {
       icon: Calendar,
       tourAttr: "tour-nav-calendar",
     },
-    // Office (Grundriss, Arbeitsplätze, Lager): admins only until OFFICE_MODE is live.
-    ...(office?.access
-      ? [
-          {
-            section: "planning" as const,
-            href: "/office",
-            labelKey: "office",
-            icon: Building2,
-            isNew: true,
-          },
-        ]
-      : []),
     // Own time tracking (replaces Clockodo). Test stage: only admins and
     // testers see it; preview: everyone, marked as new.
     ...(timeMode?.canUse
@@ -440,7 +429,11 @@ export function Sidebar() {
               },
             ]
           : []),
-        { href: "/admin/zugaenge", labelKey: "vault", icon: KeyRound, adminOnly: true },
+        // Office (Grundriss, Arbeitsplätze, Lager): in Organisation since
+        // 12.11.2026; admins only until OFFICE_MODE is live.
+        ...(office?.access ? [{ href: "/office", labelKey: "office", icon: Building2 }] : []),
+        { href: "/admin/zugaenge", labelKey: "vault", icon: Asterisk, adminOnly: true },
+        { href: "/admin/schluessel", labelKey: "keys", icon: Key, adminOnly: true },
       ],
     },
     ...ADMIN_NAV_GROUPS.slice(1).map((group) => ({
@@ -466,7 +459,8 @@ export function Sidebar() {
     pathname.startsWith("/admin") ||
     pathname.startsWith("/hr") ||
     pathname.startsWith("/applicants") ||
-    pathname.startsWith("/files")
+    pathname.startsWith("/files") ||
+    pathname.startsWith("/office")
       ? "organization"
       : "workspace";
   const [mode, setMode] = useState<SidebarMode>(routeMode);
