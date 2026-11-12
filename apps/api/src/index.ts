@@ -15,6 +15,7 @@ import { dailyBriefRoute } from "./routes/daily-brief.js";
 import { hrMailboxRoute } from "./routes/hrMailbox.js";
 import { inquiryAiRoute } from "./routes/inquiry-ai.js";
 import { officeRoute } from "./routes/office.js";
+import { vaultRoute } from "./routes/vault.js";
 import { mailRoute } from "./routes/mail.js";
 import { navigateRoute } from "./routes/navigate.js";
 import { onedriveRoute } from "./routes/onedrive.js";
@@ -105,6 +106,7 @@ export const app = new Elysia()
   .use(dailyBriefRoute)
   .use(inquiryAiRoute)
   .use(officeRoute)
+  .use(vaultRoute)
   .use(mailRoute)
   .use(navigateRoute)
   .use(onedriveRoute)

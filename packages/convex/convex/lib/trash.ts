@@ -33,6 +33,7 @@ export const TRASH_TABLES = [
   "updates",
   "wikiEntries",
   "salesCoachEvWiki",
+  "vaultEntries",
 ] as const;
 
 export type TrashTable = (typeof TRASH_TABLES)[number];
