@@ -13,6 +13,7 @@ import {
   Calendar,
   ClipboardList,
   Cloud,
+  KeyRound,
   Contact,
   ExternalLink,
   GraduationCap,
@@ -439,6 +440,7 @@ export function Sidebar() {
               },
             ]
           : []),
+        { href: "/admin/zugaenge", labelKey: "vault", icon: KeyRound, adminOnly: true },
       ],
     },
     ...ADMIN_NAV_GROUPS.slice(1).map((group) => ({

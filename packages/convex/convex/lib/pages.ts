@@ -613,6 +613,13 @@ export const INTRANET_PAGES: IntranetPage[] = [
     visible: manager,
   },
   {
+    href: "/admin/zugaenge",
+    label: "Zugänge",
+    description: "Firmen-Zugänge und Passwörter (Microsoft, IONOS, Salesforce …), verschlüsselt.",
+    keywords: ["passwörter", "passwort", "logins", "zugangsdaten", "microsoft", "tresor"],
+    visible: admin,
+  },
+  {
     href: "/admin/design-feedback",
     label: "Seiten-Feedback",
     description: "Rückmeldungen zu einzelnen Seiten, mit der Seite, auf der sie geschickt wurden.",
