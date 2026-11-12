@@ -6,14 +6,13 @@ import { decrypt, encrypt } from "../lib/crypto.js";
 import { ApiError, Errors } from "../lib/errors.js";
 import { authed, requireFirstPartyOrigin } from "../lib/middleware.js";
 import { rateLimit } from "../lib/rate-limit.js";
-import { destructiveStepUpHint } from "../lib/stepUp.js";
 
 /**
  * Zugänge (Organisation → Zugänge): shared company logins, admins only.
  * Passwords and notes are encrypted here with `VAULT_ENC_KEY` (32 bytes,
  * base64, Production only) before Convex stores them, and decrypted here on
- * reveal. Revealing needs a fresh verification (Windows PIN/passkey or code)
- * within the destructive-action window, like removing a credential.
+ * reveal. No extra verification on reveal (Vahan, 12.11.2026): admins use the
+ * entries all day; every reveal still lands in the entry's history.
  */
 
 const ENC_KEY = "VAULT_ENC_KEY";
@@ -115,11 +114,7 @@ export const vaultRoute = new Elysia()
     async ({ caller, request, params }) => {
       requireFirstPartyOrigin(request);
       assertVaultAvailable();
-      const { clerkUserId, sessionId } = caller;
-      if (!sessionId) throw Errors.badRequest("No active session");
-      await rateLimit("vault-reveal", clerkUserId, 60, "10 m");
-      const hint = await destructiveStepUpHint(clerkUserId, sessionId);
-      if (hint) return hint;
+      await rateLimit("vault-reveal", caller.clerkUserId, 120, "10 m");
       const sealed = await caller.convex.mutation(api.vault.entries.apiReveal, {
         entryId: params.id as Id<"vaultEntries">,
       });

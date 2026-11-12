@@ -4,7 +4,6 @@ import { useMemo } from "react";
 
 import { type Doc } from "@advantis/convex/dataModel";
 
-import { type StepUpHintShape } from "@/components/auth/useDestructiveStepUp";
 import { useIntranetApiClient } from "@/lib/api-client";
 
 export type VaultCategory = Doc<"vaultEntries">["category"];
@@ -39,9 +38,7 @@ export function useVaultApi() {
         send<{ id: string }>("/vault/entries", "POST", input),
       update: (id: string, input: VaultInput) =>
         send<{ ok: true }>(`/vault/entries/${id}`, "PUT", input),
-      /** Answers with a step-up hint when this session hasn't verified recently. */
-      reveal: (id: string) =>
-        send<VaultSecret | StepUpHintShape>(`/vault/entries/${id}/reveal`, "POST"),
+      reveal: (id: string) => send<VaultSecret>(`/vault/entries/${id}/reveal`, "POST"),
     };
   }, [api]);
 }

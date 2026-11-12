@@ -21,7 +21,6 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { useDestructiveStepUp } from "@/components/auth/useDestructiveStepUp";
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
 import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { useIsAdmin } from "@/components/providers/current-user";
@@ -84,15 +83,14 @@ async function copy(text: string, done: string) {
 
 /**
  * Zugänge: the company's shared logins, admins only. Passwords never reach
- * Convex in plain text (apps/api encrypts them) and are only shown after a
- * fresh verification; every reveal lands in the entry's history.
+ * Convex in plain text (apps/api encrypts them); every reveal lands in the
+ * entry's history.
  */
 export default function VaultPage() {
   const t = useTranslations("Vault");
   const isAdmin = useIsAdmin();
   const entries = useEntries(isAdmin);
   const vault = useVaultApi();
-  const { runGuarded, dialog: stepUpDialog } = useDestructiveStepUp();
   const handleError = useErrorHandler();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<VaultCategory | "all">("all");
@@ -117,7 +115,7 @@ export default function VaultPage() {
   async function reveal(entry: Entry): Promise<VaultSecret | null> {
     setBusy(entry.id);
     try {
-      return await runGuarded(() => vault.reveal(entry.id));
+      return await vault.reveal(entry.id);
     } catch (error) {
       handleError(error);
       return null;
@@ -234,7 +232,6 @@ export default function VaultPage() {
         />
       )}
       {historyOf && <HistoryDialog entry={historyOf} onClose={() => setHistoryOf(null)} />}
-      {stepUpDialog}
     </div>
   );
 }
