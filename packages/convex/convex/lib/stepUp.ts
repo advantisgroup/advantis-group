@@ -556,7 +556,9 @@ export async function resolveSignInRequirement(
   if (mfaApplies && !inMfaGrace && hasQualifyingMfaCredential) {
     requiredLevel = Math.max(requiredLevel, ORG_MFA_LEVEL);
   }
-  if (riskSignal?.newDevice) requiredLevel = Math.max(requiredLevel, LEVEL.email_code);
+  if (riskSignal?.newDevice && policy.newDeviceEmailCode === true) {
+    requiredLevel = Math.max(requiredLevel, LEVEL.email_code);
+  }
 
   return {
     requiredLevel,

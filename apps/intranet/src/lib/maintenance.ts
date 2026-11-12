@@ -67,6 +67,20 @@ const ARCHIVED_PREFIXES = [
   "/who-to-ask",
   "/fehlermanagement",
   "/suggestions",
+  // Organisation (12.11.2026, Vahan): Seiten-Feedback, Dateien (OneDrive-Browser),
+  // Uploads, Integrationen, Audit-Log und Zugriffsprüfung. Daten und
+  // Hintergrundjobs (z. B. Integrationen, Audit-Einträge) laufen weiter.
+  "/admin/design-feedback",
+  "/files",
+  "/admin/uploads",
+  "/admin/integrations",
+  "/admin/audit",
+  "/admin/access-review",
+  // Nachtrag 12.11.2026: Passwort-Resets (Performance und HR-Tresor haben
+  // keine eigenen Passwörter mehr) und Feature-Flags (Schalter bleiben in der
+  // Admin-Übersicht).
+  "/admin/password-resets",
+  "/admin/feature-flags",
 ] as const;
 
 function matchesPrefix(pathname: string, prefix: string): boolean {

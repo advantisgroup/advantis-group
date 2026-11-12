@@ -20,6 +20,7 @@ import { Link } from "@/components/Link";
 import { useIsAdmin } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { relativeTime } from "@/lib/format";
+import { isArchived } from "@/lib/maintenance";
 
 import { MetricRow, Panel, PanelSkeleton } from "./primitives";
 
@@ -111,7 +112,7 @@ export function SystemsPanel() {
                       {t(`overview.systems.status.${integration.status}`)}
                     </Badge>
                   }
-                  href="/admin/integrations"
+                  href={isArchived("/admin/integrations") ? undefined : "/admin/integrations"}
                 />
               );
             })
@@ -131,7 +132,7 @@ export function SystemsPanel() {
                     <span className="whitespace-nowrap">{relativeTime(flag.updatedAt)}</span>
                   }
                   tone="warn"
-                  href="/admin/feature-flags"
+                  href={isArchived("/admin/feature-flags") ? undefined : "/admin/feature-flags"}
                 />
               ))}
             </>

@@ -75,6 +75,7 @@ async function seedPolicy(
     gracePeriodDays: number;
     exemptUserIds: Id<"users">[];
     areaReverifyDays: number;
+    newDeviceEmailCode: boolean;
     performanceLegacyPasswordSunsetEnabled: boolean;
     performanceLegacyPasswordSunsetSetAt: number;
     applicantVaultLegacyPasswordSunsetEnabled: boolean;
@@ -420,9 +421,30 @@ describe("the sign-in gate", () => {
     expect(status.state).toBe("satisfied");
   });
 
+  test("a second device signs in without a code while the org check is off", async () => {
+    const t = setup();
+    await seedUser(t);
+    const evaluate = (deviceHash: string) =>
+      t.mutation(api.security.stepUp.apiEvaluateDevice, {
+        serverKey,
+        clerkUserId: "user_alice",
+        sessionId: SESSION,
+        deviceHash,
+      });
+
+    await evaluate("device_laptop");
+    expect(await evaluate("device_phone")).toEqual({ newDevice: true });
+
+    const status = await asUser(t, "user_alice").query(api.security.stepUp.status, {
+      sessionId: SESSION,
+    });
+    expect(status.state).toBe("satisfied");
+  });
+
   test("a second device raises a level 1 check that an email code clears", async () => {
     const t = setup();
     const userId = await seedUser(t);
+    await seedPolicy(t, userId, { newDeviceEmailCode: true });
     const evaluate = (deviceHash: string) =>
       t.mutation(api.security.stepUp.apiEvaluateDevice, {
         serverKey,
@@ -457,7 +479,8 @@ describe("the sign-in gate", () => {
 
   test("re-evaluating the same session cannot lower a raised flag", async () => {
     const t = setup();
-    await seedUser(t);
+    const userId = await seedUser(t);
+    await seedPolicy(t, userId, { newDeviceEmailCode: true });
     const evaluate = (deviceHash: string) =>
       t.mutation(api.security.stepUp.apiEvaluateDevice, {
         serverKey,

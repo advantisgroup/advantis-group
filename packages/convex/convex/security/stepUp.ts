@@ -53,6 +53,8 @@ const policyFieldsValidator = {
   gracePeriodDays: v.number(),
   exemptUserIds: v.array(v.id("users")),
   areaReverifyDays: v.number(),
+  // Optional so a caller that predates the switch leaves it as it is.
+  newDeviceEmailCode: v.optional(v.boolean()),
   // Whether the sunset is on, not when — the handler stamps `SetAt` itself.
   performanceLegacyPasswordSunsetEnabled: v.boolean(),
   applicantVaultLegacyPasswordSunsetEnabled: v.boolean(),
@@ -84,6 +86,7 @@ export const orgPolicy = userQuery({
       gracePeriodDays: policy.gracePeriodDays,
       exemptUserIds: policy.exemptUserIds,
       areaReverifyDays: policy.areaReverifyDays ?? AREA_REVERIFY_DEFAULT_DAYS,
+      newDeviceEmailCode: policy.newDeviceEmailCode === true,
       performanceLegacyPasswordSunsetEnabled:
         policy.performanceLegacyPasswordSunsetEnabled === true,
       applicantVaultLegacyPasswordSunsetEnabled:
@@ -154,6 +157,7 @@ export const setOrgPolicy = userMutation({
 
     const doc = {
       ...args,
+      newDeviceEmailCode: args.newDeviceEmailCode ?? existing?.newDeviceEmailCode === true,
       mfaPolicySetAt: mfaChanged ? now : (existing?.mfaPolicySetAt ?? now),
       passkeyPolicySetAt: passkeyChanged ? now : (existing?.passkeyPolicySetAt ?? now),
       performanceLegacyPasswordSunsetSetAt: performanceSunsetChanged

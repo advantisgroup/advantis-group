@@ -18,6 +18,7 @@ import { Vitals } from "@/components/admin/overview/Vitals";
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
 import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { useIsAdmin, useIsManager } from "@/components/providers/current-user";
+import { isArchived } from "@/lib/maintenance";
 
 /**
  * The organization control room.
@@ -92,7 +93,7 @@ export default function AdminOverviewPage() {
 
       {isAdmin && (
         <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
-          <AuditFeed />
+          {!isArchived("/admin/audit") && <AuditFeed />}
           <JumpTo />
         </div>
       )}

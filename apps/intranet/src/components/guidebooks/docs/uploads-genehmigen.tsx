@@ -18,10 +18,6 @@ const DOC: DocContent = {
       title: "Ausstehende Uploads prüfen",
       blocks: [
         {
-          kind: "links",
-          items: [{ label: "Uploads öffnen", href: "/admin/uploads" }],
-        },
-        {
           kind: "text",
           body: "Im Bereich **„Ausstehende Freigaben“** zeigt jede Anfrage Größe, Typ, Anfragezeitpunkt und Zielordner der Datei sowie das Ergebnis der Sicherheitsprüfung („Unbedenklich“, falls sauber).",
         },

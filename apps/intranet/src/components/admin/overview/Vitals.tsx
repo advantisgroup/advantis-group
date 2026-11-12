@@ -10,6 +10,7 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/components/Link";
 import { useIsAdmin } from "@/components/providers/current-user";
 import { Skeleton } from "@/components/ui/skeleton";
+import { isArchived } from "@/lib/maintenance";
 import { cn } from "@/lib/utils";
 
 /**
@@ -95,7 +96,7 @@ export function Vitals({ tzOffsetMinutes }: { tzOffsetMinutes: number }) {
             ? t("overview.vitals.flagsOff", { count: systems.disabledFlags.length })
             : t("overview.vitals.flagsAllOn")
         }
-        href="/admin/integrations"
+        href={isArchived("/admin/integrations") ? undefined : "/admin/integrations"}
       />
       {isAdmin && (
         <Cell
@@ -126,11 +127,11 @@ function Cell({
   value: ReactNode;
   headline: string;
   context: string;
-  href: string;
+  href?: string;
   tone?: "neutral" | "ok" | "warn";
 }) {
-  return (
-    <Link href={href} className="block bg-card px-5 py-4 transition-colors hover:bg-accent/60">
+  const body = (
+    <>
       <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
         <Icon className="size-3.5 shrink-0" />
         {label}
@@ -146,6 +147,13 @@ function Cell({
       </p>
       <p className="mt-2.5 truncate text-xs font-medium">{headline}</p>
       <p className="truncate text-xs text-muted-foreground">{context}</p>
+    </>
+  );
+  return href ? (
+    <Link href={href} className="block bg-card px-5 py-4 transition-colors hover:bg-accent/60">
+      {body}
     </Link>
+  ) : (
+    <div className="bg-card px-5 py-4">{body}</div>
   );
 }

@@ -106,6 +106,8 @@ interface NavItem {
   tourAttr?: string;
   /** Shows a small "Neu" chip (e.g. a module in its preview week). */
   isNew?: boolean;
+  /** Other routes that count as this entry when highlighting the active item. */
+  activePrefixes?: string[];
 }
 
 interface NavGroup {
@@ -514,7 +516,8 @@ export function Sidebar() {
   function isActive(href: string) {
     if (href === "/") return pathname === "/";
     if (href === "/admin") return pathname === "/admin";
-    return pathname.startsWith(href);
+    const extra = entries.get(href)?.item.activePrefixes ?? [];
+    return [href, ...extra].some((prefix) => pathname.startsWith(prefix));
   }
 
   function itemContent(href: string): ReactNode {

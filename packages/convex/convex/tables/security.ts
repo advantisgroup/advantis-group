@@ -28,6 +28,11 @@ export const securityTables = {
     exemptUserIds: v.array(v.id("users")),
     // Optional so older rows read as the defaults in lib/stepUp.ts.
     areaReverifyDays: v.optional(v.number()),
+    /** Ask for an email code when someone signs in from a browser the account
+     * hasn't proven yet. Off unless set: the codes land in IONOS inboxes nobody
+     * reads, which locked people out (switched off 12.11.2026, Vahan). Devices
+     * are still recognised and listed either way. */
+    newDeviceEmailCode: v.optional(v.boolean()),
     /** Turning a sunset on starts its grace clock (`SetAt`); once it runs
      * out, the area's own password stops working for accounts that have
      * another way in — a linked Performance login, a vault member with a
