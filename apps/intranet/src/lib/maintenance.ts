@@ -51,6 +51,10 @@ const ARCHIVED_PREFIXES = [
   "/sales-coach-ev",
   "/guidebooks/wallbox-sales-academy",
   "/wallbox-sales-academy",
+  // Interaktives Tool „Terminprozess E-Mobilitäts-Check“ (12.11.2026, Vahan):
+  // Projekt läuft nicht weiter.
+  "/guidebooks/terminprozess-ev-check",
+  "/tools/terminprozess-ev-check.html",
   // Blog-Redaktion im Intranet (19.10.2026). Die öffentliche Website zeigt
   // bereits veröffentlichte Artikel weiter an.
   "/blog",
