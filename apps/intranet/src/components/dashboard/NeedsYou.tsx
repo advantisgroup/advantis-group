@@ -87,13 +87,18 @@ export function NeedsYouPanel() {
   // IT-Tickets archiviert (22.10.2026): keine Ticket-Einträge mehr.
   const ticketsArchived = isArchived("/it-tickets");
   const tickets = useQuery(api.itTickets.tickets.listAssignedOpen, ticketsArchived ? "skip" : {});
-  const measures = useQuery(api.fehlermanagement.measures.listMineOpen);
+  // Fehlermanagement archiviert (12.11.2026): keine Maßnahmen-Einträge mehr.
+  const measuresArchived = isArchived("/fehlermanagement");
+  const measures = useQuery(
+    api.fehlermanagement.measures.listMineOpen,
+    measuresArchived ? "skip" : {},
+  );
   const announcements = useQuery(api.announcements.needsAttention);
   const policies = useQuery(api.wiki.policies.pendingMine);
 
   const loading =
     (!ticketsArchived && tickets === undefined) ||
-    measures === undefined ||
+    (!measuresArchived && measures === undefined) ||
     announcements === undefined ||
     policies === undefined ||
     (isManager && accessRequests === undefined);

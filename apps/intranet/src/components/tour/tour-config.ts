@@ -1,3 +1,4 @@
+import { isArchived } from "@/lib/maintenance";
 import type { TourCheckpoint } from "./tour-types";
 
 /**
@@ -6,7 +7,7 @@ import type { TourCheckpoint } from "./tour-types";
  * (`Tour.checkpoints.<id>`) and step id (`Tour.steps.<stepId>.title` /
  * `.description`), so the tour follows the user's language preference.
  */
-export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
+const ALL_TOUR_CHECKPOINTS: TourCheckpoint[] = [
   {
     id: "dashboard",
     route: "/",
@@ -322,5 +323,10 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
     ],
   },
 ];
+
+/** Archivierte Bereiche (z. B. „Hilfe & Anfragen“, 12.11.2026) fallen aus der Tour. */
+export const TOUR_CHECKPOINTS: TourCheckpoint[] = ALL_TOUR_CHECKPOINTS.filter(
+  (c) => !isArchived(c.route),
+);
 
 export const ALL_CHECKPOINT_IDS = TOUR_CHECKPOINTS.map((c) => c.id);

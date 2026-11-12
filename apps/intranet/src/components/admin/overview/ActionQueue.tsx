@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
 import { relativeTime } from "@/lib/format";
+import { isArchived } from "@/lib/maintenance";
 import { cn } from "@/lib/utils";
 
 import { Panel, PanelSkeleton } from "./primitives";
@@ -27,7 +28,10 @@ export function ActionQueue() {
   const data = useQuery(api.org.overview.queue);
 
   const items = data
-    ? [...data.items].sort((a, b) => QUEUE_ORDER.indexOf(a.key) - QUEUE_ORDER.indexOf(b.key))
+    ? [...data.items]
+        // Archivierte Module (z. B. Fehlermanagement, Vorschläge) nicht anbieten.
+        .filter((entry) => !isArchived(QUEUE_META[entry.key]?.href ?? ""))
+        .sort((a, b) => QUEUE_ORDER.indexOf(a.key) - QUEUE_ORDER.indexOf(b.key))
     : [];
 
   return (

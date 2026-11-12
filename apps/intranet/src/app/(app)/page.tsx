@@ -249,7 +249,8 @@ export default function DashboardPage() {
     ...(hasTeamPerformance && isManager
       ? [widget("teamperformance", <TeamPerformanceCard companyId={teamDashboardId!} />)]
       : []),
-    widget("errormeasures", <OpenMeasuresCard />),
+    // Fehlermanagement archiviert (12.11.2026)
+    ...(isArchived("/fehlermanagement") ? [] : [widget("errormeasures", <OpenMeasuresCard />)]),
     widget("adminstats", <AdminStatsCard />),
     ...(hasApplicantPipelineHealth
       ? [widget("applicantpipeline", <ApplicantPipelineHealthCard />)]

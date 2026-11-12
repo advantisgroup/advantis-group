@@ -26,6 +26,7 @@ import { SkeletonRows } from "@/components/ui/skeleton";
 import { localIsoDate } from "@/lib/absences";
 import { formatIsoDate } from "@/lib/format";
 import { type MyAbsence, useMyAbsences } from "@/lib/time-absences";
+import { isArchived } from "@/lib/maintenance";
 
 type State = "open" | "active" | "done" | "declined";
 type Kind = "ticket" | "suggestion" | "error" | "upload" | "absence";
@@ -133,7 +134,7 @@ function RequestsView({ absences }: { absences: Row[] }) {
           title={tab === "open" ? t("emptyOpen") : t("emptyClosed")}
           description={rows.length === 0 ? t("emptyHint") : undefined}
           action={
-            rows.length === 0 ? (
+            rows.length === 0 && !isArchived("/help") ? (
               <Button size="sm" variant="outline" asChild>
                 <Link href="/help">{t("emptyAction")}</Link>
               </Button>

@@ -23,6 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 import { Delta, Panel } from "./primitives";
+import { isArchived } from "@/lib/maintenance";
 import { RANGE_OPTIONS, STREAM_FAMILIES, type RangeOption } from "./streams";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -58,7 +59,7 @@ export function ThroughputPanel() {
     tzOffsetMinutes: new Date().getTimezoneOffset(),
   });
 
-  const families = STREAM_FAMILIES.filter((f) => !f.adminOnly || isAdmin);
+  const families = STREAM_FAMILIES.filter((f) => (!f.adminOnly || isAdmin) && !isArchived(f.href));
   const family = families.find((f) => f.key === familyKey) ?? families[0];
 
   const byKey = useMemo(() => new Map((data?.series ?? []).map((s) => [s.key, s])), [data]);
