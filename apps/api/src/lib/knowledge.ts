@@ -80,10 +80,18 @@ export function rulesBlock(knowledge: Knowledge) {
  * goes into a cached system block); `matches` depends on the question and is
  * only set when the wiki is too big to send whole.
  */
-export function knowledgePrompt(knowledge: Knowledge, question: string) {
+export function knowledgePrompt(
+  knowledge: Knowledge,
+  question: string,
+  /** Always table of contents + matches, however small the wiki — for
+   *  callers that loop over many turns and read the rest on demand. */
+  options: { contents?: boolean; matchCount?: number; matchChars?: number } = {},
+) {
   const { entries } = knowledge;
   const total = entries.reduce((sum, e) => sum + e.text.length + e.title.length, 0);
-  const whole = total <= FULL_WIKI_CHARS;
+  const whole = !options.contents && total <= FULL_WIKI_CHARS;
+  const matchCount = options.matchCount ?? MATCH_COUNT;
+  const matchChars = options.matchChars ?? MATCHES_CHARS;
   const wiki = whole
     ? `<wiki>\nDas gesamte aktuelle Wiki (${entries.length} Einträge). Du kennst damit alles, was im Wiki steht.\n\n${entries.map(entryBlock).join("\n\n")}\n</wiki>`
     : `<wiki_inhalt>\nInhaltsverzeichnis des gesamten Wikis (${entries.length} Einträge). Zu jeder Frage kommen die passendsten Einträge vollständig mit; alles andere liest du mit \`open\` und dem Schlüssel.\n\n${entries
@@ -98,8 +106,8 @@ export function knowledgePrompt(knowledge: Knowledge, question: string) {
   if (!whole) {
     let used = 0;
     const picked: KnowledgeEntry[] = [];
-    for (const e of ranked.slice(0, MATCH_COUNT)) {
-      if (used + e.text.length > MATCHES_CHARS && picked.length > 0) break;
+    for (const e of ranked.slice(0, matchCount)) {
+      if (used + e.text.length > matchChars && picked.length > 0) break;
       used += e.text.length;
       picked.push(e);
     }
