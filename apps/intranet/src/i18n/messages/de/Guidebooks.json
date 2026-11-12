@@ -271,7 +271,7 @@
       "week": "Letzte 7 Tage",
       "month": "Letzte 30 Tage"
     },
-    "emptyPrompt": "Kennt das Wiki, UTA-Produkte, Kolleginnen und Kollegen, Termine, deine Tickets und was bei dir ansteht. Deine Chats sind verschlüsselt und nur für dich sichtbar.",
+    "emptyPrompt": "Kennt das ganze Wiki, UTA-Produkte, Kolleginnen und Kollegen, Termine, deine Tickets und was bei dir ansteht. Deine Chats sind verschlüsselt und nur für dich sichtbar.",
     "starters": [
       "Was steht heute bei mir an?",
       "Was ist der Unterschied zwischen Tankkarte Basic und Standard?",
@@ -345,7 +345,13 @@
       "failed": "Nicht verfügbar"
     },
     "openFull": "Chat in voller Ansicht öffnen",
-    "openFullHint": "Mehr Platz zum Atmen — eigene Seite, wie ein echter Chat."
+    "openFullHint": "Mehr Platz zum Atmen — eigene Seite, wie ein echter Chat.",
+    "gapTitle": "Was war falsch oder fehlt?",
+    "gapPlaceholder": "z. B. „Der Preis stimmt nicht mehr, seit 04/2026 gilt …“",
+    "gapHint": "Deine Frage und dein Hinweis gehen ohne deinen Namen an die KI-Pflege. Keine Kundendaten.",
+    "gapSend": "An KI-Pflege geben",
+    "gapSkip": "Nur bewerten",
+    "gapSent": "Danke! Die KI-Pflege kümmert sich darum."
   },
   "filesBelongTo": "Gehört zu: {title}",
   "filtersLabel": "Filter",

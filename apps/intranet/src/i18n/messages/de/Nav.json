@@ -92,5 +92,6 @@
   "toolMoveDown": "{name} nach unten",
   "toolRemove": "{name} entfernen",
   "policies": "Richtlinien",
-  "newBadge": "Neu"
+  "newBadge": "Neu",
+  "aiTraining": "KI-Pflege"
 }

@@ -92,5 +92,6 @@
   "toolMoveDown": "Move {name} down",
   "toolRemove": "Remove {name}",
   "policies": "Policies",
-  "newBadge": "New"
+  "newBadge": "New",
+  "aiTraining": "AI training"
 }

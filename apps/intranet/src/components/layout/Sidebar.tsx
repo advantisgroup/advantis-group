@@ -15,6 +15,7 @@ import {
   Cloud,
   Contact,
   ExternalLink,
+  GraduationCap,
   Grid2X2,
   Inbox,
   LayoutDashboard,
@@ -197,6 +198,7 @@ export function Sidebar() {
   const timeMode = useQuery(api.time.mode.status);
   const onboardingCockpit = useQuery(api.performance.onboarding.me);
   const office = useQuery(api.office.me);
+  const aiTrainingCounts = useQuery(api.aiTraining.access.overview, user.aiTrainer ? {} : "skip");
   const pendingAbsences = usePendingAbsenceCount(isAdmin);
   const { setOpenMobile, state, isMobile, editing, setEditing } = useSidebar();
   const featureFlags = useFeatureFlags();
@@ -305,6 +307,18 @@ export function Sidebar() {
             href: "/wiki-chat",
             labelKey: "wikiChat",
             icon: Sparkles,
+          },
+        ]
+      : []),
+    // KI-Pflege (12.11.2026): nur für Admins und die von Admins Ausgewählten.
+    ...(aiEnabled && user.aiTrainer
+      ? [
+          {
+            section: "knowledge" as const,
+            href: "/ki-pflege",
+            labelKey: "aiTraining",
+            icon: GraduationCap,
+            badge: aiTrainingCounts?.openProposals || undefined,
           },
         ]
       : []),

@@ -34,6 +34,8 @@ const OPEN_PREFIXES = [
   // Wissen: Wiki und KI-Assistent für alle freigegeben (19.10. / 21.10.2026, Vahan).
   "/guidebooks",
   "/wiki-chat",
+  // KI-Pflege (12.11.2026): Zugriff regelt Convex (Admins + users.aiTrainer).
+  "/ki-pflege",
   // Hilfe: /help, /fehlermanagement archiviert (12.11.2026), siehe ARCHIVED_PREFIXES
   "/requests",
 ] as const;
