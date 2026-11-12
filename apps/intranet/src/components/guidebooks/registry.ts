@@ -141,6 +141,9 @@ export const GUIDEBOOKS: Guidebook[] = [
     ),
     minimalChrome: true,
     wide: true,
+    // Archiviert 12.11.2026 (Vahan): Projekt E-Mobilitäts-Check läuft nicht
+    // weiter. Datei public/tools/terminprozess-ev-check.html bleibt.
+    archived: true,
   },
   {
     // Interaktives Tool: sendet im Hintergrund an das Black-List-Formular von UTA.
