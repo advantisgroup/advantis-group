@@ -391,7 +391,6 @@ export function Sidebar() {
             href: "/onboarding-cockpit",
             labelKey: "onboardingCockpit",
             icon: Rocket,
-            isNew: true,
           },
         ]
       : []),
