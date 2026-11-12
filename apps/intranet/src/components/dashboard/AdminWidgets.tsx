@@ -42,7 +42,8 @@ export function ManagerBriefCard() {
   const pendingAbsences = usePendingAbsenceCount(true);
   const accessRequests = useQuery(api.people.accessRequests.list, { status: "pending" });
   const tickets = useQuery(api.itTickets.tickets.list);
-  const measures = useQuery(api.fehlermanagement.measures.list, {});
+  const measuresArchived = isArchived("/fehlermanagement");
+  const measures = useQuery(api.fehlermanagement.measures.list, measuresArchived ? "skip" : {});
 
   const staleTickets =
     tickets?.filter(
@@ -77,7 +78,7 @@ export function ManagerBriefCard() {
       pendingAbsences === undefined ||
       accessRequests === undefined ||
       tickets === undefined ||
-      measures === undefined ? (
+      (!measuresArchived && measures === undefined) ? (
         <RowSkeletons />
       ) : (
         <div className="space-y-1">
@@ -116,12 +117,15 @@ export function ManagerBriefCard() {
               />
             </>
           )}
-          <StatLine
-            icon={<AlertTriangle />}
-            label={t("overdueMeasures")}
-            value={overdueMeasures.length}
-            href="/fehlermanagement/measures"
-          />
+          {/* Fehlermanagement archiviert (12.11.2026) */}
+          {!isArchived("/fehlermanagement") && (
+            <StatLine
+              icon={<AlertTriangle />}
+              label={t("overdueMeasures")}
+              value={overdueMeasures.length}
+              href="/fehlermanagement/measures"
+            />
+          )}
         </div>
       )}
     </DashCard>

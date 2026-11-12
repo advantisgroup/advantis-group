@@ -34,10 +34,8 @@ const OPEN_PREFIXES = [
   // Wissen: Wiki und KI-Assistent für alle freigegeben (19.10. / 21.10.2026, Vahan).
   "/guidebooks",
   "/wiki-chat",
-  // Hilfe & Fehler
-  "/help",
+  // Hilfe: /help, /fehlermanagement archiviert (12.11.2026), siehe ARCHIVED_PREFIXES
   "/requests",
-  "/fehlermanagement",
 ] as const;
 
 /**
@@ -56,6 +54,13 @@ const ARCHIVED_PREFIXES = [
   "/blog",
   // IT-Tickets: ersetzt durch Wiki-Tool „Salesforce-Problem melden“ (22.10.2026).
   "/it-tickets",
+  // Hilfe & Feedback (12.11.2026, Vahan): „Hilfe & Anfragen“, „Ansprechpartner“,
+  // „Fehlermanagement“ (inkl. Maßnahmen) und „Verbesserungsvorschläge“.
+  // „Meine Anfragen“ (/requests) bleibt offen.
+  "/help",
+  "/who-to-ask",
+  "/fehlermanagement",
+  "/suggestions",
 ] as const;
 
 function matchesPrefix(pathname: string, prefix: string): boolean {

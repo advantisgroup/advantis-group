@@ -10,6 +10,7 @@ import { TourConfetti } from "@/components/tour/TourConfetti";
 
 import { useOnboarding } from "../OnboardingProvider";
 import { ONBOARDING_EASE, rise } from "./step-parts";
+import { isArchived } from "@/lib/maintenance";
 
 export function FinishStep() {
   const t = useTranslations("Onboarding");
@@ -22,7 +23,7 @@ export function FinishStep() {
     { key: "security", href: "/settings/account", icon: ShieldCheck },
     ...(aiEnabled ? [{ key: "ai", href: "/settings/ai", icon: Sparkles }] : []),
     { key: "help", href: "/help", icon: LifeBuoy },
-  ];
+  ].filter((item) => !isArchived(item.href));
 
   return (
     <div className="my-auto flex flex-col items-center py-4 text-center">
