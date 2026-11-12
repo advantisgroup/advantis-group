@@ -46,6 +46,7 @@ interface PolicyForm {
   gracePeriodDays: number;
   exemptUserIds: Id<"users">[];
   areaReverifyDays: number;
+  newDeviceEmailCode: boolean;
   performanceLegacyPasswordSunsetEnabled: boolean;
   applicantVaultLegacyPasswordSunsetEnabled: boolean;
   legacyPasswordGraceDays: number;
@@ -293,7 +294,9 @@ function SecurityStandardSection() {
   );
 }
 
-function formOf(policy: PolicyForm): PolicyForm {
+function formOf(
+  policy: Omit<PolicyForm, "newDeviceEmailCode"> & { newDeviceEmailCode?: boolean },
+): PolicyForm {
   return {
     requireMfaScope: policy.requireMfaScope,
     requireMfaRetroactive: policy.requireMfaRetroactive,
@@ -305,6 +308,7 @@ function formOf(policy: PolicyForm): PolicyForm {
     gracePeriodDays: policy.gracePeriodDays,
     exemptUserIds: policy.exemptUserIds,
     areaReverifyDays: policy.areaReverifyDays,
+    newDeviceEmailCode: policy.newDeviceEmailCode ?? false,
     performanceLegacyPasswordSunsetEnabled: policy.performanceLegacyPasswordSunsetEnabled,
     applicantVaultLegacyPasswordSunsetEnabled: policy.applicantVaultLegacyPasswordSunsetEnabled,
     legacyPasswordGraceDays: policy.legacyPasswordGraceDays,
@@ -462,6 +466,21 @@ export function AuthenticationPolicyPanel() {
             void change({ requirePasskeyRetroactive })
           }
         />
+        <SettingsSection
+          title={t("authenticationNewDeviceTitle")}
+          description={t("authenticationNewDeviceHint")}
+        >
+          <SettingsRow
+            title={t("authenticationNewDeviceEnable")}
+            control={
+              <Switch
+                checked={form.newDeviceEmailCode}
+                onToggle={() => void change({ newDeviceEmailCode: !form.newDeviceEmailCode })}
+                label={t("authenticationNewDeviceEnable")}
+              />
+            }
+          />
+        </SettingsSection>
         <SettingsSection
           title={t("authenticationDestructiveTitle")}
           description={t("authenticationDestructiveHint")}
