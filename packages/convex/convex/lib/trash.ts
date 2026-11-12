@@ -34,6 +34,7 @@ export const TRASH_TABLES = [
   "wikiEntries",
   "salesCoachEvWiki",
   "vaultEntries",
+  "officeKeys",
 ] as const;
 
 export type TrashTable = (typeof TRASH_TABLES)[number];
@@ -61,6 +62,10 @@ export function trashLabel(table: TrashTable, doc: Doc<TrashTable>): string {
       return (doc as Doc<"wikiEntries">).thema;
     case "applicants":
       return (doc as Doc<"applicants">).name;
+    case "officeKeys": {
+      const key = doc as Doc<"officeKeys">;
+      return key.number ? `${key.label} (${key.number})` : key.label;
+    }
     case "conversations":
       return (doc as Doc<"conversations">).name ?? "Group";
     default:
