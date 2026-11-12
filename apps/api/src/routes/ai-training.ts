@@ -107,9 +107,15 @@ const TOOLS: Anthropic.Tool[] = [
   },
 ];
 
-const MAX_TURNS = 8;
-const HISTORY_MESSAGES = 40;
-const FILE_MESSAGES = 6;
+// Token budget (12.11.2026): the training chat used to send the whole wiki,
+// every recent file and 40 messages on each of up to 8 turns.
+const MAX_TURNS = 5;
+const HISTORY_MESSAGES = 16;
+/** Files go to the model only with the message they came with; later on
+ *  they're named, and their content lives on in the chat and proposals. */
+const FILE_MESSAGES = 1;
+const MATCH_COUNT = 6;
+const MATCH_CHARS = 25_000;
 const MAX_FILES = 5;
 const IMAGE_TYPES = ["image/png", "image/jpeg", "image/gif", "image/webp"];
 const TEXT_TYPES = ["text/plain", "text/csv", "text/markdown", "text/html"];
@@ -167,7 +173,11 @@ async function train(
 ) {
   const knowledge = await convex.query(api.aiTraining.access.apiKnowledge, {});
   const lastQuestion = context.messages.at(-1)?.content ?? "";
-  const prompt = knowledgePrompt(knowledge, `${context.gap?.question ?? ""} ${lastQuestion}`);
+  const prompt = knowledgePrompt(knowledge, `${context.gap?.question ?? ""} ${lastQuestion}`, {
+    contents: true,
+    matchCount: MATCH_COUNT,
+    matchChars: MATCH_CHARS,
+  });
   const byKey = new Map<string, KnowledgeEntry>(knowledge.entries.map((e) => [entryKey(e), e]));
   run.recordLookup(
     prompt.whole ? `Ganzes Wiki (${knowledge.entries.length} Einträge)` : "Wiki",
@@ -200,6 +210,14 @@ async function train(
     ];
     if (last && prompt.matches) blocks.unshift({ type: "text", text: prompt.matches });
     if (blocks.length === 0) continue;
+    // Cached up to here, so the tool loop's later turns don't pay for the
+    // files and history again.
+    if (last) {
+      blocks[blocks.length - 1] = {
+        ...blocks[blocks.length - 1],
+        cache_control: { type: "ephemeral" },
+      } as Anthropic.ContentBlockParam;
+    }
     messages.push({ role: m.role, content: blocks });
   }
 
@@ -290,8 +308,9 @@ async function train(
     const { text, message } = await runModelTurn(
       run,
       {
-        max_tokens: 32_000,
+        max_tokens: 12_000,
         thinking: { type: "adaptive" },
+        output_config: { effort: "medium" },
         system,
         messages,
         tools: TOOLS,

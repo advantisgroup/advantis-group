@@ -44,4 +44,18 @@ describe("knowledge prompt", () => {
     expect(prompt.stable).not.toContain(filler);
     expect(prompt.matches).toContain("Basic kostet 0,95 €.");
   });
+
+  test("the training chat can ask for contents only, even for a small wiki", () => {
+    const knowledge: Knowledge = {
+      entries: [
+        entry("a", "Tankkarte", "Basic kostet 0,95 €."),
+        entry("b", "Maut", "OBU über myUTA."),
+      ],
+      rules: [],
+    };
+    const prompt = knowledgePrompt(knowledge, "Tankkarte", { contents: true, matchCount: 1 });
+    expect(prompt.whole).toBe(false);
+    expect(prompt.wiki).not.toContain("OBU über myUTA.");
+    expect(prompt.matches).toContain("Basic kostet 0,95 €.");
+  });
 });
