@@ -235,7 +235,7 @@
     "halfDayStart": "First day half",
     "halfDayEnd": "Last day half",
     "note": "Note (optional)",
-    "sickHint": "Sick days apply immediately; admins are informed.",
+    "sickHint": "Sick days apply once an admin approves them – until then the days don't count yet.",
     "directHint": "Entered as an admin – approved right away.",
     "approvalHint": "Takes effect once an admin approves it. Holidays and days off don't count as vacation."
   },

@@ -91,7 +91,17 @@ export const INTRANET_PAGES: IntranetPage[] = [
     label: "Zeiterfassung verwalten",
     description:
       "Freigaben, Stundenkonten, Arbeitszeitmodelle, Feiertage, Monatsabschluss und Protokoll.",
-    keywords: ["freigabe", "monatsabschluss", "feiertage", "arbeitszeitmodell", "audit"],
+    keywords: [
+      "freigabe",
+      "freigaben",
+      "genehmigen",
+      "urlaubsantrag",
+      "krankmeldung",
+      "monatsabschluss",
+      "feiertage",
+      "arbeitszeitmodell",
+      "audit",
+    ],
     visible: admin,
   },
   {
@@ -241,14 +251,6 @@ export const INTRANET_PAGES: IntranetPage[] = [
     label: "Meine Entwürfe",
     description: "Nicht abgeschickte Entwürfe, die automatisch gespeichert wurden.",
     keywords: ["entwurf", "drafts", "ungespeichert"],
-  },
-  {
-    href: "/approvals",
-    label: "Freigaben",
-    description:
-      "Abwesenheitsanträge, Zugriffsanfragen und offene Maßnahmen, die auf deine Entscheidung warten.",
-    keywords: ["genehmigungen", "approvals", "freigeben", "urlaubsantrag", "zugriffsanfrage"],
-    visible: manager,
   },
   {
     href: "/blog",

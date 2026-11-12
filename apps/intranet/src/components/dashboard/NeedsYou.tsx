@@ -210,9 +210,9 @@ export function NeedsYouPanel() {
             </span>
           )}
         </h2>
-        {canReviewAbsences || isManager ? (
+        {canReviewAbsences ? (
           <Link
-            href="/approvals"
+            href="/zeiterfassung/admin?section=approvals"
             className="text-xs font-medium text-muted-foreground hover:text-foreground"
           >
             {t("needsYouApprovals")}

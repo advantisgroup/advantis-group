@@ -11,7 +11,6 @@ import {
   BookOpen,
   Building2,
   Calendar,
-  CheckCheck,
   ClipboardList,
   Cloud,
   Contact,
@@ -194,12 +193,10 @@ export function Sidebar() {
   const hasApplicantAccess = useHasApplicantAccess();
   const hasInquiries = useHasCapability("manage_inquiries");
   const inquiryCounts = useQuery(api.marketing.inbox.counts, hasInquiries ? {} : "skip");
-  const approvalCover = useQuery(api.org.delegations.mine);
   // Test mode: only the testers named in Convex (TIME_TESTERS) see it.
   const timeMode = useQuery(api.time.mode.status);
   const onboardingCockpit = useQuery(api.performance.onboarding.me);
   const office = useQuery(api.office.me);
-  const hasApprovalCover = (approvalCover?.length ?? 0) > 0;
   const pendingAbsences = usePendingAbsenceCount(isAdmin);
   const { setOpenMobile, state, isMobile, editing, setEditing } = useSidebar();
   const featureFlags = useFeatureFlags();
@@ -229,17 +226,6 @@ export function Sidebar() {
       icon: LayoutDashboard,
       tourAttr: "tour-nav-dashboard",
     },
-    ...(isManager || hasApprovalCover
-      ? [
-          {
-            section: "general" as const,
-            href: "/approvals",
-            labelKey: "approvals",
-            icon: CheckCheck,
-            badge: pendingAbsences,
-          },
-        ]
-      : []),
     {
       section: "general",
       href: "/announcements",
@@ -293,6 +279,9 @@ export function Sidebar() {
             labelKey: "zeiterfassung",
             icon: Timer,
             isNew: timeMode.preview,
+            // Admins: open approvals (absences + corrections) right on the tab —
+            // the separate "Freigaben" tab is gone (12.11.2026).
+            badge: pendingAbsences,
           },
         ]
       : []),

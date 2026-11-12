@@ -285,7 +285,7 @@ function AbsenceDialog({
 
   const single = startDate === endDate;
   const valid = !!startDate && !!endDate && endDate >= startDate;
-  const instant = type === "sick" || direct;
+  const instant = direct;
   const overlaps = useQuery(
     api.time.absences.overlaps,
     initialType !== null && valid && type !== "sick"
@@ -402,10 +402,10 @@ function AbsenceDialog({
         </div>
         <Alert>
           <AlertDescription>
-            {type === "sick"
-              ? t("absences.sickHint")
-              : direct
-                ? t("absences.directHint")
+            {direct
+              ? t("absences.directHint")
+              : type === "sick"
+                ? t("absences.sickHint")
                 : t("absences.approvalHint")}
           </AlertDescription>
         </Alert>

@@ -91,7 +91,7 @@ export function ManagerBriefCard() {
             icon={<ClipboardCheck />}
             label={t("pendingApprovals")}
             value={pendingAbsences}
-            href="/approvals"
+            href="/zeiterfassung/admin?section=approvals"
           />
           <StatLine
             icon={<UserPlus />}

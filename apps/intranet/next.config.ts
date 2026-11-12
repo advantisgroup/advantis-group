@@ -64,6 +64,9 @@ const nextConfig: NextConfig = {
         destination: "/zeiterfassung/abwesenheiten",
         permanent: false,
       },
+      // The separate "Freigaben" tab is gone (12.11.2026): approvals live in
+      // the Zeiterfassung admin area only.
+      { source: "/approvals", destination: "/zeiterfassung/admin?section=approvals", permanent: false },
       {
         source: "/clockodo/approvals",
         destination: "/zeiterfassung/admin?section=approvals",

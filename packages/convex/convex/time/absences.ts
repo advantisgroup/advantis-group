@@ -23,9 +23,9 @@ import {
 } from "./lib/store";
 
 /**
- * Vacation, sick days, special leave and other absences. Sick days are
- * approved as they're entered (admins hear about them); everything else waits
- * for an admin. Others only ever see someone's approved vacation.
+ * Vacation, sick days, special leave and other absences. Every request —
+ * sick days included (since 12.11.2026) — waits for an admin; only an admin's
+ * own entries apply at once. Others only ever see someone's approved vacation.
  */
 
 const TYPE_LABEL: Record<string, string> = {
@@ -99,7 +99,9 @@ export const request = userMutation({
     }
 
     const now = Date.now();
-    const autoApproved = args.type === "sick" || ctx.caller.isAdmin;
+    // Only admins enter absences directly. Sick days used to apply at once,
+    // which let people book them without anyone checking (Vahan, 12.11.2026).
+    const autoApproved = ctx.caller.isAdmin;
     const row = {
       userId: subject,
       type: args.type,
@@ -110,7 +112,7 @@ export const request = userMutation({
       status: autoApproved ? ("approved" as const) : ("pending" as const),
       note: args.note?.trim() || undefined,
       createdBy: ctx.caller.id,
-      decidedBy: autoApproved && ctx.caller.isAdmin ? ctx.caller.id : undefined,
+      decidedBy: autoApproved ? ctx.caller.id : undefined,
       decidedAt: autoApproved ? now : undefined,
       updatedAt: now,
     };
@@ -127,17 +129,17 @@ export const request = userMutation({
       await invalidateTotals(ctx, subject, datesOfRange(row.startDate, row.endDate));
 
     const subjectUser = subject === ctx.caller.id ? ctx.caller.user : await ctx.db.get(subject);
-    if (args.type === "sick" || !autoApproved) {
+    if (!autoApproved) {
       await notifyAdmins(
         ctx,
         {
           type: "absence_request",
           title:
             args.type === "sick"
-              ? "Krankmeldung eingetragen"
+              ? "Krankmeldung zur Freigabe"
               : `Neuer Antrag: ${TYPE_LABEL[args.type]}`,
           body: `${displayName(subjectUser)} · ${formatRange(row.startDate, row.endDate)}`,
-          link: "/zeiterfassung/admin",
+          link: "/zeiterfassung/admin?section=approvals",
         },
         ctx.caller.id,
       );

@@ -354,10 +354,10 @@ describe("month lock", () => {
 });
 
 describe("absences", () => {
-  test("sick days are approved at once and admins are told", async () => {
+  test("sick days wait for an admin like any other request", async () => {
     const s = await setup();
     setNow("2026-10-06", "07:30");
-    await s.alice.mutation(api.time.absences.request, {
+    const id = await s.alice.mutation(api.time.absences.request, {
       type: "sick",
       startDate: "2026-10-06",
       endDate: "2026-10-07",
@@ -365,10 +365,30 @@ describe("absences", () => {
       halfDayEnd: false,
     });
     const [sick] = await s.alice.query(api.time.absences.list, {});
-    expect(sick).toMatchObject({ status: "approved", days: 2 });
+    expect(sick).toMatchObject({ status: "pending", days: 2 });
     const notes = await notificationsOf(s.t, s.ids.admin);
-    expect(notes.map((n) => n.title)).toEqual(["Krankmeldung eingetragen"]);
+    expect(notes.map((n) => n.title)).toEqual(["Krankmeldung zur Freigabe"]);
+    // Not counted until approved: the day still has its target.
+    expect((await workedOn(s.alice, "2026-10-06")).targetMinutes).toBeGreaterThan(0);
+    const approvals = await s.admin.query(api.time.admin.approvals, {});
+    expect(approvals.absences.map((row) => row._id)).toContain(id);
+
+    await s.admin.mutation(api.time.absences.decide, { id, approve: true });
     expect((await workedOn(s.alice, "2026-10-06")).targetMinutes).toBe(0);
+  });
+
+  test("an admin's own sick day applies at once", async () => {
+    const s = await setup();
+    setNow("2026-10-06", "07:30");
+    await s.admin.mutation(api.time.absences.request, {
+      type: "sick",
+      startDate: "2026-10-06",
+      endDate: "2026-10-06",
+      halfDayStart: false,
+      halfDayEnd: false,
+    });
+    const [sick] = await s.admin.query(api.time.absences.list, {});
+    expect(sick.status).toBe("approved");
   });
 
   test("vacation waits for an admin, who decides; the person hears back", async () => {

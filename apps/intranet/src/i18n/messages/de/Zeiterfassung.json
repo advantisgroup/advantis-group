@@ -235,7 +235,7 @@
     "halfDayStart": "Erster Tag halb",
     "halfDayEnd": "Letzter Tag halb",
     "note": "Notiz (optional)",
-    "sickHint": "Krankmeldungen gelten sofort; die Verwaltung wird informiert.",
+    "sickHint": "Krankmeldungen werden nach Freigabe durch die Verwaltung wirksam – bis dahin zählen die Tage noch nicht.",
     "directHint": "Als Verwaltung eingetragen – gilt sofort als genehmigt.",
     "approvalHint": "Wird nach Freigabe durch die Verwaltung wirksam. Feiertage und freie Tage zählen nicht als Urlaub."
   },
