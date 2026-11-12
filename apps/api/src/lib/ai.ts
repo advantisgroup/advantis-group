@@ -24,7 +24,8 @@ export type AiRunKind =
   | "dailyBrief"
   | "navigate"
   | "inquirySummary"
-  | "inquiryDraft";
+  | "inquiryDraft"
+  | "aiTraining";
 
 export type AiRunPhase = "reading" | "writing" | "finishing";
 
