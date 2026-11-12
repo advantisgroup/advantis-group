@@ -13,7 +13,8 @@
     "dailyBrief": "Your day at a glance",
     "navigate": "Find your way around",
     "inquirySummary": "Inquiry summary",
-    "inquiryDraft": "Inquiry reply draft"
+    "inquiryDraft": "Inquiry reply draft",
+    "aiTraining": "AI training"
   },
   "ask": {
     "title": "Ask about this",
@@ -105,7 +106,7 @@
     "featuresTitle": "What each feature sends",
     "featuresHint": "Every place in the intranet that can start an AI run, and what each one sends.",
     "feature": {
-      "wikiChat": "Your question and the rest of that conversation, plus the wiki entries that best match your question — it cites them, so you can check where an answer came from. It doesn't read tickets, absences or anyone's records.",
+      "wikiChat": "Your question and this chat so far, plus the whole current wiki and the AI training rules — the entries an answer rests on are linked so you can check where it came from. If it finds no answer, the assistant passes the question to AI training without your name. Tickets, absences and HR files are not read.",
       "wikiFormat": "The wiki entry you're editing, to propose a tidier version of it.",
       "wikiMeta": "The wiki entry you're editing, to suggest a title and tags for it.",
       "coachReport": "The transcript of the call you just recorded in Sales Coach.",
@@ -117,7 +118,8 @@
       "dailyBrief": "The same things your overview page shows you — your open tickets and measures, today's and tomorrow's events, unread announcements and how many chat messages are waiting (not their content) — to write a few sentences about your day.",
       "navigate": "What you type into the helper, the pages you can open and your newest IT tickets. To find something specific it searches wiki entries, colleagues, announcements, suggestions, error reports, events and your tickets — only what you could open yourself — and sees the titles of what matched, not the content. Your AI history lists every search it made.",
       "inquirySummary": "One website inquiry: the customer's name, company and message, the replies so far and the team's internal notes — never their email address or phone number.",
-      "inquiryDraft": "The same as the inquiry summary, to draft a reply in the customer's language. The draft only goes into the reply box; nothing is sent until someone sends it."
+      "inquiryDraft": "The same as the inquiry summary, to draft a reply in the customer's language. The draft only goes into the reply box; nothing is sent until someone sends it.",
+      "aiTraining": "What you write and upload in the training chat, that chat so far and the whole wiki with the AI rules — so it can suggest changes. Nothing is saved until someone in training applies it."
     },
     "whoTitle": "Who sees what",
     "whoHint": "An AI run belongs to whoever started it — and only they can read it, stop it or delete it.",

@@ -14,6 +14,7 @@ export const aiRunKind = v.union(
   v.literal("navigate"),
   v.literal("inquirySummary"),
   v.literal("inquiryDraft"),
+  v.literal("aiTraining"),
 );
 
 /** Records you can ask a question about in place. Each one has an access rule

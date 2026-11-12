@@ -110,6 +110,130 @@ export const aiTables = {
     .index("by_run_user", ["runId", "userId"])
     .index("by_created", ["createdAt"]),
 
+  // --- KI-Pflege (aiTraining/*) ---------------------------------------------
+  // Where chosen colleagues teach the assistant: open questions it couldn't
+  // answer, a shared training chat (with uploads) that turns what they say
+  // into reviewed changes to the wiki or to the assistant's own rules, and a
+  // log of all of it. Everyone with `users.aiTrainer` (and every admin) sees
+  // everything here — that is the point of it. Plain text on purpose: what
+  // lands here is company knowledge headed for the wiki, not private chat.
+
+  /** Something the assistant couldn't answer well. Never names who asked. */
+  aiTrainingGaps: defineTable({
+    question: v.string(),
+    detail: v.optional(v.string()),
+    source: v.union(
+      v.literal("assistant"),
+      v.literal("feedback"),
+      v.literal("manual"),
+      v.literal("check"),
+    ),
+    status: v.union(v.literal("open"), v.literal("answered"), v.literal("dismissed")),
+    /** How often the same question came up while open. */
+    count: v.number(),
+    /** Only for gaps a trainer added; an employee's question stays unnamed. */
+    createdBy: v.optional(v.id("users")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    resolvedBy: v.optional(v.id("users")),
+    resolvedAt: v.optional(v.number()),
+  }).index("by_status", ["status", "updatedAt"]),
+
+  aiTrainingSessions: defineTable({
+    title: v.string(),
+    createdBy: v.id("users"),
+    /** Started from a gap: applying its proposals answers the gap. */
+    gapId: v.optional(v.id("aiTrainingGaps")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_updated", ["updatedAt"]),
+
+  aiTrainingMessages: defineTable({
+    sessionId: v.id("aiTrainingSessions"),
+    role: v.union(v.literal("user"), v.literal("assistant")),
+    authorId: v.optional(v.id("users")),
+    content: v.string(),
+    files: v.optional(
+      v.array(
+        v.object({
+          storageId: v.id("_storage"),
+          name: v.string(),
+          mediaType: v.string(),
+          size: v.number(),
+        }),
+      ),
+    ),
+    runId: v.optional(v.id("aiRuns")),
+    createdAt: v.number(),
+  }).index("by_session", ["sessionId", "createdAt"]),
+
+  /** A change the assistant suggests. Nothing reaches the wiki or the
+   *  assistant's rules until a trainer applies it. */
+  aiTrainingProposals: defineTable({
+    sessionId: v.optional(v.id("aiTrainingSessions")),
+    gapId: v.optional(v.id("aiTrainingGaps")),
+    kind: v.union(
+      v.literal("wiki_new"),
+      v.literal("wiki_update"),
+      v.literal("rule_new"),
+      v.literal("rule_update"),
+    ),
+    entryId: v.optional(v.id("wikiEntries")),
+    ruleId: v.optional(v.id("aiTrainingRules")),
+    title: v.string(),
+    /** HTML for the wiki, plain text for a rule. */
+    body: v.string(),
+    tags: v.array(v.string()),
+    categoryName: v.optional(v.string()),
+    /** The entry's version when proposed — applying over a newer one warns. */
+    baseVersion: v.optional(v.number()),
+    reason: v.string(),
+    status: v.union(v.literal("open"), v.literal("applied"), v.literal("rejected")),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+    decidedBy: v.optional(v.id("users")),
+    decidedAt: v.optional(v.number()),
+  })
+    .index("by_status", ["status", "createdAt"])
+    .index("by_session", ["sessionId", "createdAt"]),
+
+  /** Standing instructions and background the assistant always gets, for
+   *  what isn't a wiki article (tone, where to send people, internal
+   *  numbers). `builtin` marks the briefing that used to live in the code. */
+  aiTrainingRules: defineTable({
+    title: v.string(),
+    text: v.string(),
+    active: v.boolean(),
+    builtin: v.optional(v.boolean()),
+    createdBy: v.id("users"),
+    updatedBy: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }),
+
+  aiTrainingLog: defineTable({
+    actorId: v.id("users"),
+    action: v.union(
+      v.literal("gap_added"),
+      v.literal("gap_dismissed"),
+      v.literal("gap_reopened"),
+      v.literal("gap_answered"),
+      v.literal("session_started"),
+      v.literal("message_sent"),
+      v.literal("proposal_applied"),
+      v.literal("proposal_rejected"),
+      v.literal("rule_saved"),
+      v.literal("rule_deleted"),
+      v.literal("check_run"),
+      v.literal("trainer_granted"),
+      v.literal("trainer_revoked"),
+    ),
+    target: v.string(),
+    detail: v.optional(v.string()),
+    href: v.optional(v.string()),
+    at: v.number(),
+  }).index("by_at", ["at"]),
+
   // --- Drafts ----------------------------------------------------------------
   // Unsent composer/dialog state per person, so a refresh or a closed sheet
   // never costs anyone their text (see drafts.ts).

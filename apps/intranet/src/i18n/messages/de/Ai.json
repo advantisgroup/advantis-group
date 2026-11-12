@@ -13,7 +13,8 @@
     "dailyBrief": "Dein Tag im Überblick",
     "navigate": "Wegweiser",
     "inquirySummary": "Zusammenfassung einer Anfrage",
-    "inquiryDraft": "Antwortentwurf für eine Anfrage"
+    "inquiryDraft": "Antwortentwurf für eine Anfrage",
+    "aiTraining": "KI-Pflege"
   },
   "ask": {
     "title": "Dazu fragen",
@@ -105,7 +106,7 @@
     "featuresTitle": "Was jede Funktion sendet",
     "featuresHint": "Jede Stelle im Intranet, die einen KI-Lauf starten kann – und was dabei gesendet wird.",
     "feature": {
-      "wikiChat": "Deine Frage und der bisherige Verlauf dieses Chats, dazu die Wiki-Einträge, die am besten passen – sie werden zitiert, damit du nachprüfen kannst, woher eine Antwort stammt. Tickets, Abwesenheiten oder Personalakten werden nicht gelesen.",
+      "wikiChat": "Deine Frage und der bisherige Verlauf dieses Chats, dazu das ganze aktuelle Wiki und die Regeln der KI-Pflege – die Einträge, auf die sich eine Antwort stützt, werden verlinkt, damit du nachprüfen kannst, woher sie stammt. Findet der Assistent keine Antwort, gibt er die Frage ohne deinen Namen an die KI-Pflege weiter. Tickets, Abwesenheiten oder Personalakten werden nicht gelesen.",
       "wikiFormat": "Der Wiki-Eintrag, den du gerade bearbeitest, für einen aufgeräumteren Vorschlag.",
       "wikiMeta": "Der Wiki-Eintrag, den du gerade bearbeitest, für Titel- und Stichwortvorschläge.",
       "coachReport": "Das Transkript des Gesprächs, das du gerade im Sales Coach aufgenommen hast.",
@@ -117,7 +118,8 @@
       "dailyBrief": "Dasselbe, was dir deine Startseite zeigt – deine offenen Tickets und Maßnahmen, Termine von heute und morgen, ungelesene Ankündigungen und wie viele Chatnachrichten warten (nicht deren Inhalt) –, um ein paar Sätze zu deinem Tag zu schreiben.",
       "navigate": "Was du in den Helfer eingibst, die Seiten, die du öffnen kannst, und deine neuesten IT-Tickets. Um etwas Bestimmtes zu finden, durchsucht er Wiki-Einträge, Kolleginnen und Kollegen, Ankündigungen, Vorschläge, Fehlermeldungen, Termine und deine Tickets – nur, was du selbst öffnen könntest – und sieht die Titel der Treffer, nicht ihren Inhalt. Dein KI-Verlauf zeigt jede Suche, die er gemacht hat.",
       "inquirySummary": "Eine Website-Anfrage: Name, Firma und Nachricht der Kund:in, die bisherigen Antworten und die internen Notizen des Teams – nie die E-Mail-Adresse oder Telefonnummer.",
-      "inquiryDraft": "Dasselbe wie bei der Zusammenfassung, um eine Antwort in der Sprache der Kund:in zu entwerfen. Der Entwurf landet nur im Antwortfeld; verschickt wird erst, wenn jemand auf Senden drückt."
+      "inquiryDraft": "Dasselbe wie bei der Zusammenfassung, um eine Antwort in der Sprache der Kund:in zu entwerfen. Der Entwurf landet nur im Antwortfeld; verschickt wird erst, wenn jemand auf Senden drückt.",
+      "aiTraining": "Was du im Pflege-Chat schreibst und hochlädst, der bisherige Verlauf dieses Pflege-Chats und das ganze Wiki samt KI-Regeln – damit die KI Änderungen vorschlagen kann. Gespeichert wird erst, was jemand aus der Pflege übernimmt."
     },
     "whoTitle": "Wer was sieht",
     "whoHint": "Ein KI-Lauf gehört der Person, die ihn gestartet hat – nur sie kann ihn lesen, stoppen oder löschen.",

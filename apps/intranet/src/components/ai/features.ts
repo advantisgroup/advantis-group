@@ -4,6 +4,7 @@ import {
   Compass,
   FileText,
   FileUp,
+  GraduationCap,
   LayoutDashboard,
   type LucideIcon,
   MailQuestion,
@@ -32,6 +33,7 @@ export const AI_FEATURES: { key: AiRunKind; icon: LucideIcon }[] = [
   { key: "cvRescan", icon: RefreshCw },
   { key: "inquirySummary", icon: MailQuestion },
   { key: "inquiryDraft", icon: Reply },
+  { key: "aiTraining", icon: GraduationCap },
 ];
 
 export const AI_FEATURE_ICON = Object.fromEntries(

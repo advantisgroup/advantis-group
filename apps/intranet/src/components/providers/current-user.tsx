@@ -40,6 +40,8 @@ export interface CurrentUser {
   external: boolean;
   updatesEmailConsent: boolean;
   gfAccess: boolean;
+  /** KI-Pflege: admins and whoever an admin picked. */
+  aiTrainer: boolean;
   uploadRequestsEnabled: boolean;
   customRoleIds: string[];
   customRoles: { _id: string; name: string; capabilities: Capability[] }[];

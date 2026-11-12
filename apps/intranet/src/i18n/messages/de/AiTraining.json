@@ -1,0 +1,137 @@
+{
+  "title": "KI-Pflege",
+  "intro": "Hier bringen erfahrene Kolleginnen und Kollegen dem KI-Assistenten Wissen bei. Alles hier sehen alle aus der KI-Pflege.",
+  "tabs": {
+    "gaps": "Offene Fragen",
+    "training": "Trainieren",
+    "proposals": "Vorschläge",
+    "rules": "KI-Regeln",
+    "activity": "Verlauf",
+    "people": "Berechtigte"
+  },
+  "gaps": {
+    "intro": "Fragen, die der Assistent nicht (gut) beantworten konnte – ohne Namen der fragenden Person.",
+    "check": "Wiki prüfen",
+    "checking": "Prüft das Wiki…",
+    "checkStarted": "Prüfung läuft – Funde landen hier als offene Fragen.",
+    "checkFailed": "Prüfung konnte nicht starten.",
+    "checkHint": "Die KI liest das ganze Wiki und sucht Widersprüche, unerklärte Begriffe, veraltete Angaben und fehlende Antworten.",
+    "add": "Frage hinzufügen",
+    "addTitle": "Offene Frage hinzufügen",
+    "addHint": "Etwas, das der Assistent wissen sollte, aber noch nicht weiß.",
+    "questionPlaceholder": "Die Frage, so wie ein Kollege sie stellen würde",
+    "detailPlaceholder": "Hinweis (optional): was fehlt oder falsch ist",
+    "answer": "Beantworten",
+    "dismiss": "Verwerfen",
+    "reopen": "Wieder öffnen",
+    "asked": "{count}× gefragt",
+    "resolvedBy": "erledigt von {name}",
+    "status": {
+      "open": "Offen",
+      "answered": "Beantwortet",
+      "dismissed": "Verworfen"
+    },
+    "source": {
+      "assistant": "Vom Assistenten",
+      "feedback": "Aus Bewertung",
+      "manual": "Von Hand",
+      "check": "Wiki-Prüfung"
+    },
+    "empty": {
+      "open": "Keine offenen Fragen.",
+      "answered": "Noch nichts beantwortet.",
+      "dismissed": "Nichts verworfen."
+    }
+  },
+  "training": {
+    "new": "Neues Training",
+    "emptyTitle": "Noch kein Training",
+    "emptyHint": "Starte ein Training und bring dem Assistenten etwas bei – per Text oder Datei.",
+    "gone": "Dieses Training gibt es nicht mehr.",
+    "gap": "Offene Frage",
+    "start": "Erzähl, was der Assistent wissen soll, oder lade eine Datei hoch (Tarifliste, Ablauf, Mail …). Die KI gleicht es mit dem Wiki ab, fragt nach und schlägt Änderungen vor.",
+    "startGap": "Beantworte die Frage oben so, wie du es einem neuen Kollegen erklären würdest. Die KI macht daraus einen Vorschlag fürs Wiki.",
+    "placeholder": "Wissen, Korrektur oder Antwort … (Strg+Enter zum Senden)",
+    "attach": "Datei",
+    "attachHint": "PDF, Word, Bilder, Text, CSV – bis 8 MB",
+    "removeFile": "Datei entfernen",
+    "send": "Senden",
+    "uploadFailed": "{name} konnte nicht hochgeladen werden.",
+    "sendFailed": "Senden fehlgeschlagen.",
+    "failed": "Die Antwort ist fehlgeschlagen. Schick die Nachricht noch einmal."
+  },
+  "proposals": {
+    "intro": "Was die KI aus den Trainings vorschlägt. Erst „Übernehmen“ ändert Wiki oder KI-Regeln – du kannst vorher alles anpassen.",
+    "status": {
+      "open": "Offen",
+      "applied": "Übernommen",
+      "rejected": "Abgelehnt"
+    },
+    "empty": {
+      "open": "Keine offenen Vorschläge.",
+      "applied": "Noch nichts übernommen.",
+      "rejected": "Nichts abgelehnt."
+    },
+    "kind": {
+      "wiki_new": "Neuer Wiki-Eintrag",
+      "wiki_update": "Wiki-Eintrag ändern",
+      "rule_new": "Neue KI-Regel",
+      "rule_update": "KI-Regel ändern"
+    },
+    "review": "Prüfen",
+    "show": "Ansehen",
+    "reject": "Ablehnen",
+    "apply": "Übernehmen",
+    "cancel": "Abbrechen",
+    "open": "Öffnen",
+    "decidedBy": "entschieden von {name}",
+    "applied": "Übernommen.",
+    "applyFailed": "Übernehmen fehlgeschlagen.",
+    "changedSince": "Der Eintrag wurde geändert, seit die KI den Vorschlag gemacht hat. Prüf, ob nichts Neues überschrieben wird.",
+    "showCurrent": "Aktuelle Fassung anzeigen",
+    "hideCurrent": "Aktuelle Fassung ausblenden",
+    "tags": "Stichwörter, mit Komma",
+    "category": "Kategorie"
+  },
+  "rules": {
+    "intro": "Hinweise, die der Assistent bei jeder Antwort bekommt – für alles, was kein Wiki-Artikel ist: Tonalität, Durchwahlen, „bei X immer auf Y verweisen“.",
+    "add": "Regel hinzufügen",
+    "addTitle": "Neue KI-Regel",
+    "editTitle": "KI-Regel bearbeiten",
+    "hint": "Kurz und eindeutig. Gilt sofort für alle Antworten des Assistenten.",
+    "builtin": "Grundwissen",
+    "inactive": "Aus",
+    "edit": "Bearbeiten",
+    "deleteConfirm": "Diese Regel löschen?",
+    "empty": "Noch keine Regeln.",
+    "titlePlaceholder": "Titel",
+    "textPlaceholder": "Was der Assistent wissen oder beachten soll",
+    "active": "Aktiv",
+    "save": "Speichern",
+    "saveFailed": "Speichern fehlgeschlagen."
+  },
+  "activity": {
+    "empty": "Noch nichts passiert.",
+    "action": {
+      "gap_added": "hat eine offene Frage hinzugefügt:",
+      "gap_dismissed": "hat verworfen:",
+      "gap_reopened": "hat wieder geöffnet:",
+      "gap_answered": "hat beantwortet:",
+      "session_started": "hat ein Training gestartet:",
+      "message_sent": "hat trainiert:",
+      "proposal_applied": "hat übernommen:",
+      "proposal_rejected": "hat abgelehnt:",
+      "rule_saved": "hat eine Regel gespeichert:",
+      "rule_deleted": "hat eine Regel gelöscht:",
+      "check_run": "hat das Wiki prüfen lassen:",
+      "trainer_granted": "hat für die KI-Pflege freigeschaltet:",
+      "trainer_revoked": "hat aus der KI-Pflege entfernt:"
+    }
+  },
+  "people": {
+    "intro": "Wer die KI-Pflege nutzen darf. Freischalten können nur Admins.",
+    "introAdmin": "Schalte frei, wer die KI-Pflege nutzen darf. Admins haben immer Zugriff.",
+    "admin": "Admin",
+    "toggle": "KI-Pflege für {name}"
+  }
+}

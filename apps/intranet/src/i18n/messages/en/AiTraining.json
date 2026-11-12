@@ -1,0 +1,137 @@
+{
+  "title": "AI training",
+  "intro": "Experienced colleagues teach the AI assistant here. Everyone in AI training sees everything here.",
+  "tabs": {
+    "gaps": "Open questions",
+    "training": "Train",
+    "proposals": "Proposals",
+    "rules": "AI rules",
+    "activity": "Activity",
+    "people": "People"
+  },
+  "gaps": {
+    "intro": "Questions the assistant couldn't answer (well) — without the name of whoever asked.",
+    "check": "Check wiki",
+    "checking": "Checking the wiki…",
+    "checkStarted": "Check running — findings land here as open questions.",
+    "checkFailed": "The check couldn't start.",
+    "checkHint": "The AI reads the whole wiki and looks for contradictions, unexplained terms, outdated details and missing answers.",
+    "add": "Add question",
+    "addTitle": "Add an open question",
+    "addHint": "Something the assistant should know but doesn't yet.",
+    "questionPlaceholder": "The question as a colleague would ask it",
+    "detailPlaceholder": "Note (optional): what's missing or wrong",
+    "answer": "Answer",
+    "dismiss": "Dismiss",
+    "reopen": "Reopen",
+    "asked": "asked {count}×",
+    "resolvedBy": "done by {name}",
+    "status": {
+      "open": "Open",
+      "answered": "Answered",
+      "dismissed": "Dismissed"
+    },
+    "source": {
+      "assistant": "From the assistant",
+      "feedback": "From a rating",
+      "manual": "Added by hand",
+      "check": "Wiki check"
+    },
+    "empty": {
+      "open": "No open questions.",
+      "answered": "Nothing answered yet.",
+      "dismissed": "Nothing dismissed."
+    }
+  },
+  "training": {
+    "new": "New training",
+    "emptyTitle": "No training yet",
+    "emptyHint": "Start a training and teach the assistant something — by text or file.",
+    "gone": "This training no longer exists.",
+    "gap": "Open question",
+    "start": "Tell it what the assistant should know, or upload a file (price list, process, email …). The AI checks it against the wiki, asks back and suggests changes.",
+    "startGap": "Answer the question above the way you'd explain it to a new colleague. The AI turns it into a wiki proposal.",
+    "placeholder": "Knowledge, correction or answer … (Ctrl+Enter to send)",
+    "attach": "File",
+    "attachHint": "PDF, Word, images, text, CSV — up to 8 MB",
+    "removeFile": "Remove file",
+    "send": "Send",
+    "uploadFailed": "{name} couldn't be uploaded.",
+    "sendFailed": "Sending failed.",
+    "failed": "The answer failed. Send the message again."
+  },
+  "proposals": {
+    "intro": "What the AI suggests from the trainings. Only \"Apply\" changes the wiki or the AI rules — you can edit everything first.",
+    "status": {
+      "open": "Open",
+      "applied": "Applied",
+      "rejected": "Rejected"
+    },
+    "empty": {
+      "open": "No open proposals.",
+      "applied": "Nothing applied yet.",
+      "rejected": "Nothing rejected."
+    },
+    "kind": {
+      "wiki_new": "New wiki entry",
+      "wiki_update": "Change wiki entry",
+      "rule_new": "New AI rule",
+      "rule_update": "Change AI rule"
+    },
+    "review": "Review",
+    "show": "View",
+    "reject": "Reject",
+    "apply": "Apply",
+    "cancel": "Cancel",
+    "open": "Open",
+    "decidedBy": "decided by {name}",
+    "applied": "Applied.",
+    "applyFailed": "Applying failed.",
+    "changedSince": "The entry changed since the AI made this proposal. Check that nothing new gets overwritten.",
+    "showCurrent": "Show current version",
+    "hideCurrent": "Hide current version",
+    "tags": "Tags, comma-separated",
+    "category": "Category"
+  },
+  "rules": {
+    "intro": "Notes the assistant gets with every answer — for everything that isn't a wiki article: tone, extensions, \"for X always point to Y\".",
+    "add": "Add rule",
+    "addTitle": "New AI rule",
+    "editTitle": "Edit AI rule",
+    "hint": "Short and unambiguous. Applies to every answer right away.",
+    "builtin": "Background",
+    "inactive": "Off",
+    "edit": "Edit",
+    "deleteConfirm": "Delete this rule?",
+    "empty": "No rules yet.",
+    "titlePlaceholder": "Title",
+    "textPlaceholder": "What the assistant should know or keep in mind",
+    "active": "Active",
+    "save": "Save",
+    "saveFailed": "Saving failed."
+  },
+  "activity": {
+    "empty": "Nothing has happened yet.",
+    "action": {
+      "gap_added": "added an open question:",
+      "gap_dismissed": "dismissed:",
+      "gap_reopened": "reopened:",
+      "gap_answered": "answered:",
+      "session_started": "started a training:",
+      "message_sent": "trained:",
+      "proposal_applied": "applied:",
+      "proposal_rejected": "rejected:",
+      "rule_saved": "saved a rule:",
+      "rule_deleted": "deleted a rule:",
+      "check_run": "had the wiki checked:",
+      "trainer_granted": "gave AI training access to:",
+      "trainer_revoked": "removed from AI training:"
+    }
+  },
+  "people": {
+    "intro": "Who may use AI training. Only admins can grant it.",
+    "introAdmin": "Choose who may use AI training. Admins always have access.",
+    "admin": "Admin",
+    "toggle": "AI training for {name}"
+  }
+}

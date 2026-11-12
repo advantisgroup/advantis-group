@@ -965,6 +965,9 @@ export function WikiChat({ className }: { className?: string } = {}) {
                         <AssistantMessage
                           key={i}
                           message={m}
+                          question={
+                            messages[i - 1]?.role === "user" ? messages[i - 1].content : undefined
+                          }
                           latest={i === lastAnswerIndex && !awaitingAnswer}
                           run={i === lastAnswerIndex && view.run?._id === m.runId ? view.run : null}
                           onRegenerate={

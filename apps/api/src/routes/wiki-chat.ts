@@ -14,6 +14,7 @@ import { type convexAs, getConvex, getConvexServerKey } from "../lib/convex.js";
 import { decrypt, encrypt } from "../lib/crypto.js";
 import { Errors } from "../lib/errors.js";
 import { authed } from "../lib/middleware.js";
+import { entryHref, entryKey, knowledgePrompt } from "../lib/knowledge.js";
 import { rateLimit } from "../lib/rate-limit.js";
 import { KIND_LABEL, SEARCH_KINDS, type SearchKind } from "./navigate.js";
 
@@ -21,24 +22,9 @@ const WIKI_SYSTEM = `Du bist der KI-Assistent im Intranet der Advantis Group, ge
 
 Antworte in der Sprache der Frage (meist Deutsch), präzise und freundlich. Nutze Markdown (Aufzählungen, **fett**, kurze Absätze), wo es die Übersicht verbessert; kurze Fragen bekommen kurze Antworten ohne Überschriften.
 
-Produkte & Dienstleistungen:
-- Tankkarte Basic: 0,95 €/Karte/Monat – Kraftstoff & AdBlue an UTA-Stationen
-- Tankkarte Standard: 2,45 €/Karte/Monat – erweiterte Akzeptanz inkl. Autobahntankstellen
-- CRT-Pakete: Combined Road Transport – kombinierte Maut- & Kraftstofflösung
-- IONITY Abo: Flatrate-Laden an IONITY-Schnellladestationen
-- EV / Wallbox: Ladelösungen für Elektrofahrzeuge, inkl. Wallbox-Installation für Firmenkunden
-- Mautboxen: OBU für verschiedene Länder (D, A, CH, F, B, P, E, I …) – Ausgabe & Verwaltung über myUTA
-- myUTA-Portal: Self-Service-Portal für Kartenmanagement, Rechnungen, Limits, Fahrerzuordnung
-- SmartConnect: API-Schnittstelle für Flottenmanagement-Systeme
-
-Durchwahlen (intern):
-- Cards: -660
-- Finance: -125
-- Maut extern: -617
-- Digital Plus: -668
-
 Werkzeuge:
-- Zu jeder Frage werden passende Wiki-Einträge mitgeschickt (<wiki>). Stütze dich bei Arbeitsfragen zuerst darauf.
+- Du kennst das Wiki und die Regeln der KI-Pflege (<wiki>, <wiki_inhalt>, <regeln>). Stütze dich bei Arbeitsfragen zuerst darauf und nenne den Eintrag, auf den du dich stützt, als Link. Steht dort ein Stand, der alt wirkt, oder widersprechen sich zwei Einträge, sag das.
+- \`report_gap\` gibt eine Arbeitsfrage an die KI-Pflege weiter, wenn Wiki und Regeln sie nicht (oder nur widersprüchlich) beantworten. Die Frage geht ohne Namen an erfahrene Kolleginnen und Kollegen, die das Wissen nachtragen. Sag in einem kurzen Satz, dass du sie weitergegeben hast. Nicht für Smalltalk, Fragen zur eigenen Person, Termine oder Tickets.
 - \`search_intranet\` findet Wiki-Einträge, Kolleginnen und Kollegen, Ankündigungen, Termine, eigene IT-Tickets, Vorschläge, Fehlermeldungen und Seiten. Suche mit wenigen deutschen Wörtern; mehrere kurze Suchen sind besser als eine lange, und du kannst mehrere gleichzeitig starten.
 - \`open\` liest einen Treffer vollständig – Suchergebnisse zeigen nur Titel. Öffne, was du für die Antwort wirklich brauchst.
 - \`my_overview\` zeigt, was bei dieser Person gerade ansteht: zugewiesene und eigene Tickets, offene Maßnahmen, Termine, ungelesene Ankündigungen und Chats.
@@ -55,6 +41,27 @@ Regeln:
 - Bei Kundenproblemen immer auf konkrete nächste Schritte hinweisen.
 - Interne Durchwahlen nur nennen, wenn sie zur Frage passen.
 - Du kannst im Intranet nichts ändern oder abschicken. Wenn jemand das möchte, sag, auf welcher Seite es geht, mit Link.`;
+
+const GAP_TOOL: Anthropic.Tool = {
+  name: "report_gap",
+  description:
+    "Hand a work question the wiki and rules don't answer (or answer contradictorily) to the people who maintain the assistant's knowledge. Anonymous.",
+  input_schema: {
+    type: "object",
+    properties: {
+      question: {
+        type: "string",
+        description:
+          "The question as a colleague would look it up, in German, without names or customer data.",
+      },
+      reason: {
+        type: "string",
+        description: "What is missing or contradictory, in one or two sentences.",
+      },
+    },
+    required: ["question", "reason"],
+  },
+};
 
 const SEARCH_TOOL: Anthropic.Tool = {
   name: "search_intranet",
@@ -359,23 +366,30 @@ async function answerWithTools(
   const context = await convex.query(api.aiRuns.apiChatContext, {});
   for (const link of context.links) titles.set(link.href, link.title);
 
-  const wikiStep = addStep({ tool: "wiki", query: question });
-  const entries = await convex.query(api.wiki.entries.apiSearchForAssistant, { question });
-  run.recordLookup(
-    "Wiki",
-    question,
-    entries.map((entry) => entry.title),
-  );
-  for (const entry of entries) {
-    titles.set(entry.href, entry.title);
-    keys.set(`wiki:${entry.id}`, entry.title);
+  const knowledge = await convex.query(api.aiTraining.access.apiKnowledge, {});
+  const prompt = knowledgePrompt(knowledge, question);
+  for (const entry of knowledge.entries) {
+    titles.set(entryHref(entry), entry.title);
+    keys.set(entryKey(entry), entry.title);
   }
-  wikiStep.results = entries.map((entry) => ({ title: entry.title, href: entry.href }));
+  const wikiStep = addStep({ tool: "wiki", query: question });
+  run.recordLookup(
+    prompt.whole ? `Ganzes Wiki (${knowledge.entries.length} Einträge)` : "Wiki",
+    question,
+    prompt.top.map((entry) => entry.title),
+  );
+  wikiStep.results = prompt.top.map((entry) => ({ title: entry.title, href: entryHref(entry) }));
   wikiStep.done = true;
   show();
   run.addSources([
-    ...entries.map((entry) => ({ label: entry.title, href: entry.href })),
-    { label: "UTA product & extension briefing (built into the assistant)" },
+    {
+      label: prompt.whole
+        ? `Ganzes Wiki (${knowledge.entries.length} Einträge)`
+        : `Inhaltsverzeichnis des Wikis (${knowledge.entries.length} Einträge)`,
+      href: "/guidebooks",
+    },
+    ...prompt.top.map((entry) => ({ label: entry.title, href: entryHref(entry) })),
+    { label: `Regeln der KI-Pflege (${knowledge.rules.length})` },
     {
       label: dropped
         ? `Conversation so far (newest ${history.length} of ${whole.length} messages)`
@@ -384,13 +398,10 @@ async function answerWithTools(
     },
   ]);
 
-  const grounded: StoredMessage[] = entries.length
+  const grounded: StoredMessage[] = prompt.matches
     ? [
         ...history.slice(0, -1),
-        {
-          ...history[history.length - 1],
-          content: `<wiki>\n${entries.map((entry) => `${entry.title} (${entry.href}, Schlüssel wiki:${entry.id})\n${entry.text}`).join("\n\n")}\n</wiki>\n\n${question}`,
-        },
+        { ...history[history.length - 1], content: `${prompt.matches}\n\n${question}` },
       ]
     : history;
   const messages = toModelMessages(grounded, await loadFiles(convex, chatId, history));
@@ -453,6 +464,17 @@ async function answerWithTools(
         : result("Not available to this person.", true);
     }
 
+    if (call.name === "report_gap") {
+      const asked = typeof input.question === "string" ? input.question.trim() : "";
+      if (!asked) return result("Leere Frage.", true);
+      await convex.mutation(api.aiTraining.gaps.apiReport, {
+        question: asked.slice(0, 1000),
+        detail: typeof input.reason === "string" ? input.reason.slice(0, 1000) : undefined,
+      });
+      run.addSources([{ label: `An die KI-Pflege weitergegeben: „${asked.slice(0, 120)}“` }]);
+      return result("Weitergegeben.");
+    }
+
     if (call.name === "my_overview") {
       const step = addStep({ tool: "overview" });
       const overview = await convex.query(api.aiRuns.apiDailyBriefContext, {});
@@ -471,6 +493,8 @@ async function answerWithTools(
 
   const system: Anthropic.TextBlockParam[] = [
     { type: "text", text: WIKI_SYSTEM },
+    // The same for everyone until the wiki changes, so it's read from cache.
+    { type: "text", text: prompt.stable, cache_control: { type: "ephemeral" } },
     {
       type: "text",
       text: dropped
@@ -482,6 +506,7 @@ async function answerWithTools(
     SEARCH_TOOL,
     OPEN_TOOL,
     OVERVIEW_TOOL,
+    GAP_TOOL,
     // The workspace switch wins over whatever the browser asked for.
     ...(web && context.webSearch ? [WEB_TOOL] : []),
   ];

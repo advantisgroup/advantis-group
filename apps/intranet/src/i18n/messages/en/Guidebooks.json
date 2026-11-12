@@ -345,7 +345,13 @@
       "failed": "Not available"
     },
     "openFull": "Open full-page chat",
-    "openFullHint": "More room to breathe — its own page, like a real chat app."
+    "openFullHint": "More room to breathe — its own page, like a real chat app.",
+    "gapTitle": "What was wrong or missing?",
+    "gapPlaceholder": "e.g. \"That price changed in 04/2026, it's now …\"",
+    "gapHint": "Your question and note go to AI training without your name. No customer data.",
+    "gapSend": "Send to AI training",
+    "gapSkip": "Just rate",
+    "gapSent": "Thanks! AI training will look into it."
   },
   "filesBelongTo": "Belongs to: {title}",
   "filtersLabel": "Filters",

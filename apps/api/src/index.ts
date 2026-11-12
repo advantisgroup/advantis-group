@@ -26,6 +26,7 @@ import { secondaryEmailsRoute } from "./routes/secondaryEmails.js";
 import { stepUpRoute } from "./routes/stepUp.js";
 import { totpRoute } from "./routes/totp.js";
 import { wikiChatRoute } from "./routes/wiki-chat.js";
+import { aiTrainingRoute } from "./routes/ai-training.js";
 import { wikiFormatAssistRoute } from "./routes/wiki-format-assist.js";
 import { wikiImportRoute } from "./routes/wiki-import.js";
 import { internalBackupsRoute } from "./routes/internal/backups.js";
@@ -114,6 +115,7 @@ export const app = new Elysia()
   .use(stepUpRoute)
   .use(totpRoute)
   .use(wikiChatRoute)
+  .use(aiTrainingRoute)
   .use(wikiFormatAssistRoute)
   .use(wikiImportRoute)
   .use(applicantsRoute)

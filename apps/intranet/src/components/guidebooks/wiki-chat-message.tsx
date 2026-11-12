@@ -33,6 +33,7 @@ import { Link } from "@/components/Link";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useIntranetApiClient } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
@@ -285,10 +286,14 @@ function IconAction({
   );
 }
 
-function Feedback({ runId }: { runId: Id<"aiRuns"> }) {
+function Feedback({ runId, question }: { runId: Id<"aiRuns">; question?: string }) {
   const t = useTranslations("Guidebooks.wikiChat");
   const saved = useQuery(api.aiRuns.myFeedback, { runId });
   const rateRun = useMutation(api.aiRuns.rateRun);
+  const reportGap = useMutation(api.aiTraining.gaps.report);
+  const [open, setOpen] = useState(false);
+  const [note, setNote] = useState("");
+  const [sent, setSent] = useState(false);
   return (
     <>
       <IconAction
@@ -298,13 +303,54 @@ function Feedback({ runId }: { runId: Id<"aiRuns"> }) {
       >
         <ThumbsUp className={cn(saved?.rating === "up" && "fill-current")} />
       </IconAction>
-      <IconAction
-        label={t("badAnswer")}
-        active={saved?.rating === "down"}
-        onClick={() => void rateRun({ runId, rating: "down" })}
-      >
-        <ThumbsDown className={cn(saved?.rating === "down" && "fill-current")} />
-      </IconAction>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <span>
+            <IconAction
+              label={t("badAnswer")}
+              active={saved?.rating === "down"}
+              onClick={() => {
+                void rateRun({ runId, rating: "down" });
+                if (question) setOpen(true);
+              }}
+            >
+              <ThumbsDown className={cn(saved?.rating === "down" && "fill-current")} />
+            </IconAction>
+          </span>
+        </PopoverTrigger>
+        <PopoverContent align="start" className="w-80 space-y-2">
+          {sent ? (
+            <p className="text-sm">{t("gapSent")}</p>
+          ) : (
+            <>
+              <p className="text-sm font-medium">{t("gapTitle")}</p>
+              <Textarea
+                value={note}
+                onChange={(event) => setNote(event.target.value)}
+                placeholder={t("gapPlaceholder")}
+                className="min-h-[72px]"
+              />
+              <p className="text-xs text-muted-foreground">{t("gapHint")}</p>
+              <div className="flex justify-end gap-2">
+                <Button size="sm" variant="ghost" onClick={() => setOpen(false)}>
+                  {t("gapSkip")}
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    void rateRun({ runId, rating: "down", note: note || undefined });
+                    void reportGap({ question: question ?? "", note: note || undefined }).then(() =>
+                      setSent(true),
+                    );
+                  }}
+                >
+                  {t("gapSend")}
+                </Button>
+              </div>
+            </>
+          )}
+        </PopoverContent>
+      </Popover>
     </>
   );
 }
@@ -593,8 +639,11 @@ export function AssistantMessage({
   run,
   latest = false,
   onRegenerate,
+  question,
 }: {
   message: ChatMessage;
+  /** The question this answers — sent along if it's reported as a gap. */
+  question?: string;
   working?: boolean;
   latest?: boolean;
   phase?: AiRunPhase;
@@ -651,7 +700,7 @@ export function AssistantMessage({
               <RotateCcw />
             </IconAction>
           )}
-          {message.runId && <Feedback runId={message.runId as Id<"aiRuns">} />}
+          {message.runId && <Feedback runId={message.runId as Id<"aiRuns">} question={question} />}
           {message.sources && message.sources.length > 0 && (
             <SourcesButton sources={message.sources} />
           )}

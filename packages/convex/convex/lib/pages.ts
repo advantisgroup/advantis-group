@@ -158,6 +158,18 @@ export const INTRANET_PAGES: IntranetPage[] = [
     keywords: ["ki", "ai", "fragen", "assistant", "claude", "chat", "websuche"],
   },
   {
+    href: "/ki-pflege",
+    label: "KI-Pflege",
+    description:
+      "Dem KI-Assistenten Wissen beibringen: offene Fragen beantworten, Dateien hochladen, Vorschläge fürs Wiki prüfen, Regeln pflegen.",
+    keywords: ["ki", "training", "trainieren", "pflegemodus", "wissenslücken", "assistent"],
+    visible: (caller) => caller.isAiTrainer,
+    deepLinks: [
+      { href: "/ki-pflege/training", label: "KI trainieren" },
+      { href: "/ki-pflege/vorschlaege", label: "Vorschläge prüfen" },
+    ],
+  },
+  {
     href: "/directory",
     label: "Personenverzeichnis",
     description: "Kolleginnen und Kollegen finden, mit Kontakt, Team und Erreichbarkeit.",
@@ -625,6 +637,11 @@ export const NOT_DESTINATIONS: Record<string, string> = {
   "/announcements/new": "listed as a deep link of /announcements",
   "/guidebooks/new": "listed as a deep link of /guidebooks",
   "/blog/new": "listed as a deep link of /blog",
+  "/ki-pflege/training": "listed as a deep link of /ki-pflege",
+  "/ki-pflege/vorschlaege": "listed as a deep link of /ki-pflege",
+  "/ki-pflege/regeln": "a tab of /ki-pflege",
+  "/ki-pflege/verlauf": "a tab of /ki-pflege",
+  "/ki-pflege/personen": "a tab of /ki-pflege",
   "/sales-coach-ev/wiki/new": "listed as a deep link of /sales-coach-ev/wiki",
   "/sales-cockpit/projekte/new": "listed as a deep link of /sales-cockpit/projekte",
   "/updates/new": "writing updates is an admin step inside /updates",

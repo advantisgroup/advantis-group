@@ -88,6 +88,9 @@ export const identityTables = {
      * or false means no access.
      */
     gfAccess: v.optional(v.boolean()),
+    /** KI-Pflege: an admin chose this person to train the assistant. Admins
+     *  always can; managers don't get it by rank. */
+    aiTrainer: v.optional(v.boolean()),
     /**
      * OneDrive: whether this user may submit upload *requests* (still subject to
      * manager approval). Default-on — undefined is treated as enabled; managers
