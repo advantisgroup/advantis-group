@@ -61,6 +61,7 @@ async function withAvatar(ctx: QueryCtx, user: Doc<"users">) {
     clockodoUserId: user.clockodoUserId ?? null,
     updatesEmailConsent: user.updatesEmailConsent ?? false,
     gfAccess: sandboxed ? false : (user.gfAccess ?? false),
+    aiTrainer: role === "admin" || (!sandboxed && user.aiTrainer === true),
     uploadRequestsEnabled: user.uploadRequestsEnabled !== false,
     /** `["gf_access", "upload_requests"]`-style — see lib/permissions.ts. */
     permissions: sandboxed ? [] : listUserPermissions(user),

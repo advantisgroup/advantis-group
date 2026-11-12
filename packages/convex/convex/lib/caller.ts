@@ -86,6 +86,11 @@ export class Caller {
     return !this.sandboxed && this.user.gfAccess === true;
   }
 
+  /** KI-Pflege: admins, plus whoever an admin picked. */
+  get isAiTrainer(): boolean {
+    return this.isAdmin || (!this.sandboxed && this.user.aiTrainer === true);
+  }
+
   /** On unless a manager turned it off. */
   get canRequestUploads(): boolean {
     return this.user.uploadRequestsEnabled !== false;

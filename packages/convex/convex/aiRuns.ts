@@ -421,6 +421,8 @@ function hasAreaAccess(caller: Caller, kind: Doc<"aiRuns">["kind"], subjectKey: 
     case "inquirySummary":
     case "inquiryDraft":
       return caller.can("manage_inquiries");
+    case "aiTraining":
+      return caller.isAiTrainer;
   }
 }
 
