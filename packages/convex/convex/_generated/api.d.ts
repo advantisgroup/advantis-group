@@ -210,6 +210,7 @@ import type * as performance_lib_interactionImport from "../performance/lib/inte
 import type * as performance_lib_kpi from "../performance/lib/kpi.js";
 import type * as performance_lib_onboarding from "../performance/lib/onboarding.js";
 import type * as performance_lib_onboardingKpis from "../performance/lib/onboardingKpis.js";
+import type * as performance_lib_onboardingMirror from "../performance/lib/onboardingMirror.js";
 import type * as performance_lib_referenceFix from "../performance/lib/referenceFix.js";
 import type * as performance_lib_reports from "../performance/lib/reports.js";
 import type * as performance_lib_roster from "../performance/lib/roster.js";
@@ -220,6 +221,7 @@ import type * as performance_lib_workdays from "../performance/lib/workdays.js";
 import type * as performance_lib_xlsxZip from "../performance/lib/xlsxZip.js";
 import type * as performance_onboarding from "../performance/onboarding.js";
 import type * as performance_onboardingKpis from "../performance/onboardingKpis.js";
+import type * as performance_onboardingMirror from "../performance/onboardingMirror.js";
 import type * as performance_queries from "../performance/queries.js";
 import type * as performance_reviews from "../performance/reviews.js";
 import type * as performance_topics from "../performance/topics.js";
@@ -528,6 +530,7 @@ declare const fullApi: ApiFromModules<{
   "performance/lib/kpi": typeof performance_lib_kpi;
   "performance/lib/onboarding": typeof performance_lib_onboarding;
   "performance/lib/onboardingKpis": typeof performance_lib_onboardingKpis;
+  "performance/lib/onboardingMirror": typeof performance_lib_onboardingMirror;
   "performance/lib/referenceFix": typeof performance_lib_referenceFix;
   "performance/lib/reports": typeof performance_lib_reports;
   "performance/lib/roster": typeof performance_lib_roster;
@@ -538,6 +541,7 @@ declare const fullApi: ApiFromModules<{
   "performance/lib/xlsxZip": typeof performance_lib_xlsxZip;
   "performance/onboarding": typeof performance_onboarding;
   "performance/onboardingKpis": typeof performance_onboardingKpis;
+  "performance/onboardingMirror": typeof performance_onboardingMirror;
   "performance/queries": typeof performance_queries;
   "performance/reviews": typeof performance_reviews;
   "performance/topics": typeof performance_topics;

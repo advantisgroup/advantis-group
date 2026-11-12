@@ -310,7 +310,7 @@ function caseFields(r: Doc<"onboardingCases">) {
  * logged. Cases whose last situation was already IT before the marker
  * existed count too (from that contact), until "IT erledigt".
  */
-function itOpenSince(r: Doc<"onboardingCases">): number | null {
+export function itOpenSince(r: Doc<"onboardingCases">): number | null {
   if (r.itOpenSince !== undefined) return r.itOpenSince;
   if (r.itCheckedAt !== undefined || !isItPath(r.outcomePath ?? [])) return null;
   return r.outcomeAt ?? r.updatedAt;

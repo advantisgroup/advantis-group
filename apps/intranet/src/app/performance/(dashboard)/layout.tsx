@@ -14,6 +14,7 @@ import {
   LayoutDashboard,
   Phone,
   Presentation,
+  ScanSearch,
   TrendingUp,
   Users,
 } from "lucide-react";
@@ -64,7 +65,14 @@ import { usePerformanceApi } from "@/lib/performance";
 const CALLS_ONLY_TABS = new Set(["calls", "team", "interaktionen"]);
 /** A calls dashboard linked to the Onboarding-Cockpit is laid out like
  * Sales: Überblick and Entwicklung from the cockpit, plus the call tabs. */
-const COCKPIT_TABS = new Set(["ueberblick", "calls", "team", "interaktionen", "entwicklung"]);
+const COCKPIT_TABS = new Set([
+  "ueberblick",
+  "kunden-spiegel",
+  "calls",
+  "team",
+  "interaktionen",
+  "entwicklung",
+]);
 
 function tabAllowed(dashboard: PerformanceDashboard | null, tab: string): boolean {
   if (tab === "onboarding") return false; // folded into Überblick
@@ -169,7 +177,8 @@ function DashboardTopSection({
   // top-of-page chart needed here too.
   if (activeTab === "entwicklung") return null;
   // Onboarding: the cockpit's contacts day by day.
-  if (cockpit) return <OnboardingDailyChart companyId={companyId} />;
+  if (cockpit)
+    return activeTab === "ueberblick" ? <OnboardingDailyChart companyId={companyId} /> : null;
   // Closed won is Salesforce data; Wallbox shows its own numbers below.
   if (kind !== "sales") return null;
   return <ClosedWonTrendChart days={data.wonTrend.days} avg={data.wonTrend.avg} />;
@@ -255,6 +264,16 @@ function DashboardChrome({
       label: t("tabOverview"),
       icon: LayoutDashboard,
     },
+    ...(dashboard.cockpit
+      ? [
+          {
+            value: "kunden-spiegel",
+            href: "/performance/kunden-spiegel",
+            label: t("onboarding.mirror.tab"),
+            icon: ScanSearch,
+          },
+        ]
+      : []),
     {
       value: "calls",
       href: "/performance/calls",
@@ -308,7 +327,8 @@ function DashboardChrome({
       ? !["entwicklung", "interaktionen", "monitoring", "business-review"].includes(activeTab)
       : activeTab === "calls" ||
         activeTab === "team" ||
-        (dashboard.cockpit === true && activeTab === "ueberblick");
+        (dashboard.cockpit === true &&
+          (activeTab === "ueberblick" || activeTab === "kunden-spiegel"));
 
   return (
     <div className="min-h-screen bg-muted/20">

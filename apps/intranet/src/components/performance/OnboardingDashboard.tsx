@@ -20,6 +20,10 @@ import { FilterableBarChart } from "@/components/charts/FilterableBarChart";
 import { CHART, tooltipStyle } from "@/components/charts/theme";
 import { PrimaryKpiCard, StatCard } from "@/components/performance/KpiCards";
 import {
+  OnboardingBasisToggle,
+  useOnboardingBasis,
+} from "@/components/performance/OnboardingBasis";
+import {
   fmtOnboarding,
   ONBOARDING_GROUPS,
   type OnboardingKey,
@@ -41,7 +45,8 @@ import { InfoTip } from "@/components/ui/info-tip";
 
 function useOnboardingTeam(companyId: Id<"companies">) {
   const [ym] = usePerformanceYm();
-  return useQuery(api.performance.onboardingKpis.team, { companyId, ym });
+  const [basis] = useOnboardingBasis();
+  return useQuery(api.performance.onboardingKpis.team, { companyId, ym, basis });
 }
 
 function fmtDate(iso: string | null, locale: string): string {
@@ -131,9 +136,15 @@ export function OnboardingOverview({ companyId }: { companyId: Id<"companies"> }
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-muted-foreground">
-        {t("subtitle", { ym: fmtYm(data.ym, locale), count: data.rows.length })}
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm text-muted-foreground">
+          {t(data.basis === "won" ? "subtitleWon" : "subtitle", {
+            ym: fmtYm(data.ym, locale),
+            count: data.rows.length,
+          })}
+        </p>
+        <OnboardingBasisToggle />
+      </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <PrimaryKpiCard
@@ -260,7 +271,10 @@ export function OnboardingDevelopment({ companyId }: { companyId: Id<"companies"
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">{t("devSubtitle")}</p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm text-muted-foreground">{t("devSubtitle")}</p>
+        <OnboardingBasisToggle />
+      </div>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {bar(t("devContacts"), [
           { key: "reached", color: CHART.active },

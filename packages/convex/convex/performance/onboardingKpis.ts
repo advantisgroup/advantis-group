@@ -16,6 +16,7 @@ import { berlinDate, berlinInstant } from "../time/lib/berlin";
 import { loadViewer, requireTeamView, requireViewableEmployee } from "./lib/access";
 import { monthBounds, monthCompleted, shiftYm, type Snapshot, sumTeam } from "./lib/kpi";
 import { DEFAULT_STATUS_CONFIG, withBuiltins } from "./lib/onboarding";
+import { ymOf } from "./lib/onboardingMirror";
 import {
   CALL_KEYS,
   COCKPIT_KEYS,
@@ -41,7 +42,7 @@ import { cutoffFor, currentYm } from "./queries";
 const YM = /^\d{4}-\d{2}$/;
 const TREND_MONTHS = 6;
 
-async function requireCockpitDashboard(
+export async function requireCockpitDashboard(
   ctx: Ctx,
   companyId: Id<"companies">,
 ): Promise<Doc<"companies">> {
@@ -57,14 +58,14 @@ async function requireCockpitDashboard(
 
 /** Kind of a situation's top entry by its label (entries logged before the
  * kind was stored carry only the label, "erreicht – alles ok › …"). */
-async function outcomeKindsByLabel(ctx: Ctx): Promise<Map<string, string>> {
+export async function outcomeKindsByLabel(ctx: Ctx): Promise<Map<string, string>> {
   const row = await ctx.db.query("onboardingStatusConfig").first();
   const config = withBuiltins({ outcomes: row?.outcomes ?? DEFAULT_STATUS_CONFIG.outcomes });
   return new Map(config.outcomes.map((o) => [o.label, o.kind ?? "other"]));
 }
 
 /** Cockpit log entries of the days `from`–`to` (Berlin). */
-async function cockpitEvents(ctx: Ctx, from: string, to: string): Promise<CockpitEvent[]> {
+export async function cockpitEvents(ctx: Ctx, from: string, to: string): Promise<CockpitEvent[]> {
   const kinds = await outcomeKindsByLabel(ctx);
   const rows = await ctx.db
     .query("onboardingContacts")
@@ -88,9 +89,28 @@ async function cockpitEvents(ctx: Ctx, from: string, to: string): Promise<Cockpi
     .filter((e) => e.day >= from && e.day <= to);
 }
 
+/** Data basis: every action of the month, or only those on customers won
+ * (Close Won) in that same month. */
+export const basisArg = v.optional(v.union(v.literal("all"), v.literal("won")));
+
+/** Close Won month of every case (`null` = no close date). */
+export async function closeMonths(ctx: Ctx): Promise<Map<string, string | null>> {
+  const cases = await ctx.db.query("onboardingCases").collect();
+  return new Map(cases.map((c) => [c._id as string, ymOf(c.closeDate)]));
+}
+
+/** Keeps only events on customers won in `ym` when the basis is "won". */
+function forBasis(
+  events: CockpitEvent[],
+  ym: string,
+  months: Map<string, string | null> | null,
+): CockpitEvent[] {
+  return months ? events.filter((e) => months.get(e.caseId) === ym) : events;
+}
+
 /** First day with any cockpit entry — earlier periods have no cockpit data
  * (shown as "–", not 0). */
-async function cockpitSince(ctx: Ctx): Promise<string | null> {
+export async function cockpitSince(ctx: Ctx): Promise<string | null> {
   const first = await ctx.db.query("onboardingContacts").withIndex("by_at").first();
   return first ? berlinDate(first.at) : null;
 }
@@ -194,8 +214,12 @@ async function people(
 }
 
 export const team = userQuery({
-  args: { companyId: v.optional(v.id("companies")), ym: v.optional(v.string()) },
-  handler: async (ctx, { companyId: companyIdArg, ym: ymArg }) => {
+  args: {
+    companyId: v.optional(v.id("companies")),
+    ym: v.optional(v.string()),
+    basis: basisArg,
+  },
+  handler: async (ctx, { companyId: companyIdArg, ym: ymArg, basis }) => {
     const viewer = await loadViewer(ctx, ctx.caller);
     const companyId = requireTeamView(viewer, companyIdArg);
     await requireCockpitDashboard(ctx, companyId);
@@ -204,9 +228,10 @@ export const team = userQuery({
     const p = await periods(ctx, companyId, ym, cache);
     const persons = await people(ctx, companyId, cache);
     const since = await cockpitSince(ctx);
+    const months = basis === "won" ? await closeMonths(ctx) : null;
 
     const valuesFor = async (period: Period) => {
-      const events = await cockpitEvents(ctx, period.from, period.to);
+      const events = forBasis(await cockpitEvents(ctx, period.from, period.to), period.ym, months);
       const counts = cockpitCounts(events, period.from, period.to);
       const has = since !== null && since <= period.to;
       const calls = await Promise.all(
@@ -234,7 +259,7 @@ export const team = userQuery({
     const team = new Set(persons.flatMap((pp) => (pp.userId ? [pp.userId] : [])));
     const bounds = monthBounds(ym);
     const days = contactDays(
-      await cockpitEvents(ctx, p.cur.from, p.cur.to),
+      forBasis(await cockpitEvents(ctx, p.cur.from, p.cur.to), ym, months),
       p.cur.from,
       p.cur.to,
       team,
@@ -261,6 +286,7 @@ export const team = userQuery({
 
     return {
       ym,
+      basis: basis ?? "all",
       monthDone: monthCompleted(ym),
       cockpitSince: since,
       period: { from: p.cur.from, to: p.cur.to, vmTo: p.vm.to, vjTo: p.vj.to },
@@ -284,8 +310,8 @@ export const team = userQuery({
 
 /** One person's onboarding figures (their own page, or a lead's view). */
 export const employee = userQuery({
-  args: { employeeId: v.id("performanceEmployees"), ym: v.optional(v.string()) },
-  handler: async (ctx, { employeeId, ym: ymArg }) => {
+  args: { employeeId: v.id("performanceEmployees"), ym: v.optional(v.string()), basis: basisArg },
+  handler: async (ctx, { employeeId, ym: ymArg, basis }) => {
     const viewer = await loadViewer(ctx, ctx.caller);
     const { employee, companyId } = await requireViewableEmployee(ctx, viewer, employeeId);
     await requireCockpitDashboard(ctx, companyId);
@@ -294,9 +320,10 @@ export const employee = userQuery({
     const p = await periods(ctx, companyId, ym, cache);
     const since = await cockpitSince(ctx);
     const userId = employee.userId ?? null;
+    const months = basis === "won" ? await closeMonths(ctx) : null;
 
     const valuesFor = async (period: Period) => {
-      const events = await cockpitEvents(ctx, period.from, period.to);
+      const events = forBasis(await cockpitEvents(ctx, period.from, period.to), period.ym, months);
       const counts = cockpitCounts(events, period.from, period.to);
       const own = await personCalls(
         ctx,

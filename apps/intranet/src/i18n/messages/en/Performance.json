@@ -730,7 +730,87 @@
     "devReach": "Reachability per month",
     "devMilestones": "Milestones per month",
     "devClosed": "Closed cases per month",
-    "devCalls": "Calls per month (Genesys)"
+    "devCalls": "Calls per month (Genesys)",
+    "subtitleWon": "Onboarding team in {ym} – {count} people · only actions on customers won in {ym}",
+    "basis": {
+      "label": "Data basis",
+      "all": "All actions in the month",
+      "won": "Only customers won in the month"
+    },
+    "mirror": {
+      "tab": "Customer mirror",
+      "subtitle": "Where the customers stand, who the work was for, and how fast they're activated – {month}.",
+      "funnelTitle": "Customers won in {month} – status today",
+      "funnelSubtitle": "{n} customers closed won this month",
+      "funnelInfo": "All cases whose close date (Close Won from the report) falls in the selected month, and how far they've got so far. Percent = share of all customers won that month.",
+      "won": "Won",
+      "contacted": "Contacted",
+      "dropped": "Dropped out",
+      "actionsTitle": "Actions in {month} – for which customers?",
+      "actionsSubtitle": "Each action by the customer's close month",
+      "actionsInfo": "All contacts, milestones and closures of the month, split by when the customer was won: the same month, the month before, or earlier.",
+      "actionsShareHint": "Percent on the right = share on customers from the selected month.",
+      "action": {
+        "attempts": "Contact attempts",
+        "reached": "Reached",
+        "cards": "Cards ordered",
+        "fuel": "Fuelled",
+        "twoMonth": "Two-month check",
+        "closed": "Closed cases"
+      },
+      "bucket": {
+        "same": "Customers from the month",
+        "prev": "Customers from the month before",
+        "older": "Older customers",
+        "unknown": "No close date"
+      },
+      "openTitle": "Where do open cases hang?",
+      "openSubtitleAll": "{n} open cases in total",
+      "openSubtitleWon": "{n} open cases of customers from {month}",
+      "openInfo": "Open (not closed, not archived) cases by their current stage – the furthest step reached.",
+      "open": {
+        "notContacted": "Not contacted yet",
+        "noCard": "Contacted, no card yet",
+        "cardNoFuel": "Card ordered, not fuelled",
+        "fuelNoCheck": "Fuelled, two-month check open",
+        "itOpen": "{n} of them with an open IT case."
+      },
+      "reasonsTitle": "Completions and drop-outs by reason",
+      "reasonsSubtitleAll": "Cases closed in {month}",
+      "reasonsSubtitleWon": "Customers from {month} already closed",
+      "reasonsInfo": "Completed = through onboarding. Everything else is a drop-out with its reason.",
+      "tempoTitle": "Activation speed",
+      "tempoSubtitle": "Calendar days from Close Won · {n} customers from {month}",
+      "tempoInfo": "For each customer the calendar days from the close date (Close Won) to the first contact, first reach and each milestone. Shown is the median: half the customers were faster, half slower.",
+      "days": "{n} days",
+      "stepN": "{n} customers",
+      "step": {
+        "contact": "To first contact",
+        "reached": "To reached",
+        "cards": "To cards ordered",
+        "fuel": "To fuelled",
+        "twoMonth": "To two-month check"
+      },
+      "stepShort": {
+        "contact": "Contact",
+        "reached": "Reached",
+        "cards": "Card",
+        "fuel": "Fuelled",
+        "twoMonth": "2-m check"
+      },
+      "contactSpeedTitle": "How fast does the first contact come?",
+      "within2": "{pct} % contacted within 2 days",
+      "speed": {
+        "0": "Same day",
+        "1-2": "1–2 days",
+        "3-5": "3–5 days",
+        "6-10": "6–10 days",
+        "11+": "Over 10 days"
+      },
+      "trendTitle": "By close month (median)",
+      "cohort": "Customers from",
+      "tempoNote": "Only customers closed won from {since} count – the cockpit logs contacts since then. Card and fuelled count from the tick in the cockpit."
+    }
   },
   "settingsCockpit": "Link to the onboarding cockpit",
   "settingsCockpitHint": "Team and team lead come from the cockpit; contacts, milestones and closed cases show as an \"Onboarding\" tab next to the calls.",

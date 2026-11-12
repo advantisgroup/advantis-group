@@ -730,7 +730,87 @@
     "devReach": "Erreichbarkeit pro Monat",
     "devMilestones": "Meilensteine pro Monat",
     "devClosed": "Abgänge pro Monat",
-    "devCalls": "Calls pro Monat (Genesys)"
+    "devCalls": "Calls pro Monat (Genesys)",
+    "subtitleWon": "Onboarding-Team im {ym} – {count} Personen · nur Aktionen auf Kunden, die im {ym} gewonnen wurden",
+    "basis": {
+      "label": "Datengrundlage",
+      "all": "Alle Aktionen im Monat",
+      "won": "Nur Kunden gewonnen im Monat"
+    },
+    "mirror": {
+      "tab": "Kunden-Spiegel",
+      "subtitle": "Wo stehen die Kunden, für wen wurde gearbeitet, und wie schnell werden sie aktiviert – {month}.",
+      "funnelTitle": "Kunden gewonnen im {month} – Stand heute",
+      "funnelSubtitle": "{n} Kunden mit Close Won in diesem Monat",
+      "funnelInfo": "Alle Fälle, deren Abschlussdatum (Close Won aus dem Report) im gewählten Monat liegt, und wie weit sie bis heute gekommen sind. Prozent = Anteil an allen gewonnenen Kunden des Monats.",
+      "won": "Gewonnen",
+      "contacted": "Kontaktiert",
+      "dropped": "Rausgefallen",
+      "actionsTitle": "Aktionen im {month} – für welche Kunden?",
+      "actionsSubtitle": "Jede Aktion nach dem Abschlussmonat des Kunden",
+      "actionsInfo": "Alle Kontakte, Meilensteine und Abgänge des Monats, aufgeteilt danach, wann der Kunde gewonnen wurde: im selben Monat, im Vormonat oder früher. So sieht man, wie viel Arbeit auf neue und wie viel auf ältere Kunden geht.",
+      "actionsShareHint": "Prozent rechts = Anteil auf Kunden aus dem gewählten Monat.",
+      "action": {
+        "attempts": "Kontaktversuche",
+        "reached": "Erreicht",
+        "cards": "Karten bestellt",
+        "fuel": "Getankt",
+        "twoMonth": "2-Monats-Check",
+        "closed": "Abgänge"
+      },
+      "bucket": {
+        "same": "Kunden aus dem Monat",
+        "prev": "Kunden aus dem Vormonat",
+        "older": "ältere Kunden",
+        "unknown": "ohne Abschlussdatum"
+      },
+      "openTitle": "Wo hängen die offenen Fälle?",
+      "openSubtitleAll": "{n} offene Fälle insgesamt",
+      "openSubtitleWon": "{n} offene Fälle der Kunden aus dem {month}",
+      "openInfo": "Offene (nicht abgeschlossene, nicht archivierte) Fälle nach ihrem aktuellen Stand – jeweils der weiteste erreichte Schritt.",
+      "open": {
+        "notContacted": "Noch nicht kontaktiert",
+        "noCard": "Kontaktiert, noch keine Karte",
+        "cardNoFuel": "Karte bestellt, nicht getankt",
+        "fuelNoCheck": "Getankt, 2-Monats-Check offen",
+        "itOpen": "Davon {n} mit offenem Case bei der IT."
+      },
+      "reasonsTitle": "Abschlüsse und Abgänge nach Grund",
+      "reasonsSubtitleAll": "Fälle, die im {month} geschlossen wurden",
+      "reasonsSubtitleWon": "Kunden aus dem {month}, die schon geschlossen sind",
+      "reasonsInfo": "Abgeschlossen = erfolgreich durchs Onboarding. Alles andere sind Abgänge mit ihrem Grund.",
+      "tempoTitle": "Aktivierungstempo",
+      "tempoSubtitle": "Kalendertage ab Close Won · {n} Kunden aus dem {month}",
+      "tempoInfo": "Für jeden Kunden die Kalendertage vom Abschlussdatum (Close Won) bis zum ersten Kontakt, zum ersten Erreichen und bis zu jedem Meilenstein. Gezeigt wird der Median: die Hälfte der Kunden war schneller, die andere langsamer.",
+      "days": "{n} Tage",
+      "stepN": "{n} Kunden",
+      "step": {
+        "contact": "Bis erster Kontakt",
+        "reached": "Bis erreicht",
+        "cards": "Bis Karte bestellt",
+        "fuel": "Bis getankt",
+        "twoMonth": "Bis 2-Monats-Check"
+      },
+      "stepShort": {
+        "contact": "Kontakt",
+        "reached": "Erreicht",
+        "cards": "Karte",
+        "fuel": "Getankt",
+        "twoMonth": "2-M-Check"
+      },
+      "contactSpeedTitle": "Wie schnell kommt der erste Kontakt?",
+      "within2": "{pct} % innerhalb von 2 Tagen kontaktiert",
+      "speed": {
+        "0": "Am selben Tag",
+        "1-2": "1–2 Tage",
+        "3-5": "3–5 Tage",
+        "6-10": "6–10 Tage",
+        "11+": "Über 10 Tage"
+      },
+      "trendTitle": "Entwicklung je Abschlussmonat (Median)",
+      "cohort": "Kunden aus",
+      "tempoNote": "Gezählt werden nur Kunden mit Close Won ab {since} – erst seitdem protokolliert das Cockpit die Kontakte. Karte und Getankt zählen ab dem Haken im Cockpit."
+    }
   },
   "settingsCockpit": "Mit dem Onboarding-Cockpit verknüpfen",
   "settingsCockpitHint": "Team und Teamleitung kommen aus dem Cockpit; Kontakte, Meilensteine und Abgänge erscheinen als eigener Reiter „Onboarding“ neben den Calls.",
