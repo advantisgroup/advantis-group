@@ -6,18 +6,14 @@ import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import {
   ArrowLeft,
-  Building2,
-  Clock,
   KeyRound,
   LayoutDashboard,
   type LucideIcon,
-  Mail,
   MessageSquareHeart,
   Plug,
   PowerOff,
   ScrollText,
   ShieldAlert,
-  ShieldCheck,
   Sparkles,
   Upload,
   UserCheck,
@@ -37,6 +33,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { isArchived } from "@/lib/maintenance";
 
 export interface AdminNavItem {
   href: string;
@@ -45,6 +42,8 @@ export interface AdminNavItem {
   managerOnly?: boolean;
   adminOnly?: boolean;
   tourAttr?: string;
+  /** Other routes that count as this entry when highlighting the active item. */
+  activePrefixes?: string[];
 }
 
 export interface AdminNavGroup {
@@ -84,35 +83,14 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
   {
     labelKey: "nav.groupAccess",
     items: [
-      {
-        href: "/admin/requests",
-        labelKey: "nav.requests",
-        icon: Clock,
-        managerOnly: true,
-      },
-      {
-        href: "/admin/invites",
-        labelKey: "nav.invites",
-        icon: Mail,
-        managerOnly: true,
-      },
+      // Invites, requests, departments & teams and roles are tabs of this
+      // page since 12.11.2026 — see `admin/(people)/layout.tsx`.
       {
         href: "/admin/members",
         labelKey: "nav.members",
         icon: Users,
         managerOnly: true,
-      },
-      {
-        href: "/admin/structure",
-        labelKey: "nav.structure",
-        icon: Building2,
-        adminOnly: true,
-      },
-      {
-        href: "/admin/roles",
-        labelKey: "nav.roles",
-        icon: ShieldCheck,
-        managerOnly: true,
+        activePrefixes: ["/admin/invites", "/admin/requests", "/admin/structure", "/admin/roles"],
       },
       {
         href: "/admin/access-review",
@@ -204,7 +182,10 @@ export function AdminSidebar() {
 
       {ADMIN_NAV_GROUPS.map((group) => {
         const items = group.items.filter(
-          (item) => (!item.managerOnly || isManager) && (!item.adminOnly || isAdmin),
+          (item) =>
+            (!item.managerOnly || isManager) &&
+            (!item.adminOnly || isAdmin) &&
+            !isArchived(item.href),
         );
         if (items.length === 0) return null;
         return (
@@ -213,7 +194,11 @@ export function AdminSidebar() {
             <SidebarMenu>
               {items.map((item) => {
                 const active =
-                  item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
+                  item.href === "/admin"
+                    ? pathname === "/admin"
+                    : [item.href, ...(item.activePrefixes ?? [])].some((p) =>
+                        pathname.startsWith(p),
+                      );
                 const Icon = item.icon;
                 return (
                   <SidebarMenuItem key={item.href}>
