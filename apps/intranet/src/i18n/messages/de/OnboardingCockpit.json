@@ -469,5 +469,14 @@
     "assignee": "Zuständig",
     "stillOpenBadge": "offen",
     "days": "{days} T."
+  },
+  "prePool": {
+    "label": "Pre-Pool",
+    "intro": "Neu hochgeladene Fälle – schon verteilbar, für die Kolleginnen ab dem 3. Tag um 6 Uhr in „Neu“ sichtbar.",
+    "releaseAll": "Alle jetzt freigeben",
+    "released": "{count} Fälle freigegeben.",
+    "until": "Pre-Pool bis {date}",
+    "caseInfo": "Pre-Pool: für die Zuständige erst ab {date} sichtbar.",
+    "releaseOne": "Jetzt freigeben"
   }
 }

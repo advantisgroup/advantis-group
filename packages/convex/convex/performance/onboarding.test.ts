@@ -27,6 +27,7 @@ import {
   nextNotReachedStreak,
   suggestUnreachable,
   withBuiltins,
+  prePoolRelease,
 } from "./lib/onboarding";
 
 describe("onboarding helpers", () => {
@@ -165,6 +166,19 @@ describe("onboarding helpers", () => {
   });
 });
 
+describe("Pre-Pool release time", () => {
+  test("third day after the upload, 06:00 Berlin", () => {
+    // Monday 16.11.2026 14:30 Berlin (UTC+1) → Thursday 19.11. 06:00 = 05:00Z.
+    expect(new Date(prePoolRelease(Date.UTC(2026, 10, 16, 13, 30))).toISOString()).toBe(
+      "2026-11-19T05:00:00.000Z",
+    );
+    // Summer time: Monday 06.07.2026 12:00 Berlin → Thursday 06:00 = 04:00Z.
+    expect(new Date(prePoolRelease(Date.UTC(2026, 6, 6, 10, 0))).toISOString()).toBe(
+      "2026-07-09T04:00:00.000Z",
+    );
+  });
+});
+
 describe("feedback 03.11. helpers", () => {
   test("new closed lists, not-reached streak and built-in situations", () => {
     for (const s of ["done", "winback", "refused", "fakeData", "unreachable", "tollOnly"]) {
@@ -213,13 +227,17 @@ type Row = { customerNumber: string; name?: string; reportStatus?: string };
 
 type Session = ReturnType<Awaited<ReturnType<typeof setup>>["as"]>;
 
-async function importReport(as: Session, rows: Row[]) {
+/** Imports a report; new cases are released from the Pre-Pool right away
+ * unless `keepPrePool` (most tests are about what comes after). */
+async function importReport(as: Session, rows: Row[], opts: { keepPrePool?: boolean } = {}) {
   const importId = await as.mutation(api.performance.onboarding.importStart, {
     kind: "report",
     fileName: "KI_Onboarding_all.xlsx",
   });
   await as.mutation(api.performance.onboarding.importReportChunk, { importId, rows });
-  return await as.mutation(api.performance.onboarding.importFinish, { importId });
+  const result = await as.mutation(api.performance.onboarding.importFinish, { importId });
+  if (!opts.keepPrePool) await as.mutation(api.performance.onboarding.releasePrePool, {});
+  return result;
 }
 
 afterEach(() => {
@@ -845,5 +863,37 @@ describe("onboarding cockpit", () => {
     expect(stats).toHaveLength(1);
     expect(stats[0]).toMatchObject({ customerNumber: "91", isIt: true, checks: 1 });
     expect(stats[0].closedAt).not.toBeNull();
+  });
+  test("new uploads wait in the Pre-Pool, hidden from consultants", async () => {
+    vi.stubEnv("ONBOARDING_MODE", "live");
+    const { as, ids } = await setup();
+    const admin = as("admin");
+    await admin.mutation(api.performance.onboarding.saveSettings, {
+      memberUserIds: [ids.melina],
+      pausedUserIds: [],
+    });
+    await importReport(admin, [{ customerNumber: "501" }, { customerNumber: "502" }], {
+      keepPrePool: true,
+    });
+    const all = await admin.query(api.performance.onboarding.list, {});
+    expect(all.every((c) => c.status === "fresh" && c.prePoolUntil !== null)).toBe(true);
+    // Already distributable …
+    await admin.mutation(api.performance.onboarding.assignMany, {
+      caseIds: all.map((c) => c._id),
+      assigneeUserId: ids.melina,
+    });
+    // … but Melina sees nothing yet, not even via "Ansicht als".
+    expect(await as("melina").query(api.performance.onboarding.list, {})).toHaveLength(0);
+    expect(
+      await admin.query(api.performance.onboarding.list, { asUserId: ids.melina }),
+    ).toHaveLength(0);
+    await expect(
+      as("melina").query(api.performance.onboarding.get, { caseId: all[0]._id }),
+    ).rejects.toThrow();
+    // Released early by the admin → in "Neu" for Melina.
+    await admin.mutation(api.performance.onboarding.releasePrePool, { caseIds: [all[0]._id] });
+    const mine = await as("melina").query(api.performance.onboarding.list, {});
+    expect(mine.map((c) => c.customerNumber)).toEqual([all[0].customerNumber]);
+    expect(mine[0].prePoolUntil).toBeNull();
   });
 });

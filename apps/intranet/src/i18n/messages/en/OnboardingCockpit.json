@@ -469,5 +469,14 @@
     "assignee": "Assignee",
     "stillOpenBadge": "open",
     "days": "{days} d"
+  },
+  "prePool": {
+    "label": "Pre-pool",
+    "intro": "Newly uploaded cases – can be distributed already, visible to the team in “New” from the 3rd day at 6:00.",
+    "releaseAll": "Release all now",
+    "released": "{count} cases released.",
+    "until": "Pre-pool until {date}",
+    "caseInfo": "Pre-pool: visible to the assignee from {date}.",
+    "releaseOne": "Release now"
   }
 }

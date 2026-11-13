@@ -33,6 +33,7 @@ import {
   DEFAULT_STATUS_CONFIG,
   isClosedStatus,
   isContactAttempt,
+  inPrePool,
   isItPath,
   isQuarterHour,
   MAX_REPORT_FIELDS,
@@ -42,6 +43,7 @@ import {
   milestonesOf,
   nextNotReachedStreak,
   pathLabel,
+  prePoolRelease,
   phaseFor,
   resolvePath,
   setMilestone,
@@ -120,6 +122,8 @@ async function loadCase(
   const row = await ctx.db.get(caseId);
   if (!row) throw notFound();
   if (!access.canManage && row.assigneeUserId !== access.userId) throw notFound();
+  // Pre-Pool cases stay hidden from the consultants until released.
+  if (!access.canManage && inPrePool(row, Date.now())) throw notFound();
   return row;
 }
 
@@ -275,6 +279,7 @@ function caseFields(r: Doc<"onboardingCases">) {
     customerNumber: r.customerNumber,
     name: r.name,
     status: r.status,
+    prePoolUntil: r.prePoolUntil ?? null,
     outcomePath: r.outcomePath ?? [],
     outcomeText: r.outcomeText ?? null,
     outcomeAt: r.outcomeAt ?? null,
@@ -416,7 +421,12 @@ export const list = userQuery({
           .withIndex("by_assignee", (q) => q.eq("assigneeUserId", ownerId))
           .collect()
       : await ctx.db.query("onboardingCases").collect();
-    const visible = rows.filter((r) => !!r.archivedAt === !!args.archived);
+    // A person's own list (consultant, or "Ansicht als") leaves out the
+    // Pre-Pool – they only see those cases once released into "Neu".
+    const now = Date.now();
+    const visible = rows.filter(
+      (r) => !!r.archivedAt === !!args.archived && !(ownerId && inPrePool(r, now)),
+    );
 
     const names = new Map<Id<"users">, string>();
     for (const id of new Set(visible.map((r) => r.assigneeUserId).filter((x) => !!x))) {
@@ -1133,6 +1143,25 @@ export const create = userMutation({
   },
 });
 
+/** Releases Pre-Pool cases into "Neu" right away (all, or the given ones). */
+export const releasePrePool = userMutation({
+  args: { caseIds: v.optional(v.array(v.id("onboardingCases"))) },
+  handler: async (ctx, args) => {
+    await requireManage(ctx);
+    const now = Date.now();
+    const rows = args.caseIds
+      ? (await Promise.all(args.caseIds.map((id) => ctx.db.get(id)))).filter((r) => !!r)
+      : await ctx.db.query("onboardingCases").collect();
+    let released = 0;
+    for (const r of rows) {
+      if (!inPrePool(r!, now)) continue;
+      await ctx.db.patch(r!._id, { prePoolUntil: undefined, updatedAt: now });
+      released++;
+    }
+    return { released };
+  },
+});
+
 /** Assigns several cases at once (`null` = unassigned). */
 export const assignMany = userMutation({
   args: {
@@ -1409,6 +1438,8 @@ export const importReportChunk = userMutation({
           status,
           milestonesDone: milestonesForStatus(status),
           ...(isClosedStatus(status) ? { closedAt: now } : {}),
+          // New and not yet worked on: Pre-Pool for three days (13.11.).
+          ...(status === "fresh" ? { prePoolUntil: prePoolRelease(imp.startedAt) } : {}),
           prio: false,
           createdAt: now,
         });

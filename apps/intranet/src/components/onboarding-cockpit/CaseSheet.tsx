@@ -10,6 +10,7 @@ import { Flag } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -68,6 +69,7 @@ function CaseBody({
   const data = useQuery(api.performance.onboarding.get, { caseId });
   const statusName = useStatusName();
   const update = useMutation(api.performance.onboarding.update);
+  const releasePrePool = useMutation(api.performance.onboarding.releasePrePool);
   /** Cases opened before this visit are asked about once per visit. */
   const [visitStart] = useState(() => Date.now());
   const [answeredTickets, setAnsweredTickets] = useState<Set<string>>(new Set());
@@ -174,6 +176,27 @@ function CaseBody({
       </div>
 
       <div className="flex-1 space-y-6 overflow-y-auto px-6 py-6">
+        {data.canManage &&
+          data.status === "fresh" &&
+          data.prePoolUntil !== null &&
+          data.prePoolUntil > visitStart && (
+            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-border bg-muted/30 px-4 py-3 text-sm">
+              <span className="mr-auto">
+                {t("prePool.caseInfo", { date: formatDateTime(data.prePoolUntil, locale) })}
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  void releasePrePool({ caseIds: [caseId] }).catch((e) =>
+                    handleError(e, t("case.saveError")),
+                  )
+                }
+              >
+                {t("prePool.releaseOne")}
+              </Button>
+            </div>
+          )}
         <CaseBanners data={{ ...data, open: !closed }} />
         <div className="flex flex-wrap items-start gap-2">
           <FlagControl caseId={caseId} flagged={data.flagged} flagNote={data.flagNote} />

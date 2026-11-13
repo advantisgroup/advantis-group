@@ -53,7 +53,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { formatIsoDate, matchesSearch } from "@/lib/format";
+import { formatDateTime, formatIsoDate, matchesSearch } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 import { CaseSheet } from "./CaseSheet";
@@ -61,7 +61,7 @@ import { CreateCaseDialog } from "./CreateCaseDialog";
 import { DistributionPanel } from "./DistributionPanel";
 import { FollowUpCalendar } from "./FollowUpCalendar";
 import { ImportPanel } from "./ImportPanel";
-import { PhaseBar } from "./StageOverview";
+import { barKey, PhaseBar } from "./StageOverview";
 import { StatusEditor } from "./StatusEditor";
 import { TicketOverview } from "./Tickets";
 import { TransferInbox } from "./Transfers";
@@ -425,7 +425,10 @@ function CasesView({
   const [onlyIt, setOnlyIt] = useState(false);
   const [onlyFlagged, setOnlyFlagged] = useState(false);
   const today = todayIso();
+  const now = Date.now();
   const config = useStatusConfig();
+  const handleError = useErrorHandler();
+  const releasePrePool = useMutation(api.performance.onboarding.releasePrePool);
 
   if (cases.length === 0) {
     return (
@@ -443,7 +446,7 @@ function CasesView({
       if (!matchesKpi(c, kpi, today, config)) return false;
       if (onlyIt && !itOpen(c)) return false;
       if (onlyFlagged && !c.flagged) return false;
-      if (status !== ALL && c.status !== status) return false;
+      if (status !== ALL && barKey(c, now) !== status) return false;
       if (outcome === NO_SITUATION && c.outcomePath.length > 0) return false;
       if (outcome && outcome !== NO_SITUATION && c.outcomePath[0] !== outcome) return false;
       if (
@@ -477,6 +480,7 @@ function CasesView({
       <PhaseBar
         cases={cases}
         large={!canManage}
+        showPrePool={canManage}
         active={status === ALL ? null : status}
         onPick={(phase) => {
           setStatus(phase ?? ALL);
@@ -490,6 +494,24 @@ function CasesView({
           setKpi("open");
         }}
       />
+
+      {status === "prePool" && canManage && (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-dashed border-border bg-muted/30 px-3 py-2 text-sm">
+          <span className="mr-auto text-muted-foreground">{t("prePool.intro")}</span>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() =>
+              void releasePrePool({}).then(
+                (r) => toast.success(t("prePool.released", { count: r.released })),
+                (e) => handleError(e, t("case.saveError")),
+              )
+            }
+          >
+            {t("prePool.releaseAll")}
+          </Button>
+        </div>
+      )}
 
       {/* Consultants (feedback 03.11.): the phases up front, the figures
           only as a small line below. */}
@@ -960,6 +982,7 @@ function CaseTable({
   const outcomeLabel = useOutcomeLabel();
   const t = useTranslations("OnboardingCockpit");
   const locale = useLocale();
+  const now = Date.now();
   if (rows.length === 0) return <EmptyState title={empty} />;
 
   return (
@@ -1003,6 +1026,11 @@ function CaseTable({
               <TableCell className="max-w-[320px]">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <CustomerNumber number={c.customerNumber} className="font-medium" />
+                  {c.status === "fresh" && c.prePoolUntil !== null && c.prePoolUntil > now && (
+                    <Badge variant="outline" className="border-dashed px-1.5 py-0 text-[10px]">
+                      {t("prePool.until", { date: formatDateTime(c.prePoolUntil, locale) })}
+                    </Badge>
+                  )}
                   {c.prio && isOpen(c) && (
                     <Badge variant="destructive" className="gap-1 px-1.5 py-0 text-[10px]">
                       <Flag className="h-2.5 w-2.5" />

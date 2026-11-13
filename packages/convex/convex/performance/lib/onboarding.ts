@@ -355,6 +355,43 @@ export type FollowUpReason = "contact" | "cards" | "fuel";
  * Saturday or Sunday moves to Monday. Example: Wednesday 15:37 → Friday
  * 15:45; Thursday or Friday → Monday.
  */
+/** Days a case new from a report upload stays in the Pre-Pool. */
+export const PRE_POOL_DAYS = 3;
+
+function berlinParts(ms: number) {
+  const p = Object.fromEntries(
+    new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/Berlin",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    })
+      .formatToParts(new Date(ms))
+      .map((x) => [x.type, Number(x.value)]),
+  );
+  return { y: p.year, m: p.month, d: p.day, h: p.hour, min: p.minute };
+}
+
+/**
+ * When a case uploaded at `uploadMs` leaves the Pre-Pool: the third day
+ * after the upload at 06:00 Berlin time (upload Monday → Thursday 06:00).
+ */
+export function prePoolRelease(uploadMs: number): number {
+  const p = berlinParts(uploadMs);
+  const guess = Date.UTC(p.y, p.m - 1, p.d + PRE_POOL_DAYS, 6, 0);
+  const q = berlinParts(guess);
+  const offset = Date.UTC(q.y, q.m - 1, q.d, q.h, q.min) - guess;
+  return guess - offset;
+}
+
+/** Whether a case is still in the Pre-Pool at `now`. */
+export function inPrePool(c: { prePoolUntil?: number | null }, now: number): boolean {
+  return c.prePoolUntil != null && c.prePoolUntil > now;
+}
+
 export function suggestFollowUp(now: Date, reason: FollowUpReason): { date: string; time: string } {
   const parts = Object.fromEntries(
     new Intl.DateTimeFormat("en-GB", {

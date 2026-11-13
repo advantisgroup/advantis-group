@@ -746,6 +746,10 @@ export const performanceTables = {
     lastContactKind: v.optional(v.string()),
     contactAttempts: v.optional(v.number()),
     archivedAt: v.optional(v.number()),
+    /** Pre-Pool (13.11.): a case new from a report upload is hidden from
+     * the consultants until then (3rd day after the upload, 06:00 Berlin);
+     * managers can already distribute it or release it earlier. */
+    prePoolUntil: v.optional(v.number()),
     /** "Nicht erreicht" in a row since the last time the customer was
      * reached; more than 10 suggests closing as "Nicht erreichbar". */
     notReachedStreak: v.optional(v.number()),
