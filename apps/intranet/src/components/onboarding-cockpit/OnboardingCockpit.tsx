@@ -63,6 +63,7 @@ import { FollowUpCalendar } from "./FollowUpCalendar";
 import { ImportPanel } from "./ImportPanel";
 import { PhaseBar } from "./StageOverview";
 import { StatusEditor } from "./StatusEditor";
+import { TicketOverview } from "./Tickets";
 import { TransferInbox } from "./Transfers";
 import {
   byFollowUp,
@@ -85,7 +86,15 @@ import {
   workOrder,
 } from "./shared";
 
-type Tab = "cases" | "prio" | "followUps" | "distribution" | "status" | "import" | "archive";
+type Tab =
+  | "cases"
+  | "prio"
+  | "followUps"
+  | "distribution"
+  | "tickets"
+  | "status"
+  | "import"
+  | "archive";
 type KpiFilter = "open" | "prio" | "due" | "case" | "unassigned" | "done" | "all";
 const ALL = "__all";
 const NO_SITUATION = "__none_situation";
@@ -157,6 +166,7 @@ export function OnboardingCockpit() {
     ...(canManage
       ? [
           { value: "distribution" as const, label: t("tabs.distribution") },
+          { value: "tickets" as const, label: t("tabs.tickets") },
           { value: "status" as const, label: t("tabs.status") },
           { value: "import" as const, label: t("tabs.import") },
           {
@@ -267,6 +277,7 @@ export function OnboardingCockpit() {
         )}
         {tab === "status" && canManage && <StatusEditor />}
         {tab === "import" && canManage && <ImportPanel />}
+        {tab === "tickets" && canManage && <TicketOverview onOpen={setOpenId} />}
         {tab === "archive" && canManage && (
           <section className="space-y-3">
             <CountTabs

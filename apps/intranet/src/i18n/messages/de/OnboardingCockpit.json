@@ -40,7 +40,8 @@
     "archive": "Archiv",
     "myCases": "Meine Fälle",
     "distribution": "Verteilung",
-    "status": "Lagen"
+    "status": "Lagen",
+    "tickets": "Cases"
   },
   "kpi": {
     "open": "Offen",
@@ -446,5 +447,27 @@
     "readOnly": "In der Ansicht als … nur zum Ansehen."
   },
   "itLog": "IT erledigt",
-  "kpiLine": "Offen {open} · Prio offen {prio} · Wiedervorlage fällig {due}"
+  "kpiLine": "Offen {open} · Prio offen {prio} · Wiedervorlage fällig {due}",
+  "tickets": {
+    "checkTitle": "Ist der Case mittlerweile geschlossen?",
+    "checkHint": "Bitte kurz bestätigen, bevor du einen neuen Kontakt festhältst – so sehen wir, wie lange Cases offen sind.",
+    "openedBy": "eröffnet {date} von {name} · seit {days} Tagen",
+    "closed": "Ja, geschlossen",
+    "stillOpen": "Noch offen",
+    "log": "Case geschlossen: {label} (nach {days} Tagen)",
+    "intro": "Alle Cases, die im Cockpit als „Case eröffnet“ eingetragen wurden – offen bis jemand beim nächsten Öffnen der Kundenkarte „geschlossen“ bestätigt.",
+    "reason": "Grund",
+    "open": "Offen",
+    "closedCount": "Geschlossen",
+    "avgDays": "Ø Tage bis geschlossen",
+    "empty": "Noch keine Cases erfasst.",
+    "onlyOpen": "Nur offene",
+    "customer": "Kunde",
+    "openedAt": "Eröffnet",
+    "closedAt": "Geschlossen",
+    "duration": "Dauer",
+    "assignee": "Zuständig",
+    "stillOpenBadge": "offen",
+    "days": "{days} T."
+  }
 }

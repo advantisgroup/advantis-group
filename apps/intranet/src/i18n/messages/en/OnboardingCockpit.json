@@ -40,7 +40,8 @@
     "archive": "Archive",
     "myCases": "My cases",
     "distribution": "Distribution",
-    "status": "Situations"
+    "status": "Situations",
+    "tickets": "Cases"
   },
   "kpi": {
     "open": "Open",
@@ -446,5 +447,27 @@
     "readOnly": "View only while viewing as someone else."
   },
   "itLog": "IT done",
-  "kpiLine": "Open {open} · Prio open {prio} · Follow-up due {due}"
+  "kpiLine": "Open {open} · Prio open {prio} · Follow-up due {due}",
+  "tickets": {
+    "checkTitle": "Has the case been closed by now?",
+    "checkHint": "Please confirm before recording a new contact – this is how we see how long cases stay open.",
+    "openedBy": "opened {date} by {name} · {days} days ago",
+    "closed": "Yes, closed",
+    "stillOpen": "Still open",
+    "log": "Case closed: {label} (after {days} days)",
+    "intro": "All cases recorded as “case opened” in the cockpit – open until someone confirms “closed” when opening the customer card next time.",
+    "reason": "Reason",
+    "open": "Open",
+    "closedCount": "Closed",
+    "avgDays": "Avg. days to close",
+    "empty": "No cases recorded yet.",
+    "onlyOpen": "Open only",
+    "customer": "Customer",
+    "openedAt": "Opened",
+    "closedAt": "Closed",
+    "duration": "Duration",
+    "assignee": "Assignee",
+    "stillOpenBadge": "open",
+    "days": "{days} d"
+  }
 }

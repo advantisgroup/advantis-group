@@ -813,4 +813,37 @@ describe("onboarding cockpit", () => {
     expect(rows.map((r) => r.status)).toEqual(["tollOnly", "tollOnly"]);
     expect(rows.every((r) => r.nextFollowUp === null)).toBe(true);
   });
+  test("opened cases are tracked until confirmed closed", async () => {
+    const { as } = await setup();
+    const admin = as("admin");
+    await importReport(admin, [{ customerNumber: "91" }]);
+    const [c] = await admin.query(api.performance.onboarding.list, {});
+    await admin.mutation(api.performance.onboarding.setOutcome, {
+      caseId: c._id,
+      path: ["case", "case.it"],
+    });
+    let d = await admin.query(api.performance.onboarding.get, { caseId: c._id });
+    expect(d.openTickets).toHaveLength(1);
+    expect(d.openTickets[0]).toMatchObject({ isIt: true, checks: 0 });
+    // Next visit: still open – counted, stays open.
+    await admin.mutation(api.performance.onboarding.answerTicket, {
+      ticketId: d.openTickets[0]._id,
+      closed: false,
+    });
+    d = await admin.query(api.performance.onboarding.get, { caseId: c._id });
+    expect(d.openTickets[0].checks).toBe(1);
+    // Later: closed – ticket ends, IT marker goes too.
+    await admin.mutation(api.performance.onboarding.answerTicket, {
+      ticketId: d.openTickets[0]._id,
+      closed: true,
+    });
+    d = await admin.query(api.performance.onboarding.get, { caseId: c._id });
+    expect(d.openTickets).toHaveLength(0);
+    expect(d.itOpenSince).toBeNull();
+    expect(d.contacts.some((x) => x.kind === "ticket")).toBe(true);
+    const stats = await admin.query(api.performance.onboarding.ticketStats, {});
+    expect(stats).toHaveLength(1);
+    expect(stats[0]).toMatchObject({ customerNumber: "91", isIt: true, checks: 1 });
+    expect(stats[0].closedAt).not.toBeNull();
+  });
 });

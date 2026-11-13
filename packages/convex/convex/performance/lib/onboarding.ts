@@ -409,6 +409,7 @@ export const ONBOARDING_CONTACT_KINDS = [
   "transfer",
   "it",
   "flag",
+  "ticket",
 ] as const;
 export type OnboardingContactKind = (typeof ONBOARDING_CONTACT_KINDS)[number];
 

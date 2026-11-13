@@ -354,6 +354,36 @@ const milestoneValidator = v.union(v.literal("cards"), v.literal("fuel"), v.lite
 // ------------------------------------------------------------------ reads
 
 /** Whether the cockpit shows for the caller (nav link) and what they may do. */
+// ----------------------------------------------------------------- tickets
+
+async function openTickets(
+  ctx: Ctx,
+  caseId: Id<"onboardingCases">,
+): Promise<Doc<"onboardingTickets">[]> {
+  const rows = await ctx.db
+    .query("onboardingTickets")
+    .withIndex("by_case", (q) => q.eq("caseId", caseId))
+    .collect();
+  return rows.filter((r) => r.closedAt === undefined).sort((a, b) => a.openedAt - b.openedAt);
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+async function closeTicket(
+  ctx: MutationCtx,
+  access: CockpitAccess,
+  tk: Doc<"onboardingTickets">,
+): Promise<void> {
+  const now = Date.now();
+  await ctx.db.patch(tk._id, { closedAt: now, closedByName: access.name });
+  const days = Math.max(0, Math.round((now - tk.openedAt) / DAY_MS));
+  await log(ctx, access, tk.caseId, {
+    kind: "ticket",
+    fromValue: tk.label,
+    toValue: String(days),
+  });
+}
+
 export const me = userQuery({
   args: {},
   handler: async (ctx) => {
@@ -425,6 +455,14 @@ export const get = userQuery({
         ? displayName(await ctx.db.get(row.transferToUserId))
         : null,
       canManage: access.canManage,
+      openTickets: (await openTickets(ctx, row._id)).map((tk) => ({
+        _id: tk._id,
+        label: tk.label,
+        isIt: tk.isIt,
+        openedAt: tk.openedAt,
+        openedByName: tk.openedByName,
+        checks: tk.checks,
+      })),
       contacts: contacts.map((c) => ({
         _id: c._id,
         kind: c.kind,
@@ -586,6 +624,9 @@ export const update = userMutation({
       patch.itOpenSince = undefined;
       patch.itCheckedAt = Date.now();
       await log(ctx, access, row._id, { kind: "it", toValue: "done" });
+      for (const tk of await openTickets(ctx, row._id)) {
+        if (tk.isIt) await closeTicket(ctx, access, tk);
+      }
     }
     if (args.flag !== undefined) {
       if (args.flag === null) {
@@ -757,6 +798,19 @@ export const setOutcome = userMutation({
       patch.contactAttempts = (row.contactAttempts ?? 0) + 1;
     }
     patch.notReachedStreak = nextNotReachedStreak(row.notReachedStreak ?? 0, kind);
+    // "Case eröffnet": track it until someone confirms it closed (13.11.).
+    if (kind === "case") {
+      await ctx.db.insert("onboardingTickets", {
+        caseId: row._id,
+        path: args.path,
+        label: pathLabel(config, args.path) ?? "Case",
+        isIt: isItPath(args.path),
+        openedAt: now,
+        openedByUserId: access.userId,
+        openedByName: access.name,
+        checks: 0,
+      });
+    }
     // An IT case stays marked until "IT erledigt", whatever comes next.
     const itSince = itOpenSince(row);
     if (row.itOpenSince === undefined && (itSince !== null || isItPath(args.path))) {
@@ -771,6 +825,73 @@ export const setOutcome = userMutation({
     await applyFollowUp(ctx, access, row, patch, args.nextFollowUp, args.nextFollowUpTime);
     await ctx.db.patch(row._id, patch);
     return { status: patch.status ?? row.status };
+  },
+});
+
+/**
+ * Answer to "Ist der Case mittlerweile geschlossen?" (13.11.): closed ends
+ * it (and the IT marker, if it was the last open IT case); still open only
+ * counts the check.
+ */
+export const answerTicket = userMutation({
+  args: { ticketId: v.id("onboardingTickets"), closed: v.boolean() },
+  handler: async (ctx, args) => {
+    const access = await requireAccess(ctx);
+    const tk = await ctx.db.get(args.ticketId);
+    if (!tk) throw notFound();
+    const row = await loadCase(ctx, access, tk.caseId);
+    if (tk.closedAt !== undefined) return;
+    if (!args.closed) {
+      await ctx.db.patch(tk._id, { checks: tk.checks + 1, lastCheckedAt: Date.now() });
+      return;
+    }
+    await closeTicket(ctx, access, tk);
+    if (tk.isIt) {
+      const stillIt = (await openTickets(ctx, row._id)).some((o) => o.isIt);
+      if (!stillIt && itOpenSince(row) !== null) {
+        await ctx.db.patch(row._id, {
+          itOpenSince: undefined,
+          itCheckedAt: Date.now(),
+          updatedAt: Date.now(),
+        });
+      }
+    }
+  },
+});
+
+/** All opened cases with their duration – for the "Cases" overview. */
+export const ticketStats = userQuery({
+  args: {},
+  handler: async (ctx) => {
+    await requireManage(ctx);
+    const rows = await ctx.db
+      .query("onboardingTickets")
+      .withIndex("by_openedAt")
+      .order("desc")
+      .take(3000);
+    const cases = new Map<string, Doc<"onboardingCases"> | null>();
+    const names = new Map<string, string | null>();
+    const out = [];
+    for (const tk of rows) {
+      if (!cases.has(tk.caseId)) cases.set(tk.caseId, await ctx.db.get(tk.caseId));
+      const c = cases.get(tk.caseId);
+      const uid = c?.assigneeUserId;
+      if (uid && !names.has(uid)) names.set(uid, displayName(await ctx.db.get(uid)));
+      out.push({
+        _id: tk._id,
+        caseId: tk.caseId,
+        customerNumber: c?.customerNumber ?? "–",
+        assigneeName: uid ? (names.get(uid) ?? null) : null,
+        label: tk.label,
+        reason: tk.path[tk.path.length - 1] ?? "case",
+        isIt: tk.isIt,
+        openedAt: tk.openedAt,
+        openedByName: tk.openedByName,
+        closedAt: tk.closedAt ?? null,
+        checks: tk.checks,
+      });
+    }
+    return out;
   },
 });
 

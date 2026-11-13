@@ -778,6 +778,28 @@ export const performanceTables = {
     .index("by_assignee", ["assigneeUserId"])
     .index("by_transferTo", ["transferToUserId"]),
 
+  // Cases opened with UTA ("Case eröffnet › Grund") – one row per opened
+  // case, closed when the consultant confirms it on a later visit. For
+  // tracking how many cases there are and how long they stay open.
+  onboardingTickets: defineTable({
+    caseId: v.id("onboardingCases"),
+    /** Situation path, e.g. ["case", "case.it"]. */
+    path: v.array(v.string()),
+    /** Label at opening time ("Case eröffnet › IT"). */
+    label: v.string(),
+    isIt: v.boolean(),
+    openedAt: v.number(),
+    openedByUserId: v.id("users"),
+    openedByName: v.string(),
+    closedAt: v.optional(v.number()),
+    closedByName: v.optional(v.string()),
+    /** "Noch offen" answers so far. */
+    checks: v.number(),
+    lastCheckedAt: v.optional(v.number()),
+  })
+    .index("by_case", ["caseId"])
+    .index("by_openedAt", ["openedAt"]),
+
   // Contact log of a case: calls, mails and notes people enter, plus
   // system lines for status and assignment changes.
   onboardingContacts: defineTable({
