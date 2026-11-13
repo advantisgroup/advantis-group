@@ -869,6 +869,71 @@ export const answerTicket = userMutation({
   },
 });
 
+/**
+ * Open cases whose last situation is "Case eröffnet" but that have no
+ * tracked case yet – from before the tracking existed (13.11.).
+ */
+async function untrackedCaseRows(ctx: Ctx): Promise<Doc<"onboardingCases">[]> {
+  const config = await loadStatusConfig(ctx);
+  const out = [];
+  for (const r of await ctx.db.query("onboardingCases").collect()) {
+    if (r.archivedAt || isClosedStatus(r.status) || !r.outcomePath?.length) continue;
+    const nodes = resolvePath(config, r.outcomePath);
+    if (nodes?.[0]?.kind !== "case") continue;
+    const tracked = await ctx.db
+      .query("onboardingTickets")
+      .withIndex("by_case", (q) => q.eq("caseId", r._id))
+      .first();
+    if (!tracked) out.push(r);
+  }
+  return out;
+}
+
+/** How many older cases could still be taken over. */
+export const untrackedCaseCount = userQuery({
+  args: {},
+  handler: async (ctx) => {
+    await requireManage(ctx);
+    return (await untrackedCaseRows(ctx)).length;
+  },
+});
+
+/**
+ * Takes those older cases over as tracked cases (once; safe to repeat):
+ * opened at the contact that set "Case eröffnet", by whoever logged it –
+ * so they are asked about on the next visit and show up with their real
+ * duration.
+ */
+export const backfillTickets = userMutation({
+  args: {},
+  handler: async (ctx) => {
+    const access = await requireManage(ctx);
+    const config = await loadStatusConfig(ctx);
+    let created = 0;
+    for (const r of await untrackedCaseRows(ctx)) {
+      const recent = await ctx.db
+        .query("onboardingContacts")
+        .withIndex("by_case", (q) => q.eq("caseId", r._id))
+        .order("desc")
+        .take(200);
+      const entry = recent.find((c) => c.kind === "outcome" && c.outcomeKind === "case");
+      await ctx.db.insert("onboardingTickets", {
+        caseId: r._id,
+        path: r.outcomePath!,
+        label: pathLabel(config, r.outcomePath!) ?? entry?.toValue ?? "Case",
+        isIt: isItPath(r.outcomePath!),
+        openedAt: entry?.at ?? r.outcomeAt ?? r.updatedAt,
+        openedByUserId: entry?.byUserId ?? access.userId,
+        openedByName: entry?.byName ?? r.outcomeByName ?? access.name,
+        checks: 0,
+        backfilled: true,
+      });
+      created++;
+    }
+    return { created };
+  },
+});
+
 /** All opened cases with their duration – for the "Cases" overview. */
 export const ticketStats = userQuery({
   args: {},

@@ -896,4 +896,36 @@ describe("onboarding cockpit", () => {
     expect(mine.map((c) => c.customerNumber)).toEqual([all[0].customerNumber]);
     expect(mine[0].prePoolUntil).toBeNull();
   });
+  test("older cases with situation Case eröffnet can be taken over", async () => {
+    const { t, as } = await setup();
+    const admin = as("admin");
+    await importReport(admin, [{ customerNumber: "71" }, { customerNumber: "72" }]);
+    const [a, b] = await admin.query(api.performance.onboarding.list, {});
+    // a: "Case eröffnet" logged before the tracking existed (no ticket).
+    await admin.mutation(api.performance.onboarding.setOutcome, {
+      caseId: a._id,
+      path: ["case", "case.it"],
+    });
+    await t.run(async (ctx) => {
+      for (const tk of await ctx.db.query("onboardingTickets").collect()) {
+        await ctx.db.delete(tk._id);
+      }
+    });
+    // b: last situation is something else.
+    await admin.mutation(api.performance.onboarding.setOutcome, {
+      caseId: b._id,
+      path: ["notReached"],
+    });
+    expect(await admin.query(api.performance.onboarding.untrackedCaseCount, {})).toBe(1);
+    expect(await admin.mutation(api.performance.onboarding.backfillTickets, {})).toEqual({
+      created: 1,
+    });
+    // Repeating does nothing.
+    expect(await admin.mutation(api.performance.onboarding.backfillTickets, {})).toEqual({
+      created: 0,
+    });
+    const d = await admin.query(api.performance.onboarding.get, { caseId: a._id });
+    expect(d.openTickets).toHaveLength(1);
+    expect(d.openTickets[0]).toMatchObject({ isIt: true, openedByName: "Ada Test" });
+  });
 });

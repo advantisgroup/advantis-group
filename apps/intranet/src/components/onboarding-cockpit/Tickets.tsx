@@ -7,6 +7,7 @@ import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { Check, Clock, LifeBuoy } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -109,6 +110,10 @@ export function TicketOverview({ onOpen }: { onOpen: (id: Id<"onboardingCases">)
   const t = useTranslations("OnboardingCockpit");
   const locale = useLocale();
   const rows = useQuery(api.performance.onboarding.ticketStats, {});
+  const untracked = useQuery(api.performance.onboarding.untrackedCaseCount, {});
+  const backfill = useMutation(api.performance.onboarding.backfillTickets);
+  const handleError = useErrorHandler();
+  const [backfilling, setBackfilling] = useState(false);
   const [onlyOpen, setOnlyOpen] = useState(false);
   const now = Date.now();
 
@@ -133,6 +138,27 @@ export function TicketOverview({ onOpen }: { onOpen: (id: Id<"onboardingCases">)
   return (
     <section className="space-y-4">
       <p className="text-sm text-muted-foreground">{t("tickets.intro")}</p>
+
+      {!!untracked && (
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm">
+          <span className="mr-auto">{t("tickets.backfillHint", { count: untracked })}</span>
+          <Button
+            size="sm"
+            disabled={backfilling}
+            onClick={() => {
+              setBackfilling(true);
+              void backfill({})
+                .then(
+                  (r) => toast.success(t("tickets.backfilled", { count: r.created })),
+                  (e) => handleError(e, t("case.saveError")),
+                )
+                .finally(() => setBackfilling(false));
+            }}
+          >
+            {t("tickets.backfill")}
+          </Button>
+        </div>
+      )}
 
       <div className="overflow-x-auto rounded-xl border border-border/70">
         <table className="w-full text-sm">
