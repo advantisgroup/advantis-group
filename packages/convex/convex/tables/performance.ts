@@ -799,6 +799,9 @@ export const performanceTables = {
     closedByName: v.optional(v.string()),
     /** "Noch offen" answers so far. */
     checks: v.number(),
+    /** Taken over afterwards for a case whose last situation was already
+     * "Case eröffnet" before the tracking existed (13.11.). */
+    backfilled: v.optional(v.boolean()),
     lastCheckedAt: v.optional(v.number()),
   })
     .index("by_case", ["caseId"])

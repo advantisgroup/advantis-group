@@ -468,7 +468,10 @@
     "duration": "Duration",
     "assignee": "Assignee",
     "stillOpenBadge": "open",
-    "days": "{days} d"
+    "days": "{days} d",
+    "backfillHint": "{count} open cases have “case opened” as their last situation from before the tracking. Take them over? Duration counts from that contact; the check comes on the next visit.",
+    "backfill": "Take over older cases",
+    "backfilled": "{count} cases taken over."
   },
   "prePool": {
     "label": "Pre-pool",

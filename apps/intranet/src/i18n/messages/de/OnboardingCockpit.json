@@ -468,7 +468,10 @@
     "duration": "Dauer",
     "assignee": "Zuständig",
     "stillOpenBadge": "offen",
-    "days": "{days} T."
+    "days": "{days} T.",
+    "backfillHint": "{count} offene Fälle haben als letzte Lage „Case eröffnet“ aus der Zeit vor der Nachverfolgung. Übernehmen? Die Dauer zählt ab diesem Kontakt, beim nächsten Öffnen kommt die Abfrage.",
+    "backfill": "Ältere Cases übernehmen",
+    "backfilled": "{count} Cases übernommen."
   },
   "prePool": {
     "label": "Pre-Pool",
