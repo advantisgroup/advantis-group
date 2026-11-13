@@ -3,11 +3,14 @@
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { isClosedStatus, MILESTONES } from "@advantis/convex/performance/onboarding";
+import { useState } from "react";
+
 import { useMutation, useQuery } from "convex/react";
 import { Flag } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -24,6 +27,7 @@ import { formatDateTime, formatIsoDate } from "@/lib/format";
 
 import { CaseBanners, FlagControl, MoodPicker, TransferButton } from "./CaseActions";
 import { CaseStatus } from "./CaseStatus";
+import { TicketCheck } from "./Tickets";
 import { ContactForm } from "./ContactForm";
 import { CustomerNumber, useStatusName } from "./shared";
 
@@ -65,6 +69,10 @@ function CaseBody({
   const data = useQuery(api.performance.onboarding.get, { caseId });
   const statusName = useStatusName();
   const update = useMutation(api.performance.onboarding.update);
+  const releasePrePool = useMutation(api.performance.onboarding.releasePrePool);
+  /** Cases opened before this visit are asked about once per visit. */
+  const [visitStart] = useState(() => Date.now());
+  const [answeredTickets, setAnsweredTickets] = useState<Set<string>>(new Set());
 
   const save = async (patch: Omit<Parameters<typeof update>[0], "caseId">) => {
     try {
@@ -109,6 +117,9 @@ function CaseBody({
     }
     if (c.kind === "flag") return c.toValue === "1" ? t("flag.logOn") : t("flag.logOff");
     if (c.kind === "it") return t("itLog");
+    if (c.kind === "ticket") {
+      return t("tickets.log", { label: c.fromValue ?? "Case", days: c.toValue ?? "0" });
+    }
     if (c.kind === "outcome") {
       const via =
         c.fromValue === "email" ? t("situation.channel.email") : t("situation.channel.phone");
@@ -165,6 +176,27 @@ function CaseBody({
       </div>
 
       <div className="flex-1 space-y-6 overflow-y-auto px-6 py-6">
+        {data.canManage &&
+          data.status === "fresh" &&
+          data.prePoolUntil !== null &&
+          data.prePoolUntil > visitStart && (
+            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-border bg-muted/30 px-4 py-3 text-sm">
+              <span className="mr-auto">
+                {t("prePool.caseInfo", { date: formatDateTime(data.prePoolUntil, locale) })}
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  void releasePrePool({ caseIds: [caseId] }).catch((e) =>
+                    handleError(e, t("case.saveError")),
+                  )
+                }
+              >
+                {t("prePool.releaseOne")}
+              </Button>
+            </div>
+          )}
         <CaseBanners data={{ ...data, open: !closed }} />
         <div className="flex flex-wrap items-start gap-2">
           <FlagControl caseId={caseId} flagged={data.flagged} flagNote={data.flagNote} />
@@ -219,12 +251,24 @@ function CaseBody({
           )}
         </section>
 
-        <ContactForm
-          key={data.milestones.join()}
-          caseId={caseId}
-          closed={closed}
-          milestones={data.milestones}
-        />
+        {!closed && (
+          <TicketCheck
+            tickets={data.openTickets.filter((tk) => tk.openedAt < visitStart)}
+            answered={answeredTickets}
+            onAnswered={(id) => setAnsweredTickets(new Set([...answeredTickets, id]))}
+          />
+        )}
+        {(closed ||
+          data.openTickets.every(
+            (tk) => tk.openedAt >= visitStart || answeredTickets.has(tk._id),
+          )) && (
+          <ContactForm
+            key={data.milestones.join()}
+            caseId={caseId}
+            closed={closed}
+            milestones={data.milestones}
+          />
+        )}
 
         <section className="space-y-2">
           <h3 className="text-sm font-semibold">{t("case.log")}</h3>

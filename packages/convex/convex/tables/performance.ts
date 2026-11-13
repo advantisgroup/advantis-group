@@ -746,6 +746,10 @@ export const performanceTables = {
     lastContactKind: v.optional(v.string()),
     contactAttempts: v.optional(v.number()),
     archivedAt: v.optional(v.number()),
+    /** Pre-Pool (13.11.): a case new from a report upload is hidden from
+     * the consultants until then (3rd day after the upload, 06:00 Berlin);
+     * managers can already distribute it or release it earlier. */
+    prePoolUntil: v.optional(v.number()),
     /** "Nicht erreicht" in a row since the last time the customer was
      * reached; more than 10 suggests closing as "Nicht erreichbar". */
     notReachedStreak: v.optional(v.number()),
@@ -777,6 +781,28 @@ export const performanceTables = {
     .index("by_key", ["customerKey"])
     .index("by_assignee", ["assigneeUserId"])
     .index("by_transferTo", ["transferToUserId"]),
+
+  // Cases opened with UTA ("Case eröffnet › Grund") – one row per opened
+  // case, closed when the consultant confirms it on a later visit. For
+  // tracking how many cases there are and how long they stay open.
+  onboardingTickets: defineTable({
+    caseId: v.id("onboardingCases"),
+    /** Situation path, e.g. ["case", "case.it"]. */
+    path: v.array(v.string()),
+    /** Label at opening time ("Case eröffnet › IT"). */
+    label: v.string(),
+    isIt: v.boolean(),
+    openedAt: v.number(),
+    openedByUserId: v.id("users"),
+    openedByName: v.string(),
+    closedAt: v.optional(v.number()),
+    closedByName: v.optional(v.string()),
+    /** "Noch offen" answers so far. */
+    checks: v.number(),
+    lastCheckedAt: v.optional(v.number()),
+  })
+    .index("by_case", ["caseId"])
+    .index("by_openedAt", ["openedAt"]),
 
   // Contact log of a case: calls, mails and notes people enter, plus
   // system lines for status and assignment changes.

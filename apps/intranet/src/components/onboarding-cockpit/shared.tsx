@@ -9,7 +9,6 @@ import {
   isClosedStatus,
   type OutcomeKind,
   pathLabel,
-  phaseRank,
   quarterSlots,
   resolvePath,
   type StatusConfig,
@@ -47,8 +46,6 @@ export function followUpDue(c: CaseRow, today: string): boolean {
 /** The date a case is sorted by: close date, else the report's date. */
 export const caseDate = (c: CaseRow) => c.closeDate ?? c.reportDate;
 
-/** Prio first, then due follow-ups, then earlier phases ("Getankt" – only
- * the two-month check left – last), then the oldest case, then number. */
 /** Follow-ups by date, then time (08:00 before 13:00, no time last). */
 export function byFollowUp(
   a: { nextFollowUp: string | null; nextFollowUpTime: string | null },
@@ -58,13 +55,29 @@ export function byFollowUp(
   return key(a).localeCompare(key(b));
 }
 
+/** Work groups of the call list: Neu + In Kontakt together first (the
+ * time until "Karten bestellt" should be short), then Karten bestellt, then
+ * Getankt (only the two-month check left), then closed. */
+const workGroup = (status: string) =>
+  status === "fresh" || status === "step1"
+    ? 0
+    : status === "step2"
+      ? 1
+      : status === "step3"
+        ? 2
+        : 3;
+
+/**
+ * Call list order (Vahan, 13.11.): due follow-ups first (by date and time),
+ * then Neu + In Kontakt, Karten bestellt, Getankt – within a group prio
+ * first, then the oldest case, then number.
+ */
 export function workOrder(today: string) {
   return (a: CaseRow, b: CaseRow) =>
-    Number(b.prio && isOpen(b)) - Number(a.prio && isOpen(a)) ||
     Number(followUpDue(b, today)) - Number(followUpDue(a, today)) ||
     (followUpDue(a, today) && followUpDue(b, today) ? byFollowUp(a, b) : 0) ||
-    Number(a.status === "step3") - Number(b.status === "step3") ||
-    phaseRank(a.status) - phaseRank(b.status) ||
+    workGroup(a.status) - workGroup(b.status) ||
+    Number(b.prio && isOpen(b)) - Number(a.prio && isOpen(a)) ||
     (caseDate(a) ?? "9999").localeCompare(caseDate(b) ?? "9999") ||
     a.customerNumber.localeCompare(b.customerNumber, "de", { numeric: true });
 }

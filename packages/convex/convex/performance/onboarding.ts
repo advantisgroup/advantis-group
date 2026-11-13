@@ -33,6 +33,7 @@ import {
   DEFAULT_STATUS_CONFIG,
   isClosedStatus,
   isContactAttempt,
+  inPrePool,
   isItPath,
   isQuarterHour,
   MAX_REPORT_FIELDS,
@@ -42,6 +43,7 @@ import {
   milestonesOf,
   nextNotReachedStreak,
   pathLabel,
+  prePoolRelease,
   phaseFor,
   resolvePath,
   setMilestone,
@@ -120,6 +122,8 @@ async function loadCase(
   const row = await ctx.db.get(caseId);
   if (!row) throw notFound();
   if (!access.canManage && row.assigneeUserId !== access.userId) throw notFound();
+  // Pre-Pool cases stay hidden from the consultants until released.
+  if (!access.canManage && inPrePool(row, Date.now())) throw notFound();
   return row;
 }
 
@@ -275,6 +279,7 @@ function caseFields(r: Doc<"onboardingCases">) {
     customerNumber: r.customerNumber,
     name: r.name,
     status: r.status,
+    prePoolUntil: r.prePoolUntil ?? null,
     outcomePath: r.outcomePath ?? [],
     outcomeText: r.outcomeText ?? null,
     outcomeAt: r.outcomeAt ?? null,
@@ -354,6 +359,36 @@ const milestoneValidator = v.union(v.literal("cards"), v.literal("fuel"), v.lite
 // ------------------------------------------------------------------ reads
 
 /** Whether the cockpit shows for the caller (nav link) and what they may do. */
+// ----------------------------------------------------------------- tickets
+
+async function openTickets(
+  ctx: Ctx,
+  caseId: Id<"onboardingCases">,
+): Promise<Doc<"onboardingTickets">[]> {
+  const rows = await ctx.db
+    .query("onboardingTickets")
+    .withIndex("by_case", (q) => q.eq("caseId", caseId))
+    .collect();
+  return rows.filter((r) => r.closedAt === undefined).sort((a, b) => a.openedAt - b.openedAt);
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+async function closeTicket(
+  ctx: MutationCtx,
+  access: CockpitAccess,
+  tk: Doc<"onboardingTickets">,
+): Promise<void> {
+  const now = Date.now();
+  await ctx.db.patch(tk._id, { closedAt: now, closedByName: access.name });
+  const days = Math.max(0, Math.round((now - tk.openedAt) / DAY_MS));
+  await log(ctx, access, tk.caseId, {
+    kind: "ticket",
+    fromValue: tk.label,
+    toValue: String(days),
+  });
+}
+
 export const me = userQuery({
   args: {},
   handler: async (ctx) => {
@@ -386,7 +421,12 @@ export const list = userQuery({
           .withIndex("by_assignee", (q) => q.eq("assigneeUserId", ownerId))
           .collect()
       : await ctx.db.query("onboardingCases").collect();
-    const visible = rows.filter((r) => !!r.archivedAt === !!args.archived);
+    // A person's own list (consultant, or "Ansicht als") leaves out the
+    // Pre-Pool – they only see those cases once released into "Neu".
+    const now = Date.now();
+    const visible = rows.filter(
+      (r) => !!r.archivedAt === !!args.archived && !(ownerId && inPrePool(r, now)),
+    );
 
     const names = new Map<Id<"users">, string>();
     for (const id of new Set(visible.map((r) => r.assigneeUserId).filter((x) => !!x))) {
@@ -425,6 +465,14 @@ export const get = userQuery({
         ? displayName(await ctx.db.get(row.transferToUserId))
         : null,
       canManage: access.canManage,
+      openTickets: (await openTickets(ctx, row._id)).map((tk) => ({
+        _id: tk._id,
+        label: tk.label,
+        isIt: tk.isIt,
+        openedAt: tk.openedAt,
+        openedByName: tk.openedByName,
+        checks: tk.checks,
+      })),
       contacts: contacts.map((c) => ({
         _id: c._id,
         kind: c.kind,
@@ -586,6 +634,9 @@ export const update = userMutation({
       patch.itOpenSince = undefined;
       patch.itCheckedAt = Date.now();
       await log(ctx, access, row._id, { kind: "it", toValue: "done" });
+      for (const tk of await openTickets(ctx, row._id)) {
+        if (tk.isIt) await closeTicket(ctx, access, tk);
+      }
     }
     if (args.flag !== undefined) {
       if (args.flag === null) {
@@ -757,6 +808,19 @@ export const setOutcome = userMutation({
       patch.contactAttempts = (row.contactAttempts ?? 0) + 1;
     }
     patch.notReachedStreak = nextNotReachedStreak(row.notReachedStreak ?? 0, kind);
+    // "Case eröffnet": track it until someone confirms it closed (13.11.).
+    if (kind === "case") {
+      await ctx.db.insert("onboardingTickets", {
+        caseId: row._id,
+        path: args.path,
+        label: pathLabel(config, args.path) ?? "Case",
+        isIt: isItPath(args.path),
+        openedAt: now,
+        openedByUserId: access.userId,
+        openedByName: access.name,
+        checks: 0,
+      });
+    }
     // An IT case stays marked until "IT erledigt", whatever comes next.
     const itSince = itOpenSince(row);
     if (row.itOpenSince === undefined && (itSince !== null || isItPath(args.path))) {
@@ -771,6 +835,73 @@ export const setOutcome = userMutation({
     await applyFollowUp(ctx, access, row, patch, args.nextFollowUp, args.nextFollowUpTime);
     await ctx.db.patch(row._id, patch);
     return { status: patch.status ?? row.status };
+  },
+});
+
+/**
+ * Answer to "Ist der Case mittlerweile geschlossen?" (13.11.): closed ends
+ * it (and the IT marker, if it was the last open IT case); still open only
+ * counts the check.
+ */
+export const answerTicket = userMutation({
+  args: { ticketId: v.id("onboardingTickets"), closed: v.boolean() },
+  handler: async (ctx, args) => {
+    const access = await requireAccess(ctx);
+    const tk = await ctx.db.get(args.ticketId);
+    if (!tk) throw notFound();
+    const row = await loadCase(ctx, access, tk.caseId);
+    if (tk.closedAt !== undefined) return;
+    if (!args.closed) {
+      await ctx.db.patch(tk._id, { checks: tk.checks + 1, lastCheckedAt: Date.now() });
+      return;
+    }
+    await closeTicket(ctx, access, tk);
+    if (tk.isIt) {
+      const stillIt = (await openTickets(ctx, row._id)).some((o) => o.isIt);
+      if (!stillIt && itOpenSince(row) !== null) {
+        await ctx.db.patch(row._id, {
+          itOpenSince: undefined,
+          itCheckedAt: Date.now(),
+          updatedAt: Date.now(),
+        });
+      }
+    }
+  },
+});
+
+/** All opened cases with their duration – for the "Cases" overview. */
+export const ticketStats = userQuery({
+  args: {},
+  handler: async (ctx) => {
+    await requireManage(ctx);
+    const rows = await ctx.db
+      .query("onboardingTickets")
+      .withIndex("by_openedAt")
+      .order("desc")
+      .take(3000);
+    const cases = new Map<string, Doc<"onboardingCases"> | null>();
+    const names = new Map<string, string | null>();
+    const out = [];
+    for (const tk of rows) {
+      if (!cases.has(tk.caseId)) cases.set(tk.caseId, await ctx.db.get(tk.caseId));
+      const c = cases.get(tk.caseId);
+      const uid = c?.assigneeUserId;
+      if (uid && !names.has(uid)) names.set(uid, displayName(await ctx.db.get(uid)));
+      out.push({
+        _id: tk._id,
+        caseId: tk.caseId,
+        customerNumber: c?.customerNumber ?? "–",
+        assigneeName: uid ? (names.get(uid) ?? null) : null,
+        label: tk.label,
+        reason: tk.path[tk.path.length - 1] ?? "case",
+        isIt: tk.isIt,
+        openedAt: tk.openedAt,
+        openedByName: tk.openedByName,
+        closedAt: tk.closedAt ?? null,
+        checks: tk.checks,
+      });
+    }
+    return out;
   },
 });
 
@@ -1009,6 +1140,25 @@ export const create = userMutation({
     });
     await log(ctx, access, id, { kind: "created" });
     return id;
+  },
+});
+
+/** Releases Pre-Pool cases into "Neu" right away (all, or the given ones). */
+export const releasePrePool = userMutation({
+  args: { caseIds: v.optional(v.array(v.id("onboardingCases"))) },
+  handler: async (ctx, args) => {
+    await requireManage(ctx);
+    const now = Date.now();
+    const rows = args.caseIds
+      ? (await Promise.all(args.caseIds.map((id) => ctx.db.get(id)))).filter((r) => !!r)
+      : await ctx.db.query("onboardingCases").collect();
+    let released = 0;
+    for (const r of rows) {
+      if (!inPrePool(r!, now)) continue;
+      await ctx.db.patch(r!._id, { prePoolUntil: undefined, updatedAt: now });
+      released++;
+    }
+    return { released };
   },
 });
 
@@ -1288,6 +1438,8 @@ export const importReportChunk = userMutation({
           status,
           milestonesDone: milestonesForStatus(status),
           ...(isClosedStatus(status) ? { closedAt: now } : {}),
+          // New and not yet worked on: Pre-Pool for three days (13.11.).
+          ...(status === "fresh" ? { prePoolUntil: prePoolRelease(imp.startedAt) } : {}),
           prio: false,
           createdAt: now,
         });
