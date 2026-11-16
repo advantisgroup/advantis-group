@@ -6,7 +6,7 @@ import { api } from "../_generated/api";
 import schema from "../schema";
 import { modules } from "../test.setup";
 import {
-  healthyBonus,
+  healthyDue,
   hitrateBonus,
   isoWeek,
   monthBonus,
@@ -35,7 +35,7 @@ describe("rules", () => {
     expect(hitrateBonus(24.9)).toBe(0);
     expect(hitrateBonus(25)).toBe(50);
     expect(hitrateBonus(null)).toBe(0);
-    expect([0, 1, 2, 3, 4, 9].map(healthyBonus)).toEqual([0, 0, 0, 100, 100, 100]);
+    expect([0, 2, 3, 9].map(healthyDue)).toEqual([false, false, true, true]);
   });
 
   test("Wochen zählen zum Monat ihres Donnerstags", () => {
@@ -136,8 +136,8 @@ describe("commissions.queries.month", () => {
       .query(api.commissions.queries.month, { ym: "2026-10" });
     expect(res.companyId).toBe(ids.companyId);
     const [anna, ben] = res.rows;
-    // Anna: Staffel 60 + 200 + 22×25 = 810, KW 41 +50, >60 +50, Hitrate 31 % +50,
-    // Jan–Sep gesund (9 Vormonate) +100.
+    // Anna: Staffel 60 + 200 + 22×25 = 810, KW 41 +50, >60 +50, Hitrate 31 % +50.
+    // Jan–Sep gesund → Gesund-Bonus fällig, aber erst per Häkchen ausgezahlt.
     expect(anna).toMatchObject({
       name: "Anna Test",
       won: 62,
@@ -147,8 +147,10 @@ describe("commissions.queries.month", () => {
       monthBonus: 50,
       hitrateBonus: 50,
       healthyStreak: 9,
-      healthyBonus: 100,
-      total: 1060,
+      healthyDue: true,
+      healthyPaid: false,
+      healthyBonus: 0,
+      total: 960,
     });
     expect(anna.weeks.find((w) => w.kw === 41)).toEqual({ kw: 41, won: 15, bonus: 50 });
     expect(anna.weeks.find((w) => w.kw === 42)).toEqual({ kw: 42, won: 14, bonus: 0 });
@@ -157,19 +159,88 @@ describe("commissions.queries.month", () => {
     expect(ben.sickDays).toEqual(["2026-10-01"]);
   });
 
-  test("100 € jeden Monat, wenn die 3 Vormonate ohne Krankmeldung waren", async () => {
-    const { t } = await setup();
+  test("Gesund-Bonus: fällig nach 3 Monaten, Auszahlung per Häkchen startet neu", async () => {
+    const { t, ids } = await setup();
     const admin = t.withIdentity({ subject: "admin" });
     const row = async (ym: string, name: string) =>
-      (await admin.query(api.commissions.queries.month, { ym })).rows.find((r) => r.name === name);
+      (await admin.query(api.commissions.queries.month, { ym })).rows.find((r) => r.name === name)!;
     // Seit Januar dabei: im März erst 2 Vormonate, im April 3.
-    expect(await row("2026-03", "Anna Test")).toMatchObject({ healthyStreak: 2, healthyBonus: 0 });
+    expect(await row("2026-03", "Anna Test")).toMatchObject({
+      healthyStreak: 2,
+      healthyDue: false,
+    });
+    const april = await row("2026-04", "Anna Test");
+    expect(april).toMatchObject({ healthyStreak: 3, healthyDue: true, healthyBonus: 0 });
+
+    await admin.mutation(api.commissions.adjustments.set, {
+      companyId: ids.companyId,
+      ym: "2026-04",
+      employeeId: april.employeeId,
+      healthyPaid: true,
+    });
     expect(await row("2026-04", "Anna Test")).toMatchObject({
-      healthyStreak: 3,
+      healthyPaid: true,
       healthyBonus: 100,
     });
-    // Ben krank Sep/Okt: Januar zählt noch Oktober mit, ab Februar wieder 100 €.
-    expect(await row("2027-01", "Ben Test")).toMatchObject({ healthyStreak: 2, healthyBonus: 0 });
-    expect(await row("2027-02", "Ben Test")).toMatchObject({ healthyStreak: 3, healthyBonus: 100 });
+    // Danach zählt es ab April neu: Juni erst 2 Monate, Juli wieder fällig.
+    expect(await row("2026-06", "Anna Test")).toMatchObject({
+      healthyStreak: 2,
+      healthyDue: false,
+    });
+    expect(await row("2026-07", "Anna Test")).toMatchObject({ healthyStreak: 3, healthyDue: true });
+
+    // Ben krank Sep/Okt: Januar zählt noch Oktober mit, Februar wieder fällig.
+    expect(await row("2027-01", "Ben Test")).toMatchObject({ healthyDue: false });
+    expect(await row("2027-02", "Ben Test")).toMatchObject({ healthyStreak: 3, healthyDue: true });
+  });
+
+  test("Closed Won und Hitrate lassen sich überschreiben und zurücksetzen", async () => {
+    const { t, ids } = await setup();
+    const admin = t.withIdentity({ subject: "admin" });
+    const ben = async () =>
+      (await admin.query(api.commissions.queries.month, { ym: "2026-10" })).rows.find(
+        (r) => r.name === "Ben Test",
+      )!;
+    const { employeeId } = await ben();
+    await admin.mutation(api.commissions.adjustments.set, {
+      companyId: ids.companyId,
+      ym: "2026-10",
+      employeeId,
+      wonOverride: 40,
+      hitrateOverride: 25,
+      note: " Nachgebucht laut Salesforce ",
+    });
+    expect(await ben()).toMatchObject({
+      won: 40,
+      autoWon: 20,
+      wonOverridden: true,
+      hitrate: 25,
+      autoHitrate: 10,
+      hitrateOverridden: true,
+      tierAmount: 260,
+      hitrateBonus: 50,
+      note: "Nachgebucht laut Salesforce",
+      total: 310,
+    });
+
+    await admin.mutation(api.commissions.adjustments.set, {
+      companyId: ids.companyId,
+      ym: "2026-10",
+      employeeId,
+      wonOverride: null,
+      hitrateOverride: null,
+      note: null,
+    });
+    expect(await ben()).toMatchObject({ won: 20, wonOverridden: false, total: 0, note: null });
+    expect(await t.run((ctx) => ctx.db.query("commissionAdjustments").collect())).toHaveLength(0);
+
+    await expect(
+      t.withIdentity({ subject: "anna" }).mutation(api.commissions.adjustments.set, {
+        companyId: ids.companyId,
+        ym: "2026-10",
+        employeeId,
+        wonOverride: 99,
+      }),
+    ).rejects.toThrow();
   });
 });

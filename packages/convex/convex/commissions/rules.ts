@@ -10,7 +10,9 @@
  *   Wochen über den Monatswechsel nicht doppelt bezahlt werden.
  * - 50 €, wenn im Monat mehr als 60 Closed Won.
  * - 50 €, wenn die Monats-Hitrate mindestens 25 % beträgt.
- * - 100 € jeden Monat, in dessen 3 Vormonaten keine Krankmeldung lag.
+ * - 100 € Gesund-Bonus nach 3 Monaten ohne Krankmeldung. Die Seite zeigt
+ *   ihn als fällig, ausgezahlt wird er per Häkchen der Chefin; mit der
+ *   Auszahlung beginnen die 3 Monate von vorn.
  */
 
 export const TIERS: readonly { from: number; to: number | null; perDeal: number }[] = [
@@ -62,9 +64,9 @@ export function hitrateBonus(hitrate: number | null): number {
 }
 
 /** `streak` = sick-free months in a row ending with the month *before*
- * the one in question — paid every month while that is at least 3. */
-export function healthyBonus(streak: number): number {
-  return streak >= HEALTHY_MONTHS ? HEALTHY_BONUS : 0;
+ * the one in question, counted since the last payout. */
+export function healthyDue(streak: number): boolean {
+  return streak >= HEALTHY_MONTHS;
 }
 
 // ------------------------------------------------------------------- dates

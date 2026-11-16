@@ -1,6 +1,6 @@
 import { ConvexError, v } from "convex/values";
 
-import { type Doc } from "../_generated/dataModel";
+import { type Doc, type Id } from "../_generated/dataModel";
 import { type QueryCtx } from "../_generated/server";
 import { userQuery } from "../functions";
 import { dashboardKind } from "../performance/lib/roster";
@@ -8,8 +8,9 @@ import { loadRoster, newQueryCache, teamTotals } from "../performance/lib/report
 import { todayBerlin, toISODate } from "../performance/lib/workdays";
 import { displayName } from "../lib/users";
 import {
+  HEALTHY_BONUS,
   HEALTHY_MONTHS,
-  healthyBonus,
+  healthyDue,
   hitrateBonus,
   monthBonus,
   monthRange,
@@ -24,8 +25,10 @@ import {
 /**
  * Provisionen: the month's commission per sales employee, worked out from
  * the Performance reports (Closed Won, hitrate) and the time tracking's sick
- * notes. Admins only — it is pay data. Nothing is stored; the numbers follow
- * whatever reports are uploaded.
+ * notes. Admins only — it is pay data. The automatic figures follow
+ * whatever reports are uploaded; `commissionAdjustments` (one row per
+ * employee and month) overrides Closed Won / hitrate and records the
+ * sick-free bonus as paid, which an admin ticks by hand.
  */
 
 /** How far back the sick-free streak is followed. */
@@ -44,13 +47,15 @@ async function salesDashboards(ctx: QueryCtx): Promise<Doc<"companies">[]> {
 }
 
 /** Sick-free months in a row ending with the month before `ym` (the bonus
- * looks at the 3 months before), never before the person's hire date (or
- * intranet account). Also the sick days inside `ym` itself, for display.
+ * looks at the 3 months before). The count starts no earlier than the
+ * person's hire date (or intranet account) and starts over with the month the
+ * bonus was last paid in. Also the sick days inside `ym` itself, for display.
  * `null` without a linked intranet person. */
 async function healthyStreak(
   ctx: QueryCtx,
   user: Doc<"users"> | null,
   ym: string,
+  lastPaidYm: string | null,
 ): Promise<{ streak: number; sickDays: string[] } | null> {
   if (!user) return null;
   const from = monthRange(shiftYm(ym, -STREAK_LOOKBACK)).start;
@@ -62,7 +67,8 @@ async function healthyStreak(
     (a) =>
       a.type === "sick" && a.status !== "rejected" && a.status !== "cancelled" && a.endDate >= from,
   );
-  const firstYm = (user.hireDate ?? toISODate(new Date(user.createdAt))).slice(0, 7);
+  const hired = (user.hireDate ?? toISODate(new Date(user.createdAt))).slice(0, 7);
+  const firstYm = lastPaidYm && lastPaidYm > hired ? lastPaidYm : hired;
   let streak = 0;
   for (let i = 1; i <= STREAK_LOOKBACK; i++) {
     const m = shiftYm(ym, -i);
@@ -79,6 +85,20 @@ async function healthyStreak(
       return s === e ? s : `${s} – ${e}`;
     });
   return { streak, sickDays };
+}
+
+/** The last month before `ym` in which the sick-free bonus was paid. */
+async function lastHealthyPaid(
+  ctx: QueryCtx,
+  employeeId: Id<"performanceEmployees">,
+  ym: string,
+): Promise<string | null> {
+  const rows = await ctx.db
+    .query("commissionAdjustments")
+    .withIndex("by_employee_ym", (q) => q.eq("employeeId", employeeId).lt("ym", ym))
+    .order("desc")
+    .collect();
+  return rows.find((r) => r.healthyPaid === true)?.ym ?? null;
 }
 
 export const month = userQuery({
@@ -119,6 +139,15 @@ export const month = userQuery({
           .collect()
       : [];
 
+    const adjustments = new Map(
+      (
+        await ctx.db
+          .query("commissionAdjustments")
+          .withIndex("by_company_ym", (q) => q.eq("companyId", dashboard._id).eq("ym", ym))
+          .collect()
+      ).map((a) => [a.employeeId, a]),
+    );
+
     const rows = [];
     // Everyone counted on the dashboard, also without report rows this
     // month: the sick-free bonus doesn't depend on sales figures.
@@ -127,8 +156,11 @@ export const month = userQuery({
       const employee = await ctx.db.get(employeeId);
       const user = employee?.userId ? await ctx.db.get(employee.userId) : null;
       const ownerKey = reportName.trim().toLowerCase();
-      const won = snap?.wonMonth ?? 0;
-      const hitrate = snap?.hitrate ?? null;
+      const adj = adjustments.get(employeeId);
+      const autoWon = snap?.wonMonth ?? 0;
+      const autoHitrate = snap?.hitrate ?? null;
+      const won = adj?.wonOverride ?? autoWon;
+      const hitrate = adj?.hitrateOverride ?? autoHitrate;
 
       const weekRows = weeks.map((w) => {
         const count = wonOpps.filter(
@@ -139,13 +171,14 @@ export const month = userQuery({
         ).length;
         return { kw: w.kw, won: count, bonus: weekBonus(count) };
       });
-      const health = await healthyStreak(ctx, user, ym);
+      const health = await healthyStreak(ctx, user, ym, await lastHealthyPaid(ctx, employeeId, ym));
+      const healthyPaid = adj?.healthyPaid === true;
 
       const tier = tierAmount(won);
       const weeksTotal = weekRows.reduce((s, w) => s + w.bonus, 0);
       const month = monthBonus(won);
       const hit = hitrateBonus(hitrate);
-      const healthy = health ? healthyBonus(health.streak) : 0;
+      const healthy = healthyPaid ? HEALTHY_BONUS : 0;
 
       rows.push({
         employeeId,
@@ -153,8 +186,13 @@ export const month = userQuery({
         reportName,
         linked: user !== null,
         won,
+        autoWon,
+        wonOverridden: adj?.wonOverride !== undefined,
         workable: snap?.workableCreated ?? null,
         hitrate,
+        autoHitrate,
+        hitrateOverridden: adj?.hitrateOverride !== undefined,
+        note: adj?.note ?? null,
         tiers: tierLines(won).filter((l) => l.perDeal > 0 && l.deals > 0),
         tierAmount: tier,
         weeks: weekRows,
@@ -164,6 +202,8 @@ export const month = userQuery({
         healthyStreak: health?.streak ?? null,
         healthyMonths: HEALTHY_MONTHS,
         sickDays: health?.sickDays ?? [],
+        healthyDue: health ? healthyDue(health.streak) : false,
+        healthyPaid,
         healthyBonus: healthy,
         total: tier + weeksTotal + month + hit + healthy,
       });
