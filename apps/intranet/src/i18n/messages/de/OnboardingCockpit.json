@@ -375,7 +375,8 @@
     "tollOnlyHint": "Sonderfall: Kunde will nur Mautboxen. Beim Speichern wird der Fall geschlossen und landet im Archiv unter „Nur Mautboxen“.",
     "moveFollowUp": "Nur Wiedervorlage verschieben",
     "moveFollowUpHint": "Speichert nur das neue Datum und die Uhrzeit – ohne Anrufergebnis.",
-    "followUpMoved": "Wiedervorlage verschoben auf {date}, {time}."
+    "followUpMoved": "Wiedervorlage verschoben auf {date}, {time}.",
+    "notReachedCount": "{count}× in Folge nicht erreicht"
   },
   "closedIntro": {
     "winback": "Fälle mit „wird kündigen“: geschlossen, mit Grund – für die Rückgewinnung.",

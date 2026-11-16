@@ -28,6 +28,7 @@ import {
   suggestUnreachable,
   withBuiltins,
   prePoolRelease,
+  streakFromLog,
 } from "./lib/onboarding";
 
 describe("onboarding helpers", () => {
@@ -166,6 +167,23 @@ describe("onboarding helpers", () => {
   });
 });
 
+describe("not-reached count from the log", () => {
+  test("counts in a row, skips notes, stops at a reached contact", () => {
+    const ne = { kind: "outcome", outcomeKind: "notReached" };
+    expect(
+      streakFromLog([
+        ne,
+        { kind: "followUp" },
+        ne,
+        { kind: "note" },
+        { kind: "not_reached" }, // logged before the situations existed
+        { kind: "outcome", outcomeKind: "reached" },
+        ne,
+      ]),
+    ).toBe(3);
+  });
+});
+
 describe("Pre-Pool release time", () => {
   test("third day after the upload, 06:00 Berlin", () => {
     // Monday 16.11.2026 14:30 Berlin (UTC+1) → Thursday 19.11. 06:00 = 05:00Z.
@@ -188,7 +206,8 @@ describe("feedback 03.11. helpers", () => {
     let streak = 0;
     for (let i = 0; i < 11; i++) streak = nextNotReachedStreak(streak, "notReached");
     expect(streak).toBe(11);
-    expect(suggestUnreachable(10)).toBe(false);
+    expect(suggestUnreachable(9)).toBe(false);
+    expect(suggestUnreachable(10)).toBe(true);
     expect(suggestUnreachable(streak)).toBe(true);
     expect(nextNotReachedStreak(streak, "case")).toBe(0);
     // A tree saved before the new situations gets them appended.

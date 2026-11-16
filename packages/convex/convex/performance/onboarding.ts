@@ -41,7 +41,7 @@ import {
   MILESTONES,
   milestonesForStatus,
   milestonesOf,
-  nextNotReachedStreak,
+  streakFromLog,
   pathLabel,
   prePoolRelease,
   phaseFor,
@@ -359,6 +359,17 @@ const milestoneValidator = v.union(v.literal("cards"), v.literal("fuel"), v.lite
 // ------------------------------------------------------------------ reads
 
 /** Whether the cockpit shows for the caller (nav link) and what they may do. */
+/** "Nicht erreicht" in a row from the case's log (incl. entries logged in
+ * this mutation). */
+async function logStreak(ctx: Ctx, caseId: Id<"onboardingCases">): Promise<number> {
+  const recent = await ctx.db
+    .query("onboardingContacts")
+    .withIndex("by_case", (q) => q.eq("caseId", caseId))
+    .order("desc")
+    .take(300);
+  return streakFromLog(recent);
+}
+
 // ----------------------------------------------------------------- tickets
 
 async function openTickets(
@@ -456,6 +467,8 @@ export const get = userQuery({
     const assignee = row.assigneeUserId ? await ctx.db.get(row.assigneeUserId) : null;
     return {
       ...caseFields(row),
+      // From the log, so older "nicht erreicht" count too (16.11.).
+      notReachedStreak: streakFromLog(contacts),
       reportFields: row.reportFields ?? [],
       assigneeName: assignee ? displayName(assignee) : null,
       mood: row.mood ?? null,
@@ -736,10 +749,7 @@ export const addContact = userMutation({
       patch.lastContactAt = now;
       patch.lastContactKind = args.kind;
       patch.contactAttempts = (row.contactAttempts ?? 0) + 1;
-      patch.notReachedStreak = nextNotReachedStreak(
-        row.notReachedStreak ?? 0,
-        args.kind === "not_reached" ? "notReached" : "reached",
-      );
+      patch.notReachedStreak = await logStreak(ctx, row._id);
       if ((patch.status ?? row.status) === "fresh") {
         await setStatus(ctx, access, row, "step1", patch);
       }
@@ -807,7 +817,7 @@ export const setOutcome = userMutation({
         args.channel === "email" ? "email" : kind === "notReached" ? "not_reached" : "reached";
       patch.contactAttempts = (row.contactAttempts ?? 0) + 1;
     }
-    patch.notReachedStreak = nextNotReachedStreak(row.notReachedStreak ?? 0, kind);
+    patch.notReachedStreak = await logStreak(ctx, row._id);
     // "Case eröffnet": track it until someone confirms it closed (13.11.).
     if (kind === "case") {
       await ctx.db.insert("onboardingTickets", {

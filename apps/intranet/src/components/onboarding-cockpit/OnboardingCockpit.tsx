@@ -66,6 +66,7 @@ import { StatusEditor } from "./StatusEditor";
 import { TicketOverview } from "./Tickets";
 import { TransferInbox } from "./Transfers";
 import {
+  NotReachedCount,
   byFollowUp,
   type CaseRow,
   caseDate,
@@ -1061,11 +1062,11 @@ function CaseTable({
                 <div className="flex max-w-[280px] flex-col items-start gap-1">
                   <StatusBadge status={c.status} />
                   {outcomeLabel(c) && (
-                    <span
-                      className="w-full truncate text-xs text-muted-foreground"
-                      title={outcomeLabel(c) ?? undefined}
-                    >
-                      {outcomeLabel(c)}
+                    <span className="flex w-full items-center gap-1 text-xs text-muted-foreground">
+                      <span className="truncate" title={outcomeLabel(c) ?? undefined}>
+                        {outcomeLabel(c)}
+                      </span>
+                      <NotReachedCount count={c.notReachedStreak} />
                     </span>
                   )}
                 </div>

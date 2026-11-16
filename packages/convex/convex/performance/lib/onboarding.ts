@@ -252,11 +252,34 @@ export function isItPath(path: string[]): boolean {
 }
 
 /** "Nicht erreicht" in a row after which the card suggests crossing the
- * customer off as unreachable (more than 10, Vahan 03.11.). */
+ * customer off as unreachable (from the 10th on, Vahan 16.11.). */
 export const UNREACHABLE_AFTER = 10;
 
 export function suggestUnreachable(streak: number): boolean {
-  return streak > UNREACHABLE_AFTER;
+  return streak >= UNREACHABLE_AFTER;
+}
+
+/**
+ * "Nicht erreicht" in a row, counted from the contact log (newest first):
+ * not-reached contacts count, a contact that reached the customer ends the
+ * count, notes and system entries (follow-up moves, milestones …) are
+ * skipped. Works for entries logged before the counter existed too.
+ */
+export function streakFromLog(
+  newestFirst: { kind: string; outcomeKind?: string | null }[],
+): number {
+  let n = 0;
+  for (const c of newestFirst) {
+    if (c.kind === "not_reached" || (c.kind === "outcome" && c.outcomeKind === "notReached")) {
+      n++;
+    } else if (c.kind === "outcome") {
+      if (c.outcomeKind === "other" || c.outcomeKind === "fakeData") continue;
+      break;
+    } else if (c.kind === "reached" || c.kind === "email") {
+      break;
+    }
+  }
+  return n;
 }
 
 /** The "not reached" streak after a contact of `kind`: not reached counts
