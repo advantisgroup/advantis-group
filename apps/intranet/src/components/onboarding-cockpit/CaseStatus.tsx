@@ -15,7 +15,7 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-import { LADDER, useOutcomeLabel, useStatusName } from "./shared";
+import { LADDER, NotReachedCount, useOutcomeLabel, useStatusName } from "./shared";
 
 interface CaseStatusData {
   _id: Id<"onboardingCases">;
@@ -26,6 +26,7 @@ interface CaseStatusData {
   outcomeByName: string | null;
   milestones: string[];
   itOpenSince: number | null;
+  notReachedStreak: number;
 }
 
 /**
@@ -151,7 +152,8 @@ export function CaseStatus({ data }: { data: CaseStatusData }) {
         <span className="text-muted-foreground">{t("situation.current")}: </span>
         {current ? (
           <>
-            <span className="font-medium">{current}</span>
+            <span className="font-medium">{current}</span>{" "}
+            <NotReachedCount count={data.notReachedStreak} />
             {data.outcomeText && (
               <span className="block whitespace-pre-wrap">{data.outcomeText}</span>
             )}

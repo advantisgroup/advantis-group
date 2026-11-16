@@ -150,6 +150,25 @@ export function outcomeKind(config: StatusConfig, c: CaseRow): OutcomeKind | nul
   return nodes ? (nodes[0].kind ?? "other") : null;
 }
 
+/** Small "10×" next to the situation: "nicht erreicht" in a row (16.11.).
+ * Hidden at 0 (the last contact reached the customer). */
+export function NotReachedCount({ count, className }: { count: number; className?: string }) {
+  const t = useTranslations("OnboardingCockpit");
+  if (count <= 0) return null;
+  return (
+    <span
+      title={t("situation.notReachedCount", { count })}
+      className={cn(
+        "inline-flex shrink-0 items-center rounded-full border border-border/70 bg-muted px-1.5 text-[10px] font-semibold tabular-nums text-muted-foreground",
+        count >= 10 && "border-destructive/40 bg-destructive/10 text-destructive",
+        className,
+      )}
+    >
+      {count}×
+    </span>
+  );
+}
+
 /** "Case eröffnet › login problem › no welcome mail" for a case. */
 export function useOutcomeLabel() {
   const config = useStatusConfig();

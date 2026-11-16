@@ -375,7 +375,8 @@
     "tollOnlyHint": "Special case: the customer only wants toll boxes. Saving closes the case into the archive list “Toll boxes only”.",
     "moveFollowUp": "Only move follow-up",
     "moveFollowUpHint": "Saves only the new date and time – no call result.",
-    "followUpMoved": "Follow-up moved to {date}, {time}."
+    "followUpMoved": "Follow-up moved to {date}, {time}.",
+    "notReachedCount": "Not reached {count} times in a row"
   },
   "closedIntro": {
     "winback": "Cases marked “will cancel”: closed, with a reason – for winning them back.",
