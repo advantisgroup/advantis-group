@@ -367,8 +367,37 @@ async function logStreak(ctx: Ctx, caseId: Id<"onboardingCases">): Promise<numbe
     .withIndex("by_case", (q) => q.eq("caseId", caseId))
     .order("desc")
     .take(300);
-  return streakFromLog(recent);
+  return streakFromLog(withOutcomeKinds(await loadStatusConfig(ctx), recent));
 }
+
+/** Log entries with the situation kind filled in – entries from before
+ * 10.11. only carry the label ("nicht erreicht"), so the kind is looked
+ * up by the top-level label. */
+function withOutcomeKinds<T extends { kind: string; toValue?: string; outcomeKind?: string }>(
+  config: StatusConfig,
+  rows: T[],
+): T[] {
+  const byLabel = new Map(config.outcomes.map((o) => [o.label, o.kind ?? "other"]));
+  return rows.map((r) =>
+    r.kind === "outcome" && !r.outcomeKind
+      ? { ...r, outcomeKind: byLabel.get((r.toValue ?? "").split(" › ")[0]) ?? "other" }
+      : r,
+  );
+}
+
+/** Brings the stored "nicht erreicht" count (shown in the list) in line
+ * with the log – the card calls it when they differ (older cases). */
+export const syncNotReached = userMutation({
+  args: { caseId: v.id("onboardingCases") },
+  handler: async (ctx, args) => {
+    const access = await requireAccess(ctx);
+    const row = await loadCase(ctx, access, args.caseId);
+    const streak = await logStreak(ctx, row._id);
+    if ((row.notReachedStreak ?? 0) !== streak) {
+      await ctx.db.patch(row._id, { notReachedStreak: streak });
+    }
+  },
+});
 
 // ----------------------------------------------------------------- tickets
 
@@ -468,7 +497,8 @@ export const get = userQuery({
     return {
       ...caseFields(row),
       // From the log, so older "nicht erreicht" count too (16.11.).
-      notReachedStreak: streakFromLog(contacts),
+      notReachedStreak: streakFromLog(withOutcomeKinds(await loadStatusConfig(ctx), contacts)),
+      storedNotReachedStreak: row.notReachedStreak ?? 0,
       reportFields: row.reportFields ?? [],
       assigneeName: assignee ? displayName(assignee) : null,
       mood: row.mood ?? null,
