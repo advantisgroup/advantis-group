@@ -43,15 +43,17 @@ async function salesDashboards(ctx: QueryCtx): Promise<Doc<"companies">[]> {
     .sort((a, b) => a._creationTime - b._creationTime);
 }
 
-/** Sick-free months in a row ending with `ym`, never before the person's
- * intranet account existed. `null` without a linked intranet person. */
+/** Sick-free months in a row ending with the month before `ym` (the bonus
+ * looks at the 3 months before), never before the person's hire date (or
+ * intranet account). Also the sick days inside `ym` itself, for display.
+ * `null` without a linked intranet person. */
 async function healthyStreak(
   ctx: QueryCtx,
   user: Doc<"users"> | null,
   ym: string,
 ): Promise<{ streak: number; sickDays: string[] } | null> {
   if (!user) return null;
-  const from = monthRange(shiftYm(ym, -(STREAK_LOOKBACK - 1))).start;
+  const from = monthRange(shiftYm(ym, -STREAK_LOOKBACK)).start;
   const absences = await ctx.db
     .query("timeAbsences")
     .withIndex("by_user_start", (q) => q.eq("userId", user._id))
@@ -62,7 +64,7 @@ async function healthyStreak(
   );
   const firstYm = (user.hireDate ?? toISODate(new Date(user.createdAt))).slice(0, 7);
   let streak = 0;
-  for (let i = 0; i < STREAK_LOOKBACK; i++) {
+  for (let i = 1; i <= STREAK_LOOKBACK; i++) {
     const m = shiftYm(ym, -i);
     if (m < firstYm) break;
     if (sick.some((a) => touchesMonth(a.startDate, a.endDate, m))) break;

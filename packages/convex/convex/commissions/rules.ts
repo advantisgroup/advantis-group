@@ -2,20 +2,20 @@
  * Provisionsregeln der Chefin (Stand 16.11.2026). Pure functions only — the
  * query in `commissions/month.ts` gathers the figures, this file prices them.
  *
- * - Staffel je Closed Won im Monat: die ersten 25 sind im Gehalt drin,
- *   26.–30. Abschluss je 10 €, 31.–40. je 20 €, ab dem 41. je 25 €.
+ * - Staffel je Closed Won im Monat: 1.–24. Abschluss im Gehalt drin,
+ *   25.–30. je 10 €, 31.–40. je 20 €, ab dem 41. je 25 € (40 Abschlüsse =
+ *   260 €, so von der Chefin vorgegeben).
  * - 50 € je Kalenderwoche (Mo–So) mit mindestens 15 Closed Won. Eine Woche
  *   zählt zu dem Monat, in dem ihr Donnerstag liegt (ISO-Regel), damit
  *   Wochen über den Monatswechsel nicht doppelt bezahlt werden.
  * - 50 €, wenn im Monat mehr als 60 Closed Won.
- * - 50 €, wenn die Monats-Hitrate über 25 % liegt.
- * - 100 € je 3 Monate am Stück ohne Krankmeldung (gezahlt im 3., 6., …
- *   gesunden Monat in Folge).
+ * - 50 €, wenn die Monats-Hitrate mindestens 25 % beträgt.
+ * - 100 € jeden Monat, in dessen 3 Vormonaten keine Krankmeldung lag.
  */
 
 export const TIERS: readonly { from: number; to: number | null; perDeal: number }[] = [
-  { from: 1, to: 25, perDeal: 0 },
-  { from: 26, to: 30, perDeal: 10 },
+  { from: 1, to: 24, perDeal: 0 },
+  { from: 25, to: 30, perDeal: 10 },
   { from: 31, to: 40, perDeal: 20 },
   { from: 41, to: null, perDeal: 25 },
 ];
@@ -23,7 +23,7 @@ export const WEEK_MIN_WON = 15;
 export const WEEK_BONUS = 50;
 export const MONTH_MIN_WON_EXCLUSIVE = 60;
 export const MONTH_BONUS = 50;
-export const HITRATE_MIN_EXCLUSIVE = 25;
+export const HITRATE_MIN = 25;
 export const HITRATE_BONUS = 50;
 export const HEALTHY_MONTHS = 3;
 export const HEALTHY_BONUS = 100;
@@ -58,12 +58,13 @@ export function monthBonus(won: number): number {
 }
 
 export function hitrateBonus(hitrate: number | null): number {
-  return hitrate !== null && hitrate > HITRATE_MIN_EXCLUSIVE ? HITRATE_BONUS : 0;
+  return hitrate !== null && hitrate >= HITRATE_MIN ? HITRATE_BONUS : 0;
 }
 
-/** `streak` = sick-free months in a row ending with the month in question. */
+/** `streak` = sick-free months in a row ending with the month *before*
+ * the one in question — paid every month while that is at least 3. */
 export function healthyBonus(streak: number): number {
-  return streak > 0 && streak % HEALTHY_MONTHS === 0 ? HEALTHY_BONUS : 0;
+  return streak >= HEALTHY_MONTHS ? HEALTHY_BONUS : 0;
 }
 
 // ------------------------------------------------------------------- dates
