@@ -634,6 +634,14 @@ export const INTRANET_PAGES: IntranetPage[] = [
     visible: admin,
   },
   {
+    href: "/admin/provisionen",
+    label: "Provisionen",
+    description:
+      "Provision je Sales-Mitarbeiter aus den Performance-Reports – Staffel, Boni, Summen.",
+    keywords: ["provision", "provisionen", "kalkulation", "bonus", "abrechnung", "gehalt"],
+    visible: admin,
+  },
+  {
     href: "/admin/design-feedback",
     label: "Seiten-Feedback",
     description: "Rückmeldungen zu einzelnen Seiten, mit der Seite, auf der sie geschickt wurden.",
