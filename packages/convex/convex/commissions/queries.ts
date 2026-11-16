@@ -1,0 +1,174 @@
+import { ConvexError, v } from "convex/values";
+
+import { type Doc } from "../_generated/dataModel";
+import { type QueryCtx } from "../_generated/server";
+import { userQuery } from "../functions";
+import { dashboardKind } from "../performance/lib/roster";
+import { loadRoster, newQueryCache, teamTotals } from "../performance/lib/reports";
+import { todayBerlin, toISODate } from "../performance/lib/workdays";
+import { displayName } from "../lib/users";
+import {
+  HEALTHY_MONTHS,
+  healthyBonus,
+  hitrateBonus,
+  monthBonus,
+  monthRange,
+  shiftYm,
+  tierAmount,
+  tierLines,
+  touchesMonth,
+  weekBonus,
+  weeksOfMonth,
+} from "./rules";
+
+/**
+ * Provisionen: the month's commission per sales employee, worked out from
+ * the Performance reports (Closed Won, hitrate) and the time tracking's sick
+ * notes. Admins only — it is pay data. Nothing is stored; the numbers follow
+ * whatever reports are uploaded.
+ */
+
+/** How far back the sick-free streak is followed. */
+const STREAK_LOOKBACK = 24;
+
+function currentYm(): string {
+  return toISODate(todayBerlin()).slice(0, 7);
+}
+
+/** Sales dashboards (Performance → Einstellungen), first one = default. */
+async function salesDashboards(ctx: QueryCtx): Promise<Doc<"companies">[]> {
+  const all = await ctx.db.query("companies").collect();
+  return all
+    .filter((c) => dashboardKind(c) === "sales")
+    .sort((a, b) => a._creationTime - b._creationTime);
+}
+
+/** Sick-free months in a row ending with the month before `ym` (the bonus
+ * looks at the 3 months before), never before the person's hire date (or
+ * intranet account). Also the sick days inside `ym` itself, for display.
+ * `null` without a linked intranet person. */
+async function healthyStreak(
+  ctx: QueryCtx,
+  user: Doc<"users"> | null,
+  ym: string,
+): Promise<{ streak: number; sickDays: string[] } | null> {
+  if (!user) return null;
+  const from = monthRange(shiftYm(ym, -STREAK_LOOKBACK)).start;
+  const absences = await ctx.db
+    .query("timeAbsences")
+    .withIndex("by_user_start", (q) => q.eq("userId", user._id))
+    .collect();
+  const sick = absences.filter(
+    (a) =>
+      a.type === "sick" && a.status !== "rejected" && a.status !== "cancelled" && a.endDate >= from,
+  );
+  const firstYm = (user.hireDate ?? toISODate(new Date(user.createdAt))).slice(0, 7);
+  let streak = 0;
+  for (let i = 1; i <= STREAK_LOOKBACK; i++) {
+    const m = shiftYm(ym, -i);
+    if (m < firstYm) break;
+    if (sick.some((a) => touchesMonth(a.startDate, a.endDate, m))) break;
+    streak++;
+  }
+  const { start, end } = monthRange(ym);
+  const sickDays = sick
+    .filter((a) => touchesMonth(a.startDate, a.endDate, ym))
+    .map((a) => {
+      const s = a.startDate < start ? start : a.startDate;
+      const e = a.endDate > end ? end : a.endDate;
+      return s === e ? s : `${s} – ${e}`;
+    });
+  return { streak, sickDays };
+}
+
+export const month = userQuery({
+  role: "admin",
+  args: {
+    ym: v.string(),
+    companyId: v.optional(v.id("companies")),
+  },
+  handler: async (ctx, { ym, companyId }) => {
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(ym)) {
+      throw new ConvexError({ code: "invalid", message: "Monat im Format JJJJ-MM angeben." });
+    }
+    const dashboards = await salesDashboards(ctx);
+    const dashboard = companyId ? dashboards.find((d) => d._id === companyId) : dashboards[0];
+    const base = {
+      ym,
+      running: ym >= currentYm(),
+      dashboards: dashboards.map((d) => ({ id: d._id, name: d.name })),
+      companyId: dashboard?._id ?? null,
+      weeks: weeksOfMonth(ym),
+    };
+    if (!dashboard) return { ...base, asOf: null, rows: [] };
+
+    const cache = newQueryCache();
+    const summary = await teamTotals(ctx, dashboard._id, ym, cache);
+    const roster = await loadRoster(ctx, dashboard._id, cache);
+    const snaps = new Map(summary.snaps.map((s) => [s.employeeId, s]));
+    const weeks = base.weeks;
+    const wonOpps = weeks.length
+      ? await ctx.db
+          .query("performanceWonOpps")
+          .withIndex("by_company_closeDate", (q) =>
+            q
+              .eq("companyId", dashboard._id)
+              .gte("closeDate", weeks[0].monday)
+              .lte("closeDate", weeks[weeks.length - 1].sunday),
+          )
+          .collect()
+      : [];
+
+    const rows = [];
+    // Everyone counted on the dashboard, also without report rows this
+    // month: the sick-free bonus doesn't depend on sales figures.
+    for (const [employeeId, reportName] of roster.names) {
+      const snap = snaps.get(employeeId);
+      const employee = await ctx.db.get(employeeId);
+      const user = employee?.userId ? await ctx.db.get(employee.userId) : null;
+      const ownerKey = reportName.trim().toLowerCase();
+      const won = snap?.wonMonth ?? 0;
+      const hitrate = snap?.hitrate ?? null;
+
+      const weekRows = weeks.map((w) => {
+        const count = wonOpps.filter(
+          (o) =>
+            o.owner.trim().toLowerCase() === ownerKey &&
+            o.closeDate >= w.monday &&
+            o.closeDate <= w.sunday,
+        ).length;
+        return { kw: w.kw, won: count, bonus: weekBonus(count) };
+      });
+      const health = await healthyStreak(ctx, user, ym);
+
+      const tier = tierAmount(won);
+      const weeksTotal = weekRows.reduce((s, w) => s + w.bonus, 0);
+      const month = monthBonus(won);
+      const hit = hitrateBonus(hitrate);
+      const healthy = health ? healthyBonus(health.streak) : 0;
+
+      rows.push({
+        employeeId,
+        name: user ? displayName(user) : reportName,
+        reportName,
+        linked: user !== null,
+        won,
+        workable: snap?.workableCreated ?? null,
+        hitrate,
+        tiers: tierLines(won).filter((l) => l.perDeal > 0 && l.deals > 0),
+        tierAmount: tier,
+        weeks: weekRows,
+        weeksBonus: weeksTotal,
+        monthBonus: month,
+        hitrateBonus: hit,
+        healthyStreak: health?.streak ?? null,
+        healthyMonths: HEALTHY_MONTHS,
+        sickDays: health?.sickDays ?? [],
+        healthyBonus: healthy,
+        total: tier + weeksTotal + month + hit + healthy,
+      });
+    }
+    rows.sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
+    return { ...base, asOf: summary.asOf.sales, rows };
+  },
+});

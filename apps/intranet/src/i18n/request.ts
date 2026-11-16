@@ -53,6 +53,7 @@ import deOnboardingCockpit from "./messages/de/OnboardingCockpit.json";
 import deOffice from "./messages/de/Office.json";
 import deVault from "./messages/de/Vault.json";
 import deKeys from "./messages/de/Keys.json";
+import deCommissions from "./messages/de/Commissions.json";
 import deAiTraining from "./messages/de/AiTraining.json";
 import dePerformance from "./messages/de/Performance.json";
 import deprivacy from "./messages/de/privacy.json";
@@ -117,6 +118,7 @@ import enOnboardingCockpit from "./messages/en/OnboardingCockpit.json";
 import enOffice from "./messages/en/Office.json";
 import enVault from "./messages/en/Vault.json";
 import enKeys from "./messages/en/Keys.json";
+import enCommissions from "./messages/en/Commissions.json";
 import enAiTraining from "./messages/en/AiTraining.json";
 import enPerformance from "./messages/en/Performance.json";
 import enprivacy from "./messages/en/privacy.json";
@@ -182,6 +184,7 @@ const messagesByLocale = {
     Office: enOffice,
     Vault: enVault,
     Keys: enKeys,
+    Commissions: enCommissions,
     AiTraining: enAiTraining,
     Performance: enPerformance,
     Errors: enErrors,
@@ -248,6 +251,7 @@ const messagesByLocale = {
     Office: deOffice,
     Vault: deVault,
     Keys: deKeys,
+    Commissions: deCommissions,
     AiTraining: deAiTraining,
     Performance: dePerformance,
     Errors: deErrors,
