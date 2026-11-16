@@ -947,4 +947,30 @@ describe("onboarding cockpit", () => {
     expect(d.openTickets).toHaveLength(1);
     expect(d.openTickets[0]).toMatchObject({ isIt: true, openedByName: "Ada Test" });
   });
+  test("older not-reached entries without stored kind count too", async () => {
+    const { t, as } = await setup();
+    const admin = as("admin");
+    await importReport(admin, [{ customerNumber: "61" }]);
+    const [c] = await admin.query(api.performance.onboarding.list, {});
+    for (let i = 0; i < 9; i++) {
+      await admin.mutation(api.performance.onboarding.setOutcome, {
+        caseId: c._id,
+        path: ["notReached"],
+      });
+    }
+    // Entries logged before 10.11. had only the label.
+    await t.run(async (ctx) => {
+      for (const r of await ctx.db.query("onboardingContacts").collect()) {
+        if (r.kind === "outcome") await ctx.db.patch(r._id, { outcomeKind: undefined });
+      }
+    });
+    await admin.mutation(api.performance.onboarding.setOutcome, {
+      caseId: c._id,
+      path: ["notReached"],
+    });
+    const d = await admin.query(api.performance.onboarding.get, { caseId: c._id });
+    expect(d.notReachedStreak).toBe(10);
+    const [row] = await admin.query(api.performance.onboarding.list, {});
+    expect(row.notReachedStreak).toBe(10);
+  });
 });

@@ -3,7 +3,7 @@
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { isClosedStatus, MILESTONES } from "@advantis/convex/performance/onboarding";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useMutation, useQuery } from "convex/react";
 import { Flag } from "lucide-react";
@@ -70,6 +70,13 @@ function CaseBody({
   const statusName = useStatusName();
   const update = useMutation(api.performance.onboarding.update);
   const releasePrePool = useMutation(api.performance.onboarding.releasePrePool);
+  const syncNotReached = useMutation(api.performance.onboarding.syncNotReached);
+  // Older cases: bring the list's "n×" in line with the log on opening.
+  const staleCount =
+    data !== undefined && data !== null && data.notReachedStreak !== data.storedNotReachedStreak;
+  useEffect(() => {
+    if (staleCount) void syncNotReached({ caseId }).catch(() => {});
+  }, [staleCount, caseId, syncNotReached]);
   /** Cases opened before this visit are asked about once per visit. */
   const [visitStart] = useState(() => Date.now());
   const [answeredTickets, setAnsweredTickets] = useState<Set<string>>(new Set());
