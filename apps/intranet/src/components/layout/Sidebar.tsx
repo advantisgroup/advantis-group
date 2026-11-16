@@ -14,6 +14,7 @@ import {
   ClipboardList,
   Asterisk,
   Cloud,
+  Coins,
   Key,
   Contact,
   ExternalLink,
@@ -434,6 +435,7 @@ export function Sidebar() {
         ...(office?.access ? [{ href: "/office", labelKey: "office", icon: Building2 }] : []),
         { href: "/admin/zugaenge", labelKey: "vault", icon: Asterisk, adminOnly: true },
         { href: "/admin/schluessel", labelKey: "keys", icon: Key, adminOnly: true },
+        { href: "/admin/provisionen", labelKey: "commissions", icon: Coins, adminOnly: true },
       ],
     },
     ...ADMIN_NAV_GROUPS.slice(1).map((group) => ({
