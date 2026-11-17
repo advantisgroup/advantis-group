@@ -677,6 +677,18 @@ export function useRichTextController({
     onChange(`${value}${value && !/\s$/.test(value) ? " " : ""}${span.outerHTML} `);
   }
 
+  /** An uploaded image (Convex storage URL, see `isStorageImageSrc`) at the
+   *  caret the image button was opened from — appended at the end when that
+   *  caret is gone. The sanitizer drops any other `src`, so this is the only
+   *  way an image gets in besides the bundled wiki screenshots. */
+  function insertImage(src: string, alt: string) {
+    const img = document.createElement("img");
+    img.setAttribute("src", src);
+    img.setAttribute("alt", alt);
+    if (insertAtSavedRange(img)) return;
+    onChange(`${value}${img.outerHTML}`);
+  }
+
   /** A basic `rows` × `cols` table skeleton (first row as headers), inserted
    *  at the caret the picker was opened from. Row/column *editing* after that
    *  (add/remove) has no dedicated toolbar of its own yet; cell text itself is
@@ -1027,6 +1039,7 @@ export function useRichTextController({
     insertTable,
     insertDate,
     insertFileLink,
+    insertImage,
     captureRange,
     calloutVariant,
     toggleCallout,

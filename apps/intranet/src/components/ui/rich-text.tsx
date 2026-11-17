@@ -68,9 +68,27 @@ export function isBundledImageSrc(src: string | null): src is string {
   return !!src && BUNDLED_IMAGE_SRC.test(src) && !src.includes("..");
 }
 
+/** Images an author uploaded into a wiki text via the editor's image button
+ *  (see `RichTextToolbar`'s `onUploadImage`). They live in Convex file
+ *  storage, so only a plain storage URL on our own Convex host passes —
+ *  prod sits behind backend.advantisgroup.de, dev/preview on *.convex.cloud
+ *  (same hosts `next.config.ts` allows for `next/image`). No query string,
+ *  no other path, no other host. */
+const STORAGE_IMAGE_SRC =
+  /^https:\/\/(?:backend\.advantisgroup\.de|[a-z0-9-]+\.convex\.cloud)\/api\/storage\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+export function isStorageImageSrc(src: string | null): src is string {
+  return !!src && STORAGE_IMAGE_SRC.test(src);
+}
+
+/** Every `<img src>` the sanitizer keeps: bundled screenshots or uploaded images. */
+export function isAllowedImageSrc(src: string | null): src is string {
+  return isBundledImageSrc(src) || isStorageImageSrc(src);
+}
+
 function cleanImage(el: Element, out: Node, doc: Document) {
   const src = el.getAttribute("src");
-  if (!isBundledImageSrc(src)) return;
+  if (!isAllowedImageSrc(src)) return;
   const img = doc.createElement("img");
   img.setAttribute("src", src);
   img.setAttribute("alt", el.getAttribute("alt") ?? "");

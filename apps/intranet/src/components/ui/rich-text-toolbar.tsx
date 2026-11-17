@@ -1,8 +1,16 @@
 "use client";
 
-import { Info, OctagonAlert, Paperclip, Table2, TriangleAlert } from "lucide-react";
+import {
+  ImagePlus,
+  Info,
+  Loader2,
+  OctagonAlert,
+  Paperclip,
+  Table2,
+  TriangleAlert,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -193,6 +201,7 @@ export function RichTextToolbar({
   controller,
   className,
   fileLinkCandidates,
+  onUploadImage,
 }: {
   controller: RichTextController;
   className?: string;
@@ -203,6 +212,11 @@ export function RichTextToolbar({
    *  only reflows its own direct children, not a sibling element sitting
    *  outside it. */
   fileLinkCandidates?: FileLinkCandidate[];
+  /** Enables an "insert image" button: the caller uploads the picked file and
+   *  resolves with the image URL (a Convex storage URL — anything else is
+   *  dropped by the sanitizer), or `null` when the upload failed and it has
+   *  already told the user why. */
+  onUploadImage?: (file: File) => Promise<string | null>;
 }) {
   const t = useTranslations("RichText");
   return (
@@ -243,7 +257,61 @@ export function RichTextToolbar({
           onPick={(name) => controller.insertFileLink(name)}
         />
       )}
+      {onUploadImage && <ImageUploadButton controller={controller} onUpload={onUploadImage} />}
     </div>
+  );
+}
+
+/** "Bild einfügen": picks an image, lets the caller upload it, and inserts it
+ *  at the caret the button was pressed from. */
+function ImageUploadButton({
+  controller,
+  onUpload,
+}: {
+  controller: RichTextController;
+  onUpload: (file: File) => Promise<string | null>;
+}) {
+  const t = useTranslations("RichText");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function onPicked(file: File | undefined) {
+    if (!file) return;
+    setBusy(true);
+    try {
+      const url = await onUpload(file);
+      if (url) controller.insertImage(url, file.name.replace(/\.[^.]+$/, ""));
+    } finally {
+      setBusy(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        title={t("insertImage")}
+        aria-label={t("insertImage")}
+        disabled={busy}
+        onPointerDown={(e) => e.preventDefault()}
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => {
+          controller.captureRange();
+          inputRef.current?.click();
+        }}
+        className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50 [&_svg]:size-[17px]"
+      >
+        {busy ? <Loader2 className="animate-spin" /> : <ImagePlus />}
+      </button>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/gif,image/webp"
+        className="hidden"
+        onChange={(e) => void onPicked(e.target.files?.[0])}
+      />
+    </>
   );
 }
 
