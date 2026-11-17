@@ -422,10 +422,13 @@ async function closeTicket(
   ctx: MutationCtx,
   access: CockpitAccess,
   tk: Doc<"onboardingTickets">,
+  /** When UTA actually closed it (17.11.) – defaults to now. */
+  at?: number,
 ): Promise<void> {
   const now = Date.now();
-  await ctx.db.patch(tk._id, { closedAt: now, closedByName: access.name });
-  const days = Math.max(0, Math.round((now - tk.openedAt) / DAY_MS));
+  const closedAt = Math.min(now, Math.max(tk.openedAt, at ?? now));
+  await ctx.db.patch(tk._id, { closedAt, closedByName: access.name });
+  const days = Math.max(0, Math.round((closedAt - tk.openedAt) / DAY_MS));
   await log(ctx, access, tk.caseId, {
     kind: "ticket",
     fromValue: tk.label,
@@ -887,8 +890,23 @@ export const setOutcome = userMutation({
  * it (and the IT marker, if it was the last open IT case); still open only
  * counts the check.
  */
+/** A picked closing day → noon (Berlin) of that day; today → now. */
+function closedOnMs(day: string | undefined): number | undefined {
+  if (!day) return undefined;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day);
+  if (!m) throw invalid("Ungültiges Datum.");
+  const noon = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 11);
+  return noon > Date.now() ? undefined : noon;
+}
+
 export const answerTicket = userMutation({
-  args: { ticketId: v.id("onboardingTickets"), closed: v.boolean() },
+  args: {
+    ticketId: v.id("onboardingTickets"),
+    closed: v.boolean(),
+    /** Day the case was closed ("YYYY-MM-DD", 17.11.) – picked from the
+     * days since it was opened; today or missing = now. */
+    closedOn: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
     const access = await requireAccess(ctx);
     const tk = await ctx.db.get(args.ticketId);
@@ -899,7 +917,7 @@ export const answerTicket = userMutation({
       await ctx.db.patch(tk._id, { checks: tk.checks + 1, lastCheckedAt: Date.now() });
       return;
     }
-    await closeTicket(ctx, access, tk);
+    await closeTicket(ctx, access, tk, closedOnMs(args.closedOn));
     if (tk.isIt) {
       const stillIt = (await openTickets(ctx, row._id)).some((o) => o.isIt);
       if (!stillIt && itOpenSince(row) !== null) {

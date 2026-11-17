@@ -96,12 +96,14 @@ export function ContactForm({
     options = activeChildren(node);
   }
   const last = chosen[chosen.length - 1];
-  const complete = channel === "note" || (!!last && activeChildren(last).length === 0);
+  // E-mail and note need no situation – an e-mail often goes out without a
+  // call first (Vahan, 17.11.).
+  const withSituation = channel === "phone";
+  const complete = !withSituation || (!!last && activeChildren(last).length === 0);
   const kind = chosen[0]?.kind ?? null;
-  const needsFreetext = channel !== "note" && complete && !!last?.freetext;
+  const needsFreetext = withSituation && complete && !!last?.freetext;
   const closesTo =
-    (channel !== "note" && kind ? CLOSES_TO[kind] : undefined) ??
-    (tollOnly ? "tollOnly" : undefined);
+    (withSituation && kind ? CLOSES_TO[kind] : undefined) ?? (tollOnly ? "tollOnly" : undefined);
   const ticksChanged = ticks.join() !== start.join();
 
   const toggleTick = (m: Milestone, on: boolean) => {
@@ -169,10 +171,10 @@ export function ContactForm({
         ...(ticksChanged ? { milestones: ticks } : {}),
         ...(tollOnly ? { status: "tollOnly" as const } : {}),
       };
-      if (channel === "note") {
+      if (!withSituation) {
         await addContact({
           caseId,
-          kind: "note",
+          kind: channel === "email" ? "email" : "note",
           note: note.trim() || undefined,
           ...follow,
           ...withTicks,
@@ -212,7 +214,7 @@ export function ContactForm({
               aria-selected={channel === c}
               onClick={() => {
                 setChannel(c);
-                if (c === "note") setPath([]);
+                if (c !== "phone") setPath([]);
               }}
               className={cn(
                 "rounded-md px-3 py-1 text-xs font-medium transition-colors",
@@ -225,7 +227,7 @@ export function ContactForm({
         </div>
       </div>
 
-      {channel !== "note" &&
+      {withSituation &&
         levels.map((level, i) => (
           <div key={i} className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">
