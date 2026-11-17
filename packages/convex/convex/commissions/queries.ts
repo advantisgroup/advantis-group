@@ -179,6 +179,12 @@ export const month = userQuery({
       const month = monthBonus(won);
       const hit = hitrateBonus(hitrate);
       const healthy = healthyPaid ? HEALTHY_BONUS : 0;
+      const extras = (adj?.extras ?? []).map((e) => ({
+        id: e.id,
+        amount: e.amount,
+        label: e.label,
+      }));
+      const extrasTotal = extras.reduce((sum, e) => sum + e.amount, 0);
 
       rows.push({
         employeeId,
@@ -205,7 +211,9 @@ export const month = userQuery({
         healthyDue: health ? healthyDue(health.streak) : false,
         healthyPaid,
         healthyBonus: healthy,
-        total: tier + weeksTotal + month + hit + healthy,
+        extras,
+        extrasTotal,
+        total: tier + weeksTotal + month + hit + healthy + extrasTotal,
       });
     }
     rows.sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));

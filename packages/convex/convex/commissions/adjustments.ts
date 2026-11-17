@@ -1,5 +1,8 @@
 import { ConvexError, v } from "convex/values";
 
+import { type Doc, type Id } from "../_generated/dataModel";
+import { type MutationCtx } from "../_generated/server";
+
 import { userMutation } from "../functions";
 
 /**
@@ -42,12 +45,7 @@ export const set = userMutation({
       throw new ConvexError({ code: "invalid", message: "Hitrate in Prozent ab 0 angeben." });
     }
 
-    const existing = (
-      await ctx.db
-        .query("commissionAdjustments")
-        .withIndex("by_employee_ym", (q) => q.eq("employeeId", args.employeeId).eq("ym", args.ym))
-        .collect()
-    ).find((row) => row.companyId === args.companyId);
+    const existing = await findRow(ctx, args);
 
     const pick = <T>(next: T | null | undefined, current: T | undefined): T | undefined =>
       next === undefined ? current : next === null ? undefined : next;
@@ -62,32 +60,135 @@ export const set = userMutation({
       healthyPaid:
         args.healthyPaid === undefined ? existing?.healthyPaid : args.healthyPaid || undefined,
       note,
+      extras: existing?.extras,
     };
-    const empty =
-      next.wonOverride === undefined &&
-      next.hitrateOverride === undefined &&
-      !next.healthyPaid &&
-      next.note === undefined;
+    return await writeRow(ctx, args, existing, next);
+  },
+});
 
-    if (empty) {
-      if (existing) await ctx.db.delete(existing._id);
-      return null;
-    }
-    const fields = { ...next, updatedBy: ctx.caller.user._id, updatedAt: Date.now() };
-    if (existing) {
-      await ctx.db.replace(existing._id, {
-        companyId: existing.companyId,
-        ym: existing.ym,
-        employeeId: existing.employeeId,
-        ...fields,
-      });
-      return existing._id;
-    }
-    return await ctx.db.insert("commissionAdjustments", {
-      companyId: args.companyId,
-      ym: args.ym,
-      employeeId: args.employeeId,
+type Key = {
+  companyId: Id<"companies">;
+  ym: string;
+  employeeId: Id<"performanceEmployees">;
+};
+type Fields = Pick<
+  Doc<"commissionAdjustments">,
+  "wonOverride" | "hitrateOverride" | "healthyPaid" | "note" | "extras"
+>;
+
+async function checkKey(ctx: MutationCtx, key: Key) {
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(key.ym)) {
+    throw new ConvexError({ code: "invalid", message: "Monat im Format JJJJ-MM angeben." });
+  }
+  const employee = await ctx.db.get(key.employeeId);
+  if (!employee || employee.companyId !== key.companyId) {
+    throw new ConvexError({ code: "not_found", message: "Mitarbeiter nicht gefunden." });
+  }
+}
+
+async function findRow(ctx: MutationCtx, key: Key) {
+  return (
+    await ctx.db
+      .query("commissionAdjustments")
+      .withIndex("by_employee_ym", (q) => q.eq("employeeId", key.employeeId).eq("ym", key.ym))
+      .collect()
+  ).find((row) => row.companyId === key.companyId);
+}
+
+/** Saves the row, or removes it once nothing is left in it. */
+async function writeRow(
+  ctx: MutationCtx & { caller: { user: Doc<"users"> } },
+  key: Key,
+  existing: Doc<"commissionAdjustments"> | undefined,
+  next: Fields,
+) {
+  const extras = next.extras?.length ? next.extras : undefined;
+  const empty =
+    next.wonOverride === undefined &&
+    next.hitrateOverride === undefined &&
+    !next.healthyPaid &&
+    next.note === undefined &&
+    extras === undefined;
+  if (empty) {
+    if (existing) await ctx.db.delete(existing._id);
+    return null;
+  }
+  const fields = { ...next, extras, updatedBy: ctx.caller.user._id, updatedAt: Date.now() };
+  if (existing) {
+    await ctx.db.replace(existing._id, {
+      companyId: existing.companyId,
+      ym: existing.ym,
+      employeeId: existing.employeeId,
       ...fields,
+    });
+    return existing._id;
+  }
+  return await ctx.db.insert("commissionAdjustments", {
+    companyId: key.companyId,
+    ym: key.ym,
+    employeeId: key.employeeId,
+    ...fields,
+  });
+}
+
+function keep(row: Doc<"commissionAdjustments"> | undefined): Fields {
+  return {
+    wonOverride: row?.wonOverride,
+    hitrateOverride: row?.hitrateOverride,
+    healthyPaid: row?.healthyPaid,
+    note: row?.note,
+    extras: row?.extras,
+  };
+}
+
+const keyArgs = {
+  companyId: v.id("companies"),
+  ym: v.string(),
+  employeeId: v.id("performanceEmployees"),
+};
+
+/** Sonderbetrag hinzufügen, z. B. 500 € „besondere Vereinbarung“. Negative
+ * amounts are allowed (Abzug). */
+export const addExtra = userMutation({
+  role: "admin",
+  args: { ...keyArgs, amount: v.number(), label: v.string() },
+  handler: async (ctx, { amount, label, ...key }) => {
+    await checkKey(ctx, key);
+    const cents = Math.round(amount * 100) / 100;
+    if (!Number.isFinite(cents) || cents === 0 || Math.abs(cents) > 100_000) {
+      throw new ConvexError({ code: "invalid", message: "Betrag in Euro angeben (nicht 0)." });
+    }
+    const text = label.trim().slice(0, 200);
+    if (!text) {
+      throw new ConvexError({ code: "invalid", message: "Bitte einen Grund angeben." });
+    }
+    const existing = await findRow(ctx, key);
+    const extra = {
+      id: crypto.randomUUID(),
+      amount: cents,
+      label: text,
+      addedBy: ctx.caller.user._id,
+      addedAt: Date.now(),
+    };
+    return await writeRow(ctx, key, existing, {
+      ...keep(existing),
+      extras: [...(existing?.extras ?? []), extra],
+    });
+  },
+});
+
+export const removeExtra = userMutation({
+  role: "admin",
+  args: { ...keyArgs, id: v.string() },
+  handler: async (ctx, { id, ...key }) => {
+    await checkKey(ctx, key);
+    const existing = await findRow(ctx, key);
+    if (!existing?.extras?.some((e) => e.id === id)) {
+      throw new ConvexError({ code: "not_found", message: "Betrag nicht gefunden." });
+    }
+    return await writeRow(ctx, key, existing, {
+      ...keep(existing),
+      extras: existing.extras.filter((e) => e.id !== id),
     });
   },
 });
