@@ -54,5 +54,18 @@
   "savedToast": "Gespeichert.",
   "resetToast": "Zurück auf die automatischen Werte.",
   "invalidNumber": "Bitte nur Zahlen eintragen.",
-  "ruleAdjust": "Closed Won und Hitrate kommen automatisch aus den Reports und lassen sich je Mitarbeiter und Monat überschreiben (Zeile aufklappen)."
+  "ruleAdjust": "Closed Won und Hitrate kommen automatisch aus den Reports und lassen sich je Mitarbeiter und Monat überschreiben (Zeile aufklappen).",
+  "colExtras": "Sonderbeträge",
+  "extrasTitle": "Sonderbeträge",
+  "extrasNone": "Keine Sonderbeträge in diesem Monat.",
+  "extraAdd": "Betrag hinzufügen",
+  "extraAmount": "Betrag in €",
+  "extraLabel": "Grund",
+  "extraLabelPlaceholder": "z. B. Besondere Vereinbarung August-Woche",
+  "extraLabelMissing": "Bitte einen Grund angeben.",
+  "extraAdded": "Betrag hinzugefügt.",
+  "extraRemoved": "Betrag entfernt.",
+  "extraRemove": "„{label}“ entfernen",
+  "cancel": "Abbrechen",
+  "ruleExtras": "Sonderbeträge (z. B. besondere Vereinbarungen) lassen sich je Mitarbeiter und Monat dazu buchen und kommen in die Summe; ein Minus-Betrag zieht ab."
 }
