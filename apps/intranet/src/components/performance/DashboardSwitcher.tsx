@@ -6,16 +6,10 @@ import { type Id } from "@advantis/convex/dataModel";
 import { useTranslations } from "next-intl";
 
 import { dashboardHome, usePerformanceAccess } from "@/components/performance/PerformanceAccess";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-/** Picks which team dashboard is shown — only rendered for people who can
+/** Picks which team dashboard is shown — side by side, the open one
+ * standing out — only rendered for people who can
  * open more than one (admins, or someone in several teams). */
 export function DashboardSwitcher({ className }: { className?: string }) {
   const t = useTranslations("Performance");
@@ -24,29 +18,42 @@ export function DashboardSwitcher({ className }: { className?: string }) {
   const dashboards = me?.dashboards ?? [];
   if (dashboards.length < 2 || !dashboard) return null;
 
+  const open = (value: Id<"companies">) => {
+    const next = dashboards.find((d) => d.companyId === value);
+    if (!next || value === dashboard.companyId) return;
+    selectDashboard(value);
+    router.push(dashboardHome(next));
+  };
+
   return (
-    <Select
-      value={dashboard.companyId}
-      onValueChange={(value) => {
-        const next = dashboards.find((d) => d.companyId === value);
-        if (!next) return;
-        selectDashboard(value as Id<"companies">);
-        router.push(dashboardHome(next));
-      }}
+    <div
+      role="tablist"
+      aria-label={t("dashboardSwitcherLabel")}
+      className={cn(
+        "inline-flex items-center gap-0.5 overflow-x-auto rounded-lg bg-muted p-0.5",
+        className,
+      )}
     >
-      <SelectTrigger
-        className={cn("h-8 w-auto min-w-40 gap-2", className)}
-        aria-label={t("dashboardSwitcherLabel")}
-      >
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {dashboards.map((d) => (
-          <SelectItem key={d.companyId} value={d.companyId}>
+      {dashboards.map((d) => {
+        const active = d.companyId === dashboard.companyId;
+        return (
+          <button
+            key={d.companyId}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            onClick={() => open(d.companyId)}
+            className={cn(
+              "whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium transition-colors",
+              active
+                ? "bg-background text-foreground shadow-sm ring-1 ring-border"
+                : "text-muted-foreground hover:bg-background/60 hover:text-foreground",
+            )}
+          >
             {d.name}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+          </button>
+        );
+      })}
+    </div>
   );
 }
