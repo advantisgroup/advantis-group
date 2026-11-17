@@ -1,6 +1,6 @@
 /**
  * Who sees what in Performance, now that access is the intranet sign-in:
- * admins everything, a linked team's lead the team view of that dashboard,
+ * admins everything, a linked department's lead the team view of that dashboard,
  * everyone else only their own employee page.
  */
 import { convexTest } from "convex-test";
@@ -38,35 +38,32 @@ async function setup() {
     const ben = await user("ben", "employee", "Ben", "Becker");
     const evLead = await user("evlead", "employee", "Eva", "Volt");
 
-    const sales = await ctx.db.insert("teams", {
+    const sales = await ctx.db.insert("departments", {
       name: "Sales",
-      slug: "sales",
       reportsToUserId: lead,
       createdAt: now,
       createdBy: admin,
     });
-    const ev = await ctx.db.insert("teams", {
+    const ev = await ctx.db.insert("departments", {
       name: "EV-Pilot",
-      slug: "ev-pilot",
       reportsToUserId: evLead,
       createdAt: now,
       createdBy: admin,
     });
-    for (const userId of [lead, anna, ben])
-      await ctx.db.insert("userTeams", { userId, teamId: sales });
-    await ctx.db.insert("userTeams", { userId: evLead, teamId: ev });
+    for (const userId of [lead, anna, ben]) await ctx.db.patch(userId, { departmentId: sales });
+    await ctx.db.patch(evLead, { departmentId: ev });
 
     const salesDash = await ctx.db.insert("companies", {
       name: "Sales",
       slug: "sales",
-      teamIds: [sales],
+      departmentIds: [sales],
       createdAt: now,
       updatedAt: now,
     });
     const evDash = await ctx.db.insert("companies", {
       name: "EV-Pilot",
       slug: "ev-pilot",
-      teamIds: [ev],
+      departmentIds: [ev],
       createdAt: now,
       updatedAt: now,
     });

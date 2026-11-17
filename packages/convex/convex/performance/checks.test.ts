@@ -75,18 +75,17 @@ async function setup() {
     const admin = await user("admin", "admin", "Ada", "Admin");
     const lead = await user("lead", "employee", "Lea", "Leitung");
     const anna = await user("anna", "employee", "Anna", "Müller");
-    const team = await ctx.db.insert("teams", {
+    const team = await ctx.db.insert("departments", {
       name: "Sales",
-      slug: "sales",
       reportsToUserId: lead,
       createdAt: now,
       createdBy: admin,
     });
-    for (const u of [lead, anna]) await ctx.db.insert("userTeams", { userId: u, teamId: team });
+    for (const u of [lead, anna]) await ctx.db.patch(u, { departmentId: team });
     const companyId = await ctx.db.insert("companies", {
       name: "Sales",
       slug: "sales",
-      teamIds: [team],
+      departmentIds: [team],
       createdAt: now,
       updatedAt: now,
     });

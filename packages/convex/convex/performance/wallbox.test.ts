@@ -65,20 +65,27 @@ async function setup() {
     const vahan = await user("vahan", "employee", "Vahan", "Hovhannisyan");
     const olga = await user("olga", "employee", "Olga", "Onboarding");
 
-    const team = (name: string, slug: string, reportsToUserId?: Id<"users">) =>
-      ctx.db.insert("teams", { name, slug, reportsToUserId, createdAt: now, createdBy: admin });
-    const evTeam = await team("EV-Pilot", "ev", lead);
-    const onboardingTeam = await team("Onboarding", "onboarding");
-    for (const u of [nadine, vahan])
-      await ctx.db.insert("userTeams", { userId: u, teamId: evTeam });
-    await ctx.db.insert("userTeams", { userId: olga, teamId: onboardingTeam });
+    const department = (name: string, reportsToUserId?: Id<"users">) =>
+      ctx.db.insert("departments", { name, reportsToUserId, createdAt: now, createdBy: admin });
+    const evTeam = await department("EV-Pilot", lead);
+    const onboardingTeam = await department("Onboarding");
+    for (const u of [nadine, vahan]) await ctx.db.patch(u, { departmentId: evTeam });
+    await ctx.db.patch(olga, { departmentId: onboardingTeam });
 
     const dashboard = (
       name: string,
       slug: string,
       kind: "sales" | "wallbox" | "calls",
-      teamIds: Id<"teams">[],
-    ) => ctx.db.insert("companies", { name, slug, kind, teamIds, createdAt: now, updatedAt: now });
+      departmentIds: Id<"departments">[],
+    ) =>
+      ctx.db.insert("companies", {
+        name,
+        slug,
+        kind,
+        departmentIds,
+        createdAt: now,
+        updatedAt: now,
+      });
     const sales = await dashboard("Sales", "sales", "sales", []);
     const wallbox = await dashboard("Wallbox", "wallbox", "wallbox", [evTeam]);
     const onboarding = await dashboard("Onboarding", "onboarding", "calls", [onboardingTeam]);
@@ -406,7 +413,7 @@ describe("wallbox dashboard", () => {
     const { t, ids, upload } = await setup();
     // 11/2026: the EV team moved to Sales; Nadine has no Salesforce leads of
     // her own, only Genesys calls.
-    await t.run((ctx) => ctx.db.patch(ids.sales, { teamIds: [ids.evTeam] }));
+    await t.run((ctx) => ctx.db.patch(ids.sales, { departmentIds: [ids.evTeam] }));
     await upload(ids.sales, "calls.csv", callCsv([["WEIDENHAMMER Nadine", 20]]));
     const rows = await t.run((ctx) =>
       ctx.db
