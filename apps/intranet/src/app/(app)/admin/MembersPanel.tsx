@@ -41,7 +41,6 @@ import {
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { initials } from "@/lib/format";
 import { CAPABILITY_ICONS } from "@/lib/permission-icons";
-import { TEAMS } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 
 function TourProgressChip({ userId }: { userId: Id<"users"> }) {
@@ -81,7 +80,6 @@ function TourProgressChip({ userId }: { userId: Id<"users"> }) {
 export function MembersPanel({ isManager }: { isManager: boolean }) {
   const t = useTranslations("Admin");
   const tRoles = useTranslations("Roles");
-  const tTeams = useTranslations("Teams");
   const tCap = useTranslations("CustomRoles");
   const members = useQuery(api.people.users.list, { includeSuspended: true });
   const customRoles = useQuery(api.org.roles.list);
@@ -93,7 +91,6 @@ export function MembersPanel({ isManager }: { isManager: boolean }) {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | Role>("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "suspended">("all");
-  const [teamFilter, setTeamFilter] = useState("all");
   const [selectedId, setSelectedId] = useState<Id<"users"> | null>(null);
 
   const filtered = useMemo(() => {
@@ -105,9 +102,8 @@ export function MembersPanel({ isManager }: { isManager: boolean }) {
       );
     if (roleFilter !== "all") list = list.filter((m) => m.role === roleFilter);
     if (statusFilter !== "all") list = list.filter((m) => m.status === statusFilter);
-    if (teamFilter !== "all") list = list.filter((m) => m.teams.includes(teamFilter));
     return list;
-  }, [members, search, roleFilter, statusFilter, teamFilter]);
+  }, [members, search, roleFilter, statusFilter]);
 
   function copyEmail(email: string) {
     void navigator.clipboard.writeText(email);
@@ -406,19 +402,6 @@ export function MembersPanel({ isManager }: { isManager: boolean }) {
               <SelectItem value="all">{t("allStatuses")}</SelectItem>
               <SelectItem value="active">{t("active")}</SelectItem>
               <SelectItem value="suspended">{t("suspended")}</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={teamFilter} onValueChange={setTeamFilter}>
-            <SelectTrigger className="w-full sm:w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("allTeams")}</SelectItem>
-              {TEAMS.map((team) => (
-                <SelectItem key={team.id} value={team.id}>
-                  {tTeams(team.labelKey)}
-                </SelectItem>
-              ))}
             </SelectContent>
           </Select>
         </div>

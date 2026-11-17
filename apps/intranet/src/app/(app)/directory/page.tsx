@@ -63,7 +63,7 @@ import { useDeepLinkId } from "@/hooks/use-deep-link-id";
 import { isoToday } from "@/lib/absences";
 import { useAbsencesCalendar } from "@/lib/time-absences";
 import { useNow } from "@/hooks/use-now";
-import { TEAMS, teamColor } from "@/lib/teams";
+import { TEAMS } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 
 type ViewMode = "list" | "grid" | "org";
@@ -83,7 +83,6 @@ type SavedDirectoryView = {
 function DirectoryPageContent() {
   const t = useTranslations("Directory");
   const tRoles = useTranslations("Roles");
-  const tTeams = useTranslations("Teams");
   const tCommon = useTranslations("Common");
   const router = useRouter();
   const params = useSearchParams();
@@ -410,20 +409,6 @@ function DirectoryPageContent() {
               selected={role === "all" ? [] : [role]}
               onChange={(next) => setRole(next.find((r) => r !== role) ?? "all")}
               clearLabel={t("clearFilter", { label: t("role") })}
-            />
-            <FilterPill
-              label={t("team")}
-              options={TEAMS.map((tm) => ({
-                value: tm.id,
-                label: tTeams(tm.labelKey),
-                leading: <span className={cn("size-2 shrink-0 rounded-full", teamColor(tm.id))} />,
-              }))}
-              selected={team === "all" ? [] : [team]}
-              onChange={(next) => {
-                setMyTeamsOnly(false);
-                setTeam(next.find((id) => id !== team) ?? "all");
-              }}
-              clearLabel={t("clearFilter", { label: t("team") })}
             />
             {me.teams.length > 0 && (
               <TogglePill

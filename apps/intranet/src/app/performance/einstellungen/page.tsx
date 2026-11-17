@@ -54,7 +54,7 @@ type EmployeeRow = FunctionReturnType<typeof api.performance.dashboards.employee
 type DashboardKind = DashboardRow["kind"];
 const KINDS: DashboardKind[] = ["sales", "wallbox", "calls"];
 
-/** Name plus the intranet teams/departments whose members belong to it. */
+/** Name plus the intranet departments whose members belong to it. */
 function DashboardDialog({
   open,
   onOpenChange,
@@ -76,9 +76,6 @@ function DashboardDialog({
   const [kind, setKind] = useState<DashboardKind>(dashboard?.kind ?? "sales");
   const [teamOnly, setTeamOnly] = useState<boolean>(dashboard?.teamOnly ?? true);
   const [cockpit, setCockpit] = useState<boolean>(dashboard?.onboardingCockpit ?? false);
-  const [teamIds, setTeamIds] = useState<Set<string>>(
-    () => new Set(dashboard?.teams.map((x) => x.id) ?? []),
-  );
   const [departmentIds, setDepartmentIds] = useState<Set<string>>(
     () => new Set(dashboard?.departments.map((x) => x.id) ?? []),
   );
@@ -99,7 +96,6 @@ function DashboardDialog({
         kind,
         teamOnly,
         onboardingCockpit: kind === "calls" && cockpit,
-        teamIds: [...teamIds] as Id<"teams">[],
         departmentIds: [...departmentIds] as Id<"departments">[],
       };
       if (dashboard) await update({ companyId: dashboard.companyId, ...payload });
@@ -201,9 +197,6 @@ function DashboardDialog({
               <p className="text-xs text-muted-foreground">{t("settingsKindHint")}</p>
             )}
           </div>
-          {group(t("settingsTeams"), options?.teams, teamIds, (id) =>
-            setTeamIds((s) => toggle(s, id)),
-          )}
           {group(t("settingsDepartments"), options?.departments, departmentIds, (id) =>
             setDepartmentIds((s) => toggle(s, id)),
           )}
@@ -566,10 +559,10 @@ export default function PerformanceSettingsPage() {
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm">
                   <div className="flex flex-wrap gap-1">
-                    {[...d.teams, ...d.departments].length === 0 ? (
+                    {d.departments.length === 0 ? (
                       <span className="text-muted-foreground">{t("settingsNoTeams")}</span>
                     ) : (
-                      [...d.teams, ...d.departments].map((x) => (
+                      d.departments.map((x) => (
                         <Badge key={x.id} variant="muted">
                           {x.name}
                         </Badge>

@@ -37,7 +37,6 @@ import {
   type ProfileUser,
   StarterChecklist,
   type StarterStep,
-  TeamsEditor,
 } from "./ProfileSections";
 
 /**
@@ -50,7 +49,6 @@ function starterSteps(user: ProfileUser): StarterStep[] {
     { key: "photo", complete: Boolean(user.avatar) },
     { key: "contact", complete: Boolean(user.jobTitle && user.phone) },
     { key: "department", complete: Boolean(user.department) },
-    { key: "team", complete: user.teams.length > 0 },
     { key: "hireDate", complete: Boolean(user.hireDate) },
   ];
 }
@@ -246,11 +244,6 @@ function AdminControls({
         {isAdmin && !isSelf && (
           <SettingRow label={t("role")}>
             <RoleSelect value={user.role} onChange={changeRole} canElevate />
-          </SettingRow>
-        )}
-        {isAdmin && (
-          <SettingRow label={t("teams")}>
-            <TeamsEditor userId={user._id} teams={user.teams} />
           </SettingRow>
         )}
         {!isSelf && (

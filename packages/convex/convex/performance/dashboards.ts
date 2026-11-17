@@ -33,12 +33,10 @@ export const list = userQuery({
   role: "admin",
   args: {},
   handler: async (ctx) => {
-    const [companies, teams, departments] = await Promise.all([
+    const [companies, departments] = await Promise.all([
       ctx.db.query("companies").collect(),
-      ctx.db.query("teams").collect(),
       ctx.db.query("departments").collect(),
     ]);
-    const teamName = new Map(teams.map((t) => [t._id, t.name]));
     const departmentName = new Map(departments.map((d) => [d._id, d.name]));
 
     const rows = await Promise.all(
@@ -56,7 +54,9 @@ export const list = userQuery({
           kind: dashboardKind(c),
           teamOnly: c.teamOnly !== false,
           onboardingCockpit: c.onboardingCockpit === true,
-          teams: (c.teamIds ?? []).map((id) => ({ id, name: teamName.get(id) ?? "?" })),
+          // Teams were dropped 11/2026; stays empty for a page still on the
+          // previous deploy. Remove after 12/2026.
+          teams: [] as { id: string; name: string }[],
           departments: (c.departmentIds ?? []).map((id) => ({
             id,
             name: departmentName.get(id) ?? "?",
@@ -70,21 +70,14 @@ export const list = userQuery({
   },
 });
 
-/** Teams and departments to choose from when linking a dashboard. */
+/** Departments to choose from when linking a dashboard. */
 export const orgOptions = userQuery({
   role: "admin",
   args: {},
   handler: async (ctx) => {
-    const [teams, departments] = await Promise.all([
-      ctx.db.query("teams").collect(),
-      ctx.db.query("departments").collect(),
-    ]);
+    const departments = await ctx.db.query("departments").collect();
     const byName = <T extends { name: string }>(a: T, b: T) => a.name.localeCompare(b.name, "de");
     return {
-      teams: teams
-        .filter((t) => !t.archivedAt)
-        .map((t) => ({ id: t._id, name: t.name, hasLead: Boolean(t.reportsToUserId) }))
-        .sort(byName),
       departments: departments
         .filter((d) => !d.archivedAt)
         .map((d) => ({ id: d._id, name: d.name, hasLead: Boolean(d.reportsToUserId) }))
@@ -94,7 +87,9 @@ export const orgOptions = userQuery({
 });
 
 const orgArgs = {
-  teamIds: v.array(v.id("teams")),
+  /** Ignored: teams were dropped 11/2026 (a dashboard links departments).
+   *  Still accepted for a page on the previous deploy; remove after 12/2026. */
+  teamIds: v.optional(v.array(v.id("teams"))),
   departmentIds: v.array(v.id("departments")),
   kind: v.optional(kindValidator),
   /** Count only names linked to an intranet person (default on). */
@@ -106,10 +101,7 @@ const orgArgs = {
 export const create = userMutation({
   role: "admin",
   args: { name: v.string(), ...orgArgs },
-  handler: async (
-    ctx,
-    { name, teamIds, departmentIds, kind, teamOnly },
-  ): Promise<Id<"companies">> => {
+  handler: async (ctx, { name, departmentIds, kind, teamOnly }): Promise<Id<"companies">> => {
     const trimmed = name.trim();
     if (!trimmed)
       throw new ConvexError({ code: "validation", message: "Bitte einen Namen eingeben." });
@@ -127,7 +119,6 @@ export const create = userMutation({
     const companyId = await ctx.db.insert("companies", {
       name: trimmed,
       slug,
-      teamIds,
       departmentIds,
       kind: kind ?? "sales",
       teamOnly: teamOnly ?? true,
@@ -145,7 +136,7 @@ export const update = userMutation({
   args: { companyId: v.id("companies"), name: v.string(), ...orgArgs },
   handler: async (
     ctx,
-    { companyId, name, teamIds, departmentIds, kind, teamOnly, onboardingCockpit },
+    { companyId, name, departmentIds, kind, teamOnly, onboardingCockpit },
   ): Promise<void> => {
     await getDashboard(ctx, companyId);
     const trimmed = name.trim();
@@ -153,7 +144,7 @@ export const update = userMutation({
       throw new ConvexError({ code: "validation", message: "Bitte einen Namen eingeben." });
     await ctx.db.patch(companyId, {
       name: trimmed,
-      teamIds,
+      teamIds: undefined,
       departmentIds,
       ...(kind ? { kind } : {}),
       ...(teamOnly !== undefined ? { teamOnly } : {}),

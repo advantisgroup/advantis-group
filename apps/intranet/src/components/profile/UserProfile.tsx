@@ -26,7 +26,6 @@ import { useNow } from "@/hooks/use-now";
 import { formatIsoDate, initials } from "@/lib/format";
 import { profileColorStyle, profileGradientClass } from "@/lib/profile-gradient";
 import { activeStatusMessage } from "@/lib/status-message";
-import { teamColor, teamLabel } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 import { ManagementRail } from "./ProfileAdmin";
 import { ContactRow, DetailRow, InfoPanel, RoleBadge, Section, useUser } from "./ProfileParts";
@@ -46,7 +45,6 @@ function ProfileContent({ user, onClose }: { user: ProfileUser; onClose: () => v
   const t = useTranslations("Profile");
   const tRoles = useTranslations("Roles");
   const tAdmin = useTranslations("Admin");
-  const tTeams = useTranslations("Teams");
   const locale = useLocale();
   const router = useRouter();
   const me = useCurrentUser();
@@ -193,19 +191,6 @@ function ProfileContent({ user, onClose }: { user: ProfileUser; onClose: () => v
                 value={formatIsoDate(user.dateOfBirth, locale)}
               />
             )}
-          </div>
-        </Section>
-      )}
-
-      {user.teams.length > 0 && (
-        <Section label={tAdmin("teams")}>
-          <div className="flex flex-wrap gap-1.5">
-            {user.teams.map((team) => (
-              <Badge key={team} variant="muted" className="gap-1.5">
-                <span className={cn("size-1.5 rounded-full", teamColor(team))} />
-                {teamLabel(tTeams, team)}
-              </Badge>
-            ))}
           </div>
         </Section>
       )}

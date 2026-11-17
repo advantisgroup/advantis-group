@@ -33,45 +33,33 @@ export async function cockpitTeam(
   return { members: row?.memberUserIds ?? [], leads: row?.leadUserIds ?? [] };
 }
 
-/** Active intranet users in the dashboard's linked teams and departments —
+/** Active intranet users in the dashboard's linked departments —
  * and, for a dashboard linked to the Onboarding-Cockpit, the cockpit's team. */
 export async function dashboardMembers(
   ctx: QueryCtx | MutationCtx,
   company: Doc<"companies">,
 ): Promise<Doc<"users">[]> {
-  const teamIds = new Set<string>(company.teamIds ?? []);
   const departmentIds = new Set<string>(company.departmentIds ?? []);
   const cockpit = new Set<string>(
     company.onboardingCockpit ? (await cockpitTeam(ctx)).members : [],
   );
-  if (teamIds.size === 0 && departmentIds.size === 0 && cockpit.size === 0) return [];
-  // Archived teams/departments no longer count.
-  for (const id of [...teamIds]) {
-    const team = await ctx.db.get(id as Id<"teams">);
-    if (!team || team.archivedAt) teamIds.delete(id);
-  }
+  if (departmentIds.size === 0 && cockpit.size === 0) return [];
+  // Archived departments no longer count. (Teams were dropped 11/2026; a
+  // leftover `company.teamIds` is ignored.)
   for (const id of [...departmentIds]) {
     const dep = await ctx.db.get(id as Id<"departments">);
     if (!dep || dep.archivedAt) departmentIds.delete(id);
   }
-  const [users, memberships] = await Promise.all([
-    ctx.db.query("users").collect(),
-    teamIds.size > 0 ? ctx.db.query("userTeams").collect() : Promise.resolve([]),
-  ]);
-  const inTeam = new Set<string>(
-    memberships.filter((m) => teamIds.has(m.teamId)).map((m) => m.userId),
-  );
+  const users = await ctx.db.query("users").collect();
   return users.filter(
     (u) =>
       u.status === "active" &&
-      (inTeam.has(u._id) ||
-        cockpit.has(u._id) ||
-        (u.departmentId !== undefined && departmentIds.has(u.departmentId))),
+      (cockpit.has(u._id) || (u.departmentId !== undefined && departmentIds.has(u.departmentId))),
   );
 }
 
 /**
- * Every member of a dashboard's linked teams/departments gets an employee
+ * Every member of a dashboard's linked departments gets an employee
  * row linked to their account, reusing an unlinked row with the same name
  * (e.g. one an earlier report created) before adding a new one. Never
  * unlinks or deletes anything. Wallbox and calls-only dashboards have no

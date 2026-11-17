@@ -12,13 +12,11 @@ import {
   ChevronRight,
   ChevronsUpDown,
   Crown,
-  FolderInput,
   MoreHorizontal,
   Pencil,
   Plus,
   UserCheck,
   UserRound,
-  Users2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -32,63 +30,39 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { cn } from "@/lib/utils";
 
 type Overview = FunctionReturnType<typeof api.org.structure.overview>;
 type Department = Overview["departments"][number];
-type Team = Overview["teams"][number];
 type Person = PersonOption;
 
-const NONE = "__none";
-
 /**
- * Departments with their teams underneath, so the org reads the way people
- * think about it. Leads, renaming, moving a team and archiving all happen in
- * place; archived entries wait in a closed list at the bottom.
+ * Departments only (teams were dropped 11/2026: a person belongs to exactly
+ * one department, and everything that used teams — Performance, commissions —
+ * now hangs off the department). Leads, renaming and archiving happen in
+ * place; archived departments wait in a closed list at the bottom.
  */
 export default function StructurePage() {
   const t = useTranslations("Admin");
   const isAdmin = useIsAdmin();
   const data = useQuery(api.org.structure.overview, isAdmin ? {} : "skip");
   const people = useQuery(api.people.users.options, isAdmin ? {} : "skip");
-  const [creating, setCreating] = useState<{
-    kind: "department" | "team";
-    departmentId?: string;
-  }>();
+  const [creating, setCreating] = useState(false);
 
   const actions = useMemo(
     () => [
       {
-        key: "team",
-        label: t("structure.newTeam"),
-        icon: Users2,
-        variant: "outline" as const,
-        onClick: () => setCreating({ kind: "team" }),
-      },
-      {
         key: "new",
         label: t("structure.newDepartment"),
         icon: Plus,
-        onClick: () => setCreating({ kind: "department" }),
+        onClick: () => setCreating(true),
       },
     ],
     [t],
@@ -97,14 +71,7 @@ export default function StructurePage() {
   if (!isAdmin) return <ForbiddenScreen />;
 
   const departments = data?.departments.filter((d) => d.archivedAt === undefined) ?? [];
-  const activeIds = new Set(departments.map((d) => d._id as string));
-  const teams = data?.teams.filter((team) => team.archivedAt === undefined) ?? [];
-  // a team whose department was archived is as good as unplaced
-  const unplaced = teams.filter((team) => !team.departmentId || !activeIds.has(team.departmentId));
-  const archived = [
-    ...(data?.departments ?? []).filter((d) => d.archivedAt !== undefined),
-    ...(data?.teams ?? []).filter((team) => team.archivedAt !== undefined),
-  ];
+  const archived = (data?.departments ?? []).filter((d) => d.archivedAt !== undefined);
   const leads = people ?? [];
 
   return (
@@ -123,13 +90,13 @@ export default function StructurePage() {
           <Skeleton className="h-48 rounded-xl" />
           <Skeleton className="h-28 rounded-xl" />
         </div>
-      ) : departments.length === 0 && teams.length === 0 ? (
+      ) : departments.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border px-6 py-14 text-center">
           <p className="text-sm font-medium">{t("structure.emptyTitle")}</p>
           <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
             {t("structure.emptyBody")}
           </p>
-          <Button className="mt-5" size="sm" onClick={() => setCreating({ kind: "department" })}>
+          <Button className="mt-5" size="sm" onClick={() => setCreating(true)}>
             <Plus />
             {t("structure.newDepartment")}
           </Button>
@@ -138,45 +105,15 @@ export default function StructurePage() {
         <>
           <div className="space-y-4">
             {departments.map((department) => (
-              <DepartmentCard
-                key={department._id}
-                department={department}
-                teams={teams.filter((team) => team.departmentId === department._id)}
-                departments={departments}
-                people={leads}
-                onAddTeam={() => setCreating({ kind: "team", departmentId: department._id })}
-              />
+              <DepartmentCard key={department._id} department={department} people={leads} />
             ))}
           </div>
-
-          {unplaced.length > 0 && (
-            <section className="space-y-3">
-              <div>
-                <h2 className="text-sm font-semibold">{t("structure.unplacedTitle")}</h2>
-                <p className="mt-0.5 text-sm text-muted-foreground">
-                  {t("structure.unplacedHint")}
-                </p>
-              </div>
-              <ul className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border/70 bg-card">
-                {unplaced.map((team) => (
-                  <TeamRow key={team._id} team={team} departments={departments} people={leads} />
-                ))}
-              </ul>
-            </section>
-          )}
 
           {archived.length > 0 && <ArchivedList entries={archived} />}
         </>
       )}
 
-      {creating && (
-        <CreateDialog
-          kind={creating.kind}
-          initialDepartmentId={creating.departmentId}
-          departments={departments}
-          onClose={() => setCreating(undefined)}
-        />
-      )}
+      {creating && <CreateDialog onClose={() => setCreating(false)} />}
     </div>
   );
 }
@@ -187,7 +124,6 @@ const tint = (color: string): CSSProperties => ({
   background: `color-mix(in oklab, ${color} 14%, transparent)`,
 });
 const DEPARTMENT = "var(--chart-1)";
-const TEAM = "var(--chart-2)";
 const LEAD = "var(--chart-3)";
 const DIRECTOR = "var(--chart-5)";
 
@@ -195,7 +131,6 @@ function HowItWorks() {
   const t = useTranslations("Admin");
   const legend = [
     { line: "Departments", icon: Building2, color: DEPARTMENT },
-    { line: "Teams", icon: Users2, color: TEAM },
     { line: "Leads", icon: UserCheck, color: LEAD },
     { line: "Director", icon: Crown, color: DIRECTOR },
   ] as const;
@@ -235,17 +170,7 @@ function HowItWorks() {
 function OrgDiagram() {
   const t = useTranslations("Admin");
   const d = (
-    key:
-      | "director"
-      | "directorNote"
-      | "sales"
-      | "inbound"
-      | "outbound"
-      | "departmentLead"
-      | "teamLead"
-      | "member"
-      | "reportsTo"
-      | "and",
+    key: "director" | "directorNote" | "sales" | "departmentLead" | "member" | "reportsTo" | "and",
   ) => t(`structure.diagram.${key}`);
 
   return (
@@ -266,9 +191,9 @@ function OrgDiagram() {
           <span className="font-semibold">{d("sales")}</span>
           <LeadPill>{d("departmentLead")}</LeadPill>
         </div>
-        <div className="ml-[7px] mt-2.5 space-y-2 border-l border-border pl-4">
-          <DiagramTeam name={d("inbound")} lead={d("teamLead")} member={d("member")} />
-          <DiagramTeam name={d("outbound")} lead={d("teamLead")} member={d("member")} />
+        <div className="mt-2 flex items-center gap-1.5 pl-6 text-xs text-muted-foreground">
+          <UserRound className="size-3 shrink-0" />
+          {d("member")}
         </div>
       </div>
 
@@ -276,25 +201,7 @@ function OrgDiagram() {
         <UserRound className="size-3.5 shrink-0" />
         <span className="font-medium text-foreground">{d("member")}</span>
         <span>{d("reportsTo")}</span>
-        <LeadPill>{d("teamLead")}</LeadPill>
-        <span>{d("and")}</span>
         <LeadPill>{d("departmentLead")}</LeadPill>
-      </div>
-    </div>
-  );
-}
-
-function DiagramTeam({ name, lead, member }: { name: string; lead: string; member: string }) {
-  return (
-    <div className="relative rounded-md border border-border/80 bg-background/60 px-2.5 py-2 before:absolute before:-left-4 before:top-[18px] before:h-px before:w-4 before:bg-border">
-      <div className="flex flex-wrap items-center gap-2">
-        <Users2 className="size-3.5 shrink-0" style={{ color: TEAM }} />
-        <span className="font-medium">{name}</span>
-        <LeadPill>{lead}</LeadPill>
-      </div>
-      <div className="mt-1.5 flex items-center gap-1.5 pl-[22px] text-xs text-muted-foreground">
-        <UserRound className="size-3 shrink-0" />
-        {member}
       </div>
     </div>
   );
@@ -309,19 +216,7 @@ function LeadPill({ children }: { children: ReactNode }) {
   );
 }
 
-function DepartmentCard({
-  department,
-  teams,
-  departments,
-  people,
-  onAddTeam,
-}: {
-  department: Department;
-  teams: Team[];
-  departments: Department[];
-  people: Person[];
-  onAddTeam: () => void;
-}) {
+function DepartmentCard({ department, people }: { department: Department; people: Person[] }) {
   const t = useTranslations("Admin");
   const handleError = useErrorHandler();
   const rename = useMutation(api.org.structure.renameDepartment);
@@ -346,8 +241,6 @@ function DepartmentCard({
           />
           <p className="mt-0.5 text-xs text-muted-foreground">
             {t("structure.people", { count: department.memberCount })}
-            {" · "}
-            {t("structure.teams", { count: teams.length })}
           </p>
         </div>
         <LeadSelect
@@ -363,88 +256,7 @@ function DepartmentCard({
           onArchive={() => archive({ departmentId, archived: true }).catch(handleError)}
         />
       </header>
-
-      {teams.length > 0 && (
-        <ul className="divide-y divide-border/60 border-t border-border/60 bg-background/40">
-          {teams.map((team) => (
-            <TeamRow key={team._id} team={team} departments={departments} people={people} nested />
-          ))}
-        </ul>
-      )}
-
-      <div className="border-t border-border/60 px-3 py-1.5">
-        <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={onAddTeam}>
-          <Plus />
-          {t("structure.addTeam")}
-        </Button>
-      </div>
     </section>
-  );
-}
-
-function TeamRow({
-  team,
-  departments,
-  people,
-  nested,
-}: {
-  team: Team;
-  departments: Department[];
-  people: Person[];
-  nested?: boolean;
-}) {
-  const t = useTranslations("Admin");
-  const handleError = useErrorHandler();
-  const rename = useMutation(api.org.structure.renameTeam);
-  const archive = useMutation(api.org.structure.archiveTeam);
-  const setLead = useMutation(api.org.structure.setTeamReportsTo);
-  const move = useMutation(api.org.structure.setTeamDepartment);
-  const [editing, setEditing] = useState(false);
-  const teamId = team._id as Id<"teams">;
-
-  return (
-    <li
-      className={cn(
-        "flex flex-wrap items-center gap-x-3 gap-y-1.5 py-2.5 pr-5",
-        nested ? "pl-5 sm:pl-[4.25rem]" : "pl-5",
-      )}
-    >
-      <Users2 className="size-4 shrink-0 text-muted-foreground" />
-      <div className="flex min-w-0 flex-1 items-baseline gap-2">
-        <EditableName
-          name={team.name}
-          editing={editing}
-          onDone={() => setEditing(false)}
-          onSave={(name) => rename({ teamId, name }).catch(handleError)}
-          className="text-sm font-medium"
-        />
-        {!editing && (
-          <span className="shrink-0 text-xs text-muted-foreground">
-            {t("structure.people", { count: team.memberCount })}
-          </span>
-        )}
-      </div>
-      <LeadSelect
-        value={team.reportsToUserId}
-        people={people}
-        onChange={(userId) =>
-          setLead({ teamId, userId: userId as Id<"users"> | null }).catch(handleError)
-        }
-      />
-      <RowMenu
-        name={team.name}
-        onRename={() => setEditing(true)}
-        onArchive={() => archive({ teamId, archived: true }).catch(handleError)}
-        move={{
-          current: team.departmentId,
-          departments,
-          onMove: (departmentId) =>
-            move({ teamId, departmentId: departmentId as Id<"departments"> | null }).catch(
-              handleError,
-            ),
-        }}
-      />
-    </li>
   );
 }
 
@@ -526,16 +338,10 @@ function RowMenu({
   name,
   onRename,
   onArchive,
-  move,
 }: {
   name: string;
   onRename: () => void;
   onArchive: () => void;
-  move?: {
-    current?: string;
-    departments: Department[];
-    onMove: (departmentId: string | null) => void;
-  };
 }) {
   const t = useTranslations("Admin");
   const tc = useTranslations("Common");
@@ -581,30 +387,6 @@ function RowMenu({
           <Pencil />
           {t("structure.rename")}
         </DropdownMenuItem>
-        {move && (
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger>
-              <FolderInput />
-              {t("structure.moveTo")}
-            </DropdownMenuSubTrigger>
-            <DropdownMenuSubContent>
-              <DropdownMenuRadioGroup
-                value={move.current ?? NONE}
-                onValueChange={(v) => move.onMove(v === NONE ? null : v)}
-              >
-                {move.departments.map((department) => (
-                  <DropdownMenuRadioItem key={department._id} value={department._id}>
-                    {department.name}
-                  </DropdownMenuRadioItem>
-                ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuRadioItem value={NONE}>
-                  {t("structure.noDepartment")}
-                </DropdownMenuRadioItem>
-              </DropdownMenuRadioGroup>
-            </DropdownMenuSubContent>
-          </DropdownMenuSub>
-        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           className="text-destructive focus:text-destructive"
@@ -618,11 +400,10 @@ function RowMenu({
   );
 }
 
-function ArchivedList({ entries }: { entries: (Department | Team)[] }) {
+function ArchivedList({ entries }: { entries: Department[] }) {
   const t = useTranslations("Admin");
   const handleError = useErrorHandler();
-  const restoreDepartment = useMutation(api.org.structure.archiveDepartment);
-  const restoreTeam = useMutation(api.org.structure.archiveTeam);
+  const restore = useMutation(api.org.structure.archiveDepartment);
 
   return (
     <details className="group">
@@ -631,69 +412,43 @@ function ArchivedList({ entries }: { entries: (Department | Team)[] }) {
         {t("structure.archived", { count: entries.length })}
       </summary>
       <ul className="mt-3 divide-y divide-border/60 overflow-hidden rounded-xl border border-border/70 bg-card">
-        {entries.map((entry) => {
-          const isTeam = "slug" in entry;
-          const Icon = isTeam ? Users2 : Building2;
-          return (
-            <li key={entry._id} className="flex items-center gap-3 px-5 py-2.5">
-              <Icon className="size-4 shrink-0 text-muted-foreground" />
-              <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
-                {entry.name}
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() =>
-                  (isTeam
-                    ? restoreTeam({ teamId: entry._id as Id<"teams">, archived: false })
-                    : restoreDepartment({
-                        departmentId: entry._id as Id<"departments">,
-                        archived: false,
-                      })
-                  ).catch(handleError)
-                }
-              >
-                {t("orgEntity.restore")}
-              </Button>
-            </li>
-          );
-        })}
+        {entries.map((entry) => (
+          <li key={entry._id} className="flex items-center gap-3 px-5 py-2.5">
+            <Building2 className="size-4 shrink-0 text-muted-foreground" />
+            <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
+              {entry.name}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                restore({
+                  departmentId: entry._id as Id<"departments">,
+                  archived: false,
+                }).catch(handleError)
+              }
+            >
+              {t("orgEntity.restore")}
+            </Button>
+          </li>
+        ))}
       </ul>
     </details>
   );
 }
 
-function CreateDialog({
-  kind,
-  initialDepartmentId,
-  departments,
-  onClose,
-}: {
-  kind: "department" | "team";
-  initialDepartmentId?: string;
-  departments: Department[];
-  onClose: () => void;
-}) {
+function CreateDialog({ onClose }: { onClose: () => void }) {
   const t = useTranslations("Admin");
   const handleError = useErrorHandler();
   const createDepartment = useMutation(api.org.structure.createDepartment);
-  const createTeam = useMutation(api.org.structure.createTeam);
   const [name, setName] = useState("");
-  const [departmentId, setDepartmentId] = useState(initialDepartmentId ?? NONE);
   const [busy, setBusy] = useState(false);
 
   async function create() {
     if (!name.trim()) return;
     setBusy(true);
     try {
-      if (kind === "department") {
-        await createDepartment({ name: name.trim() });
-      } else {
-        await createTeam({
-          name: name.trim(),
-          departmentId: departmentId === NONE ? undefined : (departmentId as Id<"departments">),
-        });
-      }
+      await createDepartment({ name: name.trim() });
       onClose();
     } catch (error) {
       handleError(error);
@@ -706,10 +461,8 @@ function CreateDialog({
     <ResponsiveDialog
       open
       onOpenChange={(open) => !open && onClose()}
-      title={kind === "department" ? t("structure.newDepartment") : t("structure.newTeam")}
-      description={
-        kind === "department" ? t("structure.newDepartmentHint") : t("structure.newTeamHint")
-      }
+      title={t("structure.newDepartment")}
+      description={t("structure.newDepartmentHint")}
       footer={
         <Button
           disabled={busy || !name.trim()}
@@ -720,37 +473,16 @@ function CreateDialog({
         </Button>
       }
     >
-      <div className="space-y-3">
-        <Input
-          autoFocus
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") void create();
-          }}
-          placeholder={
-            kind === "department"
-              ? t("structure.departmentPlaceholder")
-              : t("structure.teamPlaceholder")
-          }
-          aria-label={t("structure.name")}
-        />
-        {kind === "team" && (
-          <Select value={departmentId} onValueChange={setDepartmentId}>
-            <SelectTrigger aria-label={t("structure.department")}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {departments.map((department) => (
-                <SelectItem key={department._id} value={department._id}>
-                  {t("structure.inDepartment", { name: department.name })}
-                </SelectItem>
-              ))}
-              <SelectItem value={NONE}>{t("structure.noDepartment")}</SelectItem>
-            </SelectContent>
-          </Select>
-        )}
-      </div>
+      <Input
+        autoFocus
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") void create();
+        }}
+        placeholder={t("structure.departmentPlaceholder")}
+        aria-label={t("structure.name")}
+      />
     </ResponsiveDialog>
   );
 }

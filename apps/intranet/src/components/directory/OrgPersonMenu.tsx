@@ -3,7 +3,7 @@
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation } from "convex/react";
-import { Building2, Crown, MoreHorizontal, Star, Users2 } from "lucide-react";
+import { Building2, Crown, MoreHorizontal, Star } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -27,13 +27,6 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 import { type Person } from "./person-status";
 
 export interface OrgUnits {
-  teams: {
-    _id: Id<"teams">;
-    name: string;
-    slug: string;
-    reportsToUserId?: Id<"users">;
-    departmentId?: Id<"departments">;
-  }[];
   departments: { _id: Id<"departments">; name: string; reportsToUserId?: Id<"users"> }[];
   /** Admins shape the structure; people who manage members can place someone in a department. */
   canAdmin: boolean;
@@ -46,11 +39,8 @@ const NO_DEPARTMENT = "none";
 export function OrgPersonMenu({ person, units }: { person: Person; units: OrgUnits }) {
   const t = useTranslations("Directory");
   const handleError = useErrorHandler();
-  const setTeamLead = useMutation(api.org.structure.setTeamReportsTo);
   const setDepartmentLead = useMutation(api.org.structure.setDepartmentReportsTo);
   const setDepartment = useMutation(api.org.structure.setUserDepartment);
-  const addToTeam = useMutation(api.org.structure.addUserToTeam);
-  const removeFromTeam = useMutation(api.org.structure.removeUserFromTeam);
   const setManagingDirector = useMutation(api.people.users.setManagingDirector);
 
   const saved = (promise: Promise<unknown>) =>
@@ -112,37 +102,6 @@ export function OrgPersonMenu({ person, units }: { person: Person; units: OrgUni
           <>
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>
-                <Users2 />
-                {t("orgMenuTeams")}
-              </DropdownMenuSubTrigger>
-              <DropdownMenuSubContent className="w-56">
-                {units.teams.length === 0 && (
-                  <DropdownMenuItem disabled>{t("orgMenuNoTeams")}</DropdownMenuItem>
-                )}
-                {units.teams.map((team) => {
-                  const member = person.teams.includes(team.slug);
-                  return (
-                    <DropdownMenuCheckboxItem
-                      key={team._id}
-                      checked={member}
-                      onSelect={(event) => event.preventDefault()}
-                      onCheckedChange={() =>
-                        saved(
-                          member
-                            ? removeFromTeam({ userId: person._id, teamId: team._id })
-                            : addToTeam({ userId: person._id, teamId: team._id }),
-                        )
-                      }
-                    >
-                      {team.name}
-                    </DropdownMenuCheckboxItem>
-                  );
-                })}
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
-
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>
                 <Star />
                 {t("orgMenuLeads")}
               </DropdownMenuSubTrigger>
@@ -169,26 +128,6 @@ export function OrgPersonMenu({ person, units }: { person: Person; units: OrgUni
                       }
                     >
                       <span className="min-w-0 flex-1 truncate">{department.name}</span>
-                    </DropdownMenuCheckboxItem>
-                  );
-                })}
-                {units.teams.length > 0 && (
-                  <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">
-                    {t("orgMenuLeadTeams")}
-                  </DropdownMenuLabel>
-                )}
-                {units.teams.map((team) => {
-                  const leads = team.reportsToUserId === person._id;
-                  return (
-                    <DropdownMenuCheckboxItem
-                      key={team._id}
-                      checked={leads}
-                      onSelect={(event) => event.preventDefault()}
-                      onCheckedChange={() =>
-                        saved(setTeamLead({ teamId: team._id, userId: leads ? null : person._id }))
-                      }
-                    >
-                      <span className="min-w-0 flex-1 truncate">{team.name}</span>
                     </DropdownMenuCheckboxItem>
                   );
                 })}

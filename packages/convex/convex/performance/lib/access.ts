@@ -115,30 +115,19 @@ export async function viewerFor(
     return { userId: user._id, name: displayName(user), isAdmin, dashboards: [] };
   }
 
-  const [companies, memberships, ledTeams, ledDepartments, myEmployees, cockpit] =
-    await Promise.all([
-      ctx.db.query("companies").collect(),
-      ctx.db
-        .query("userTeams")
-        .withIndex("by_user", (q) => q.eq("userId", user._id))
-        .collect(),
-      ctx.db
-        .query("teams")
-        .collect()
-        .then((teams) => teams.filter((t) => t.reportsToUserId === user._id && !t.archivedAt)),
-      ctx.db
-        .query("departments")
-        .collect()
-        .then((deps) => deps.filter((d) => d.reportsToUserId === user._id && !d.archivedAt)),
-      ctx.db
-        .query("performanceEmployees")
-        .withIndex("by_userId", (q) => q.eq("userId", user._id))
-        .collect(),
-      cockpitTeam(ctx),
-    ]);
+  const [companies, ledDepartments, myEmployees, cockpit] = await Promise.all([
+    ctx.db.query("companies").collect(),
+    ctx.db
+      .query("departments")
+      .collect()
+      .then((deps) => deps.filter((d) => d.reportsToUserId === user._id && !d.archivedAt)),
+    ctx.db
+      .query("performanceEmployees")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .collect(),
+    cockpitTeam(ctx),
+  ]);
 
-  const myTeamIds = new Set<Id<"teams">>(memberships.map((m) => m.teamId));
-  const ledTeamIds = new Set<Id<"teams">>(ledTeams.map((t) => t._id));
   const ledDepartmentIds = new Set<Id<"departments">>(ledDepartments.map((d) => d._id));
   const employeeByCompany = new Map<Id<"companies">, Id<"performanceEmployees">>();
   for (const e of myEmployees) {
@@ -147,17 +136,16 @@ export async function viewerFor(
 
   const dashboards: DashboardAccess[] = [];
   for (const company of companies) {
-    const teamIds = company.teamIds ?? [];
+    // Membership and team view come from the linked departments (teams were
+    // dropped 11/2026; a leftover `company.teamIds` is ignored).
     const departmentIds = company.departmentIds ?? [];
     // A dashboard linked to the Onboarding-Cockpit takes its team and
     // team leads from there.
     const viaCockpit = company.onboardingCockpit === true;
     const leads =
-      teamIds.some((id) => ledTeamIds.has(id)) ||
       departmentIds.some((id) => ledDepartmentIds.has(id)) ||
       (viaCockpit && cockpit.leads.includes(user._id));
     const member =
-      teamIds.some((id) => myTeamIds.has(id)) ||
       (user.departmentId !== undefined && departmentIds.includes(user.departmentId)) ||
       (viaCockpit && cockpit.members.includes(user._id));
     const employeeId = employeeByCompany.get(company._id) ?? null;
