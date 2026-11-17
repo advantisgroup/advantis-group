@@ -6,7 +6,17 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { type FunctionReturnType } from "convex/server";
-import { ChevronDown, ChevronRight, Coins, Download, Info, RotateCcw, Save } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  Coins,
+  Download,
+  Info,
+  Plus,
+  RotateCcw,
+  Save,
+  Trash2,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -104,11 +114,14 @@ export default function CommissionsPage() {
               Monatsbonus: r.monthBonus,
               "Hitrate-Bonus": r.hitrateBonus,
               "Gesund-Bonus": r.healthyBonus,
+              Sonderbeträge: r.extrasTotal,
               Summe: r.total,
               Angepasst: [r.wonOverridden && "Closed Won", r.hitrateOverridden && "Hitrate"]
                 .filter(Boolean)
                 .join(", "),
-              Notiz: r.note ?? "",
+              Notiz: [r.note, ...r.extras.map((e) => `${e.amount} € ${e.label}`)]
+                .filter(Boolean)
+                .join("; "),
             })),
             [
               "Mitarbeiter",
@@ -119,6 +132,7 @@ export default function CommissionsPage() {
               "Monatsbonus",
               "Hitrate-Bonus",
               "Gesund-Bonus",
+              "Sonderbeträge",
               "Summe",
               "Angepasst",
               "Notiz",
@@ -223,6 +237,7 @@ export default function CommissionsPage() {
                   <TableHead className="text-right">{t("colMonth")}</TableHead>
                   <TableHead className="text-right">{t("colHitrateBonus")}</TableHead>
                   <TableHead className="text-right">{t("colHealthy")}</TableHead>
+                  <TableHead className="text-right">{t("colExtras")}</TableHead>
                   <TableHead className="text-right">{t("colTotal")}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -282,8 +297,16 @@ export default function CommissionsPage() {
                       </TableRow>
                       {isOpen && (
                         <TableRow className="bg-panel-2/50 hover:bg-panel-2/50">
-                          <TableCell colSpan={9}>
+                          <TableCell colSpan={10}>
                             <Details row={r} euro={euro} />
+                            {data.companyId && (
+                              <ExtrasEditor
+                                row={r}
+                                ym={data.ym}
+                                companyId={data.companyId}
+                                euro={euro}
+                              />
+                            )}
                             {data.companyId && (
                               <AdjustForm
                                 key={`${r.employeeId}:${data.ym}:${r.won}:${r.hitrate}:${r.note}`}
@@ -301,7 +324,7 @@ export default function CommissionsPage() {
               </TableBody>
               <TableFooter>
                 <TableRow>
-                  <TableCell colSpan={8} className="font-medium">
+                  <TableCell colSpan={9} className="font-medium">
                     {t("sum")}
                   </TableCell>
                   <TableCell className="text-right font-semibold tabular-nums">
@@ -365,6 +388,137 @@ function HealthyToggle({
         }
       />
     </label>
+  );
+}
+
+/** "500", "1.500", "1.500,50", "20,5", "20.50", "-100" → number (NaN if not). */
+function parseEuro(input: string): number {
+  let text = input.trim().replace(/\s|€/g, "");
+  if (text.includes(",")) text = text.replace(/\./g, "").replace(",", ".");
+  else if (/^-?\d{1,3}(\.\d{3})+$/.test(text)) text = text.replace(/\./g, "");
+  return text === "" ? Number.NaN : Number(text);
+}
+
+function ExtrasEditor({
+  row,
+  ym,
+  companyId,
+  euro,
+}: {
+  row: Row;
+  ym: string;
+  companyId: Id<"companies">;
+  euro: Intl.NumberFormat;
+}) {
+  const t = useTranslations("Commissions");
+  const handleError = useErrorHandler();
+  const add = useMutation(api.commissions.adjustments.addExtra);
+  const remove = useMutation(api.commissions.adjustments.removeExtra);
+  const [adding, setAdding] = useState(false);
+  const [amount, setAmount] = useState("");
+  const [label, setLabel] = useState("");
+  const [busy, setBusy] = useState(false);
+  const key = { companyId, ym, employeeId: row.employeeId };
+
+  async function submit() {
+    const value = parseEuro(amount);
+    if (!amount.trim() || Number.isNaN(value) || value === 0) {
+      toast.error(t("invalidNumber"));
+      return;
+    }
+    if (!label.trim()) {
+      toast.error(t("extraLabelMissing"));
+      return;
+    }
+    setBusy(true);
+    await add({ ...key, amount: value, label })
+      .then(() => {
+        toast.success(t("extraAdded"));
+        setAmount("");
+        setLabel("");
+        setAdding(false);
+      })
+      .catch(handleError)
+      .finally(() => setBusy(false));
+  }
+
+  return (
+    <div className="mt-3 border-t border-border/60 pt-3">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <p className="text-sm font-medium">{t("extrasTitle")}</p>
+        {!adding && (
+          <Button size="sm" variant="outline" onClick={() => setAdding(true)}>
+            <Plus />
+            {t("extraAdd")}
+          </Button>
+        )}
+      </div>
+      {row.extras.length === 0 && !adding && (
+        <p className="text-sm text-muted-foreground">{t("extrasNone")}</p>
+      )}
+      {row.extras.length > 0 && (
+        <ul className="mb-2 space-y-1 text-sm">
+          {row.extras.map((e) => (
+            <li key={e.id} className="flex items-center gap-3">
+              <span className="w-24 text-right font-medium tabular-nums">
+                {euro.format(e.amount)}
+              </span>
+              <span className="flex-1">{e.label}</span>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="size-7"
+                aria-label={t("extraRemove", { label: e.label })}
+                onClick={() =>
+                  remove({ ...key, id: e.id })
+                    .then(() => toast.success(t("extraRemoved")))
+                    .catch(handleError)
+                }
+              >
+                <Trash2 />
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {adding && (
+        <div className="grid gap-3 sm:grid-cols-[10rem_1fr_auto] sm:items-end">
+          <div className="space-y-1">
+            <Label htmlFor={`extra-amount-${row.employeeId}`}>{t("extraAmount")}</Label>
+            <Input
+              id={`extra-amount-${row.employeeId}`}
+              inputMode="decimal"
+              autoFocus
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="500"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor={`extra-label-${row.employeeId}`}>{t("extraLabel")}</Label>
+            <Input
+              id={`extra-label-${row.employeeId}`}
+              value={label}
+              maxLength={200}
+              onChange={(e) => setLabel(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") void submit();
+              }}
+              placeholder={t("extraLabelPlaceholder")}
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button size="sm" disabled={busy} onClick={() => void submit()}>
+              <Save />
+              {t("save")}
+            </Button>
+            <Button size="sm" variant="ghost" disabled={busy} onClick={() => setAdding(false)}>
+              {t("cancel")}
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -540,6 +694,7 @@ function Rules() {
         <li>{t("ruleHitrate")}</li>
         <li>{t("ruleHealthy")}</li>
         <li>{t("ruleAdjust")}</li>
+        <li>{t("ruleExtras")}</li>
       </ul>
     </div>
   );

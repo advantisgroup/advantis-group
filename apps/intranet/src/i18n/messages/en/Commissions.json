@@ -54,5 +54,18 @@
   "savedToast": "Saved.",
   "resetToast": "Back to the automatic values.",
   "invalidNumber": "Please enter numbers only.",
-  "ruleAdjust": "Closed won and hit rate come from the reports automatically and can be overridden per employee and month (expand the row)."
+  "ruleAdjust": "Closed won and hit rate come from the reports automatically and can be overridden per employee and month (expand the row).",
+  "colExtras": "Extras",
+  "extrasTitle": "Extra amounts",
+  "extrasNone": "No extra amounts this month.",
+  "extraAdd": "Add amount",
+  "extraAmount": "Amount in €",
+  "extraLabel": "Reason",
+  "extraLabelPlaceholder": "e.g. special agreement for the August week",
+  "extraLabelMissing": "Please give a reason.",
+  "extraAdded": "Amount added.",
+  "extraRemoved": "Amount removed.",
+  "extraRemove": "Remove “{label}”",
+  "cancel": "Cancel",
+  "ruleExtras": "Extra amounts (e.g. special agreements) can be added per employee and month and go into the total; a negative amount deducts."
 }

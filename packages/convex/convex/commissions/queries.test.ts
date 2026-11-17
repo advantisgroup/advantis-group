@@ -243,4 +243,56 @@ describe("commissions.queries.month", () => {
       }),
     ).rejects.toThrow();
   });
+
+  test("Sonderbeträge kommen in die Summe und lassen sich entfernen", async () => {
+    const { t, ids } = await setup();
+    const admin = t.withIdentity({ subject: "admin" });
+    const ben = async () =>
+      (await admin.query(api.commissions.queries.month, { ym: "2026-10" })).rows.find(
+        (r) => r.name === "Ben Test",
+      )!;
+    const { employeeId } = await ben();
+    const key = { companyId: ids.companyId, ym: "2026-10", employeeId };
+    await admin.mutation(api.commissions.adjustments.addExtra, {
+      ...key,
+      amount: 500,
+      label: " Besondere Vereinbarung August-Woche ",
+    });
+    await admin.mutation(api.commissions.adjustments.addExtra, {
+      ...key,
+      amount: -20.5,
+      label: "Abzug",
+    });
+    const row = await ben();
+    expect(row).toMatchObject({ extrasTotal: 479.5, total: 479.5 });
+    expect(row.extras.map((e) => e.label)).toEqual([
+      "Besondere Vereinbarung August-Woche",
+      "Abzug",
+    ]);
+
+    // Anderes Anpassen lässt die Beträge stehen.
+    await admin.mutation(api.commissions.adjustments.set, { ...key, wonOverride: 40 });
+    expect(await ben()).toMatchObject({ extrasTotal: 479.5, total: 739.5 });
+    await admin.mutation(api.commissions.adjustments.set, { ...key, wonOverride: null });
+
+    for (const e of row.extras) {
+      await admin.mutation(api.commissions.adjustments.removeExtra, { ...key, id: e.id });
+    }
+    expect(await ben()).toMatchObject({ extras: [], total: 0 });
+    expect(await t.run((ctx) => ctx.db.query("commissionAdjustments").collect())).toHaveLength(0);
+
+    await expect(
+      admin.mutation(api.commissions.adjustments.addExtra, { ...key, amount: 0, label: "x" }),
+    ).rejects.toThrow();
+    await expect(
+      admin.mutation(api.commissions.adjustments.addExtra, { ...key, amount: 10, label: "  " }),
+    ).rejects.toThrow();
+    await expect(
+      t.withIdentity({ subject: "anna" }).mutation(api.commissions.adjustments.addExtra, {
+        ...key,
+        amount: 10,
+        label: "x",
+      }),
+    ).rejects.toThrow();
+  });
 });

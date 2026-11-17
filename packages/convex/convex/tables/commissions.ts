@@ -15,6 +15,18 @@ export const commissionTables = {
     hitrateOverride: v.optional(v.number()),
     healthyPaid: v.optional(v.boolean()),
     note: v.optional(v.string()),
+    /** Sonderbeträge, e.g. "500 € besondere Vereinbarung"; negative = Abzug. */
+    extras: v.optional(
+      v.array(
+        v.object({
+          id: v.string(),
+          amount: v.number(),
+          label: v.string(),
+          addedBy: v.id("users"),
+          addedAt: v.number(),
+        }),
+      ),
+    ),
     updatedBy: v.id("users"),
     updatedAt: v.number(),
   })
