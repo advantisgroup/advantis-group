@@ -50,7 +50,7 @@
   "uploadStatusUploading": "Uploading… {percent}%",
   "uploadStatusProcessing": "Processing…",
   "uploadFailuresTitle": "Failed uploads (last 14 days)",
-  "uploadFailuresHint": "These files did not arrive. The message says why.",
+  "uploadFailuresHint": "These files didn't arrive. The message says why. “Retry” reads the stored file again – e.g. after a fix.",
   "uploadLogTitle": "Recent uploads",
   "uploadLogEmpty": "No uploads yet.",
   "uploadLogFile": "File",
@@ -843,5 +843,7 @@
   "settingsCallHistoryBusy": "Adopting …",
   "settingsCallHistoryDone": "Adopted: {days} days of call figures, {interactions} interactions.",
   "settingsCallHistoryError": "Adopting failed.",
-  "uploadKindOnboarding": "Onboarding report → onboarding cockpit"
+  "uploadKindOnboarding": "Onboarding report → onboarding cockpit",
+  "uploadRetryOk": "Upload retried – the file is imported now.",
+  "uploadRetryNoFile": "The file of this upload isn't stored – please upload it again."
 }

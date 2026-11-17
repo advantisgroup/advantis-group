@@ -226,9 +226,28 @@ async function importReportBytes(input: {
     }
     return result;
   } catch (err) {
-    // Nothing was imported or logged — don't keep the staged copy.
-    await deleteStaged(storageId);
-    throw importError(err);
+    const error = importError(err);
+    // Nothing was imported. The file is kept with the failure entry, so an
+    // admin can retry it from the upload page later (e.g. after a fix)
+    // without the uploader sending it again; a busy import lock is just
+    // "try again", nothing to keep.
+    if (error.status === 409) {
+      await deleteStaged(storageId);
+    } else {
+      await getConvex()
+        .mutation(api.performance.uploadFailures.apiRecordWithFile, {
+          serverKey: getConvexServerKey(),
+          companyId,
+          filename,
+          fileSize: bytes.length,
+          message: error.message,
+          uploadedBy,
+          storageId,
+          contentHash,
+        })
+        .catch(() => deleteStaged(storageId));
+    }
+    throw error;
   }
 }
 

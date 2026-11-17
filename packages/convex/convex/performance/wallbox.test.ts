@@ -308,6 +308,35 @@ describe("wallbox dashboard", () => {
     expect(cases.every((c) => c.name === "")).toBe(true);
   });
 
+  test("a failed upload with its kept file can be retried from the list", async () => {
+    const { t, ids, as } = await setup();
+    const content =
+      "As of 2026-10-05\nLead Owner;Lead Status;Create Date;Last Activity\nSam Sales;Open;01.10.2026;";
+    const failureId = await t.run(async (ctx) => {
+      const storageId = await ctx.storage.store(new Blob([new TextEncoder().encode(content)]));
+      return ctx.db.insert("performanceUploadFailures", {
+        companyId: ids.sales,
+        filename: "lead.csv",
+        message: "Import fehlgeschlagen",
+        uploadedBy: "Jörg",
+        at: Date.now(),
+        storageId,
+        contentHash: "h-retry",
+      });
+    });
+    const listed = await as("admin").query(api.performance.uploadFailures.list, {
+      companyId: ids.sales,
+    });
+    expect(listed[0]).toMatchObject({ filename: "lead.csv", canRetry: true });
+    const result = await as("admin").action(api.performance.uploadParse.retryFailedUpload, {
+      failureId,
+    });
+    expect(result).toMatchObject({ status: "ok", reportKind: "lead" });
+    expect(
+      await as("admin").query(api.performance.uploadFailures.list, { companyId: ids.sales }),
+    ).toHaveLength(0);
+  });
+
   test("one call report reaches every dashboard whose team has the agent", async () => {
     const { t, ids, upload } = await setup();
     const result = await upload(

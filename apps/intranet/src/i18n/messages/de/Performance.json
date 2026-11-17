@@ -50,7 +50,7 @@
   "uploadStatusUploading": "Wird hochgeladen … {percent}%",
   "uploadStatusProcessing": "Wird verarbeitet …",
   "uploadFailuresTitle": "Fehlgeschlagene Uploads (letzte 14 Tage)",
-  "uploadFailuresHint": "Diese Dateien sind nicht angekommen. Die Meldung sagt, woran es lag.",
+  "uploadFailuresHint": "Diese Dateien sind nicht angekommen. Die Meldung sagt, woran es lag. Mit „Erneut versuchen“ wird die gespeicherte Datei noch einmal eingelesen – z. B. nach einer Korrektur.",
   "uploadLogTitle": "Letzte Uploads",
   "uploadLogEmpty": "Noch keine Uploads.",
   "uploadLogFile": "Datei",
@@ -843,5 +843,7 @@
   "settingsCallHistoryBusy": "Wird übernommen …",
   "settingsCallHistoryDone": "Übernommen: {days} Tage Call-Zahlen, {interactions} Interaktionen.",
   "settingsCallHistoryError": "Übernahme fehlgeschlagen.",
-  "uploadKindOnboarding": "Onboarding-Report → Onboarding-Cockpit"
+  "uploadKindOnboarding": "Onboarding-Report → Onboarding-Cockpit",
+  "uploadRetryOk": "Upload nachgeholt – die Datei ist jetzt importiert.",
+  "uploadRetryNoFile": "Die Datei ist zu diesem Upload nicht gespeichert – bitte erneut hochladen."
 }
