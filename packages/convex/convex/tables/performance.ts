@@ -586,6 +586,10 @@ export const performanceTables = {
     message: v.string(),
     uploadedBy: v.string(),
     at: v.number(),
+    /** The file, kept so the upload can be retried from the list (17.11.);
+     * missing for failures recorded before, or that never reached storage. */
+    storageId: v.optional(v.id("_storage")),
+    contentHash: v.optional(v.string()),
   }).index("by_company_at", ["companyId", "at"]),
 
   // "Ansicht als": an admin looking at Performance as another intranet user

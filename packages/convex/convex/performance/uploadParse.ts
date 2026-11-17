@@ -1040,6 +1040,56 @@ export const reimportUpload = userAction({
   },
 });
 
+/** Retries a failed upload from the failure list with the file it kept –
+ * e.g. after a fix – without anyone uploading it again (17.11.). */
+export const retryFailedUpload = userAction({
+  role: "admin",
+  args: { failureId: v.id("performanceUploadFailures") },
+  handler: async (ctx, { failureId }): Promise<ImportResult> => {
+    const failure = await ctx.runQuery(internal.performance.uploadFailures.getForRetry, {
+      failureId,
+    });
+    if (!failure || !failure.storageId) {
+      throw new ConvexError({
+        code: "not_found",
+        message:
+          "Zu diesem Upload ist keine Datei mehr gespeichert – bitte die Datei erneut hochladen.",
+      });
+    }
+    const { companyId, storageId } = failure;
+    await requireCompanyExists(ctx, companyId);
+    try {
+      const result = await withImportLock(ctx, companyId, failure.uploadedBy, () =>
+        processReport(ctx, companyId, {
+          filename: failure.filename,
+          storageId,
+          contentHash: failure.contentHash ?? "",
+          fileSize: failure.fileSize,
+          uploadedBy: failure.uploadedBy,
+        }),
+      );
+      await ctx.runMutation(internal.performance.uploadFailures.afterRetry, {
+        failureId,
+        ok: true,
+      });
+      return result;
+    } catch (err) {
+      const message =
+        err instanceof ConvexError
+          ? ((err.data as { message?: string } | undefined)?.message ?? String(err.data))
+          : err instanceof Error
+            ? err.message
+            : String(err);
+      await ctx.runMutation(internal.performance.uploadFailures.afterRetry, {
+        failureId,
+        ok: false,
+        message,
+      });
+      throw err;
+    }
+  },
+});
+
 /** Re-imports every file in a batch, sequentially (not in parallel) so a
  * large batch doesn't fan out into a burst of concurrent Node actions —
  * each file's parse is small and fast, and the DB layer already skips a

@@ -533,8 +533,25 @@ function DailyStatus({
  * so another admin (or the uploader after a reload) can see why. */
 function FailedUploads({ companyId, locale }: { companyId: Id<"companies">; locale: string }) {
   const t = useTranslations("Performance");
+  const handleError = useErrorHandler();
   const failures = useQuery(api.performance.uploadFailures.list, { companyId });
+  const retryUpload = useAction(api.performance.uploadParse.retryFailedUpload);
+  const [retrying, setRetrying] = useState<string | null>(null);
   if (!failures || failures.length === 0) return null;
+
+  // Retries with the file the failure kept – no new upload needed (17.11.).
+  async function retry(id: Id<"performanceUploadFailures">) {
+    setRetrying(id);
+    try {
+      const result = await retryUpload({ failureId: id });
+      if (result.status === "ok") toast.success(t("uploadRetryOk"));
+      else if (result.status === "empty") toast.info(t("uploadEmpty"));
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setRetrying(null);
+    }
+  }
   return (
     <section className="space-y-3">
       <div>
@@ -555,7 +572,26 @@ function FailedUploads({ companyId, locale }: { companyId: Id<"companies">; loca
                   </span>
                 </div>
                 <p className="text-destructive">{f.message}</p>
+                {!f.canRetry && (
+                  <p className="text-xs text-muted-foreground">{t("uploadRetryNoFile")}</p>
+                )}
               </div>
+              {f.canRetry && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0 self-start"
+                  disabled={retrying !== null}
+                  onClick={() => void retry(f.id)}
+                >
+                  {retrying === f.id ? (
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <RotateCw className="mr-1.5 h-3.5 w-3.5" />
+                  )}
+                  {t("uploadRetry")}
+                </Button>
+              )}
             </li>
           ))}
         </ul>
