@@ -16,12 +16,12 @@
  * refreshes only the report columns, and customers that drop out of the
  * report stay (flagged `inReport: false`) until an admin archives them.
  */
-import { ConvexError, v } from "convex/values";
+import { ConvexError, type ObjectType, v } from "convex/values";
 
 import { internal } from "../_generated/api";
 import { type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "../_generated/server";
-import { userMutation, userQuery } from "../functions";
+import { internalMutation, internalQuery, userMutation, userQuery } from "../functions";
 import { type Caller } from "../lib/caller";
 import { displayName } from "../lib/users";
 import { onboardingOutcomeValidator } from "../tables/performance";
@@ -1450,27 +1450,35 @@ export const importStart = userMutation({
   },
   handler: async (ctx, args) => {
     const access = await requireManage(ctx);
-    if (args.kind === "prio" && args.resetPrio) {
-      const all = await ctx.db.query("onboardingCases").collect();
-      for (const row of all) {
-        if (row.prio) await ctx.db.patch(row._id, { prio: false, updatedAt: Date.now() });
-      }
-    }
-    return await ctx.db.insert("onboardingImports", {
-      kind: args.kind,
-      fileName: args.fileName.slice(0, 200),
-      byUserId: access.userId,
-      byName: access.name,
-      startedAt: Date.now(),
-      rows: 0,
-      created: 0,
-      updated: 0,
-      missing: 0,
-      prioHits: 0,
-      resetPrio: args.resetPrio,
-    });
+    return await startImport(ctx, { userId: access.userId, name: access.name }, args);
   },
 });
+
+async function startImport(
+  ctx: MutationCtx,
+  by: { userId?: Id<"users">; name: string },
+  args: { kind: "report" | "prio"; fileName: string; resetPrio?: boolean },
+): Promise<Id<"onboardingImports">> {
+  if (args.kind === "prio" && args.resetPrio) {
+    const all = await ctx.db.query("onboardingCases").collect();
+    for (const row of all) {
+      if (row.prio) await ctx.db.patch(row._id, { prio: false, updatedAt: Date.now() });
+    }
+  }
+  return await ctx.db.insert("onboardingImports", {
+    kind: args.kind,
+    fileName: args.fileName.slice(0, 200),
+    byUserId: by.userId,
+    byName: by.name,
+    startedAt: Date.now(),
+    rows: 0,
+    created: 0,
+    updated: 0,
+    missing: 0,
+    prioHits: 0,
+    resetPrio: args.resetPrio,
+  });
+}
 
 async function openImport(
   ctx: MutationCtx,
@@ -1489,80 +1497,89 @@ const fieldValidator = v.object({ label: v.string(), value: v.string() });
 /** Up to 250 report rows: new customers become cases (status guessed from
  * the report), known ones get fresh report columns — status, assignee,
  * prio and follow-up stay as they are. */
+const reportChunkArgs = {
+  importId: v.id("onboardingImports"),
+  rows: v.array(
+    v.object({
+      customerNumber: v.string(),
+      name: v.optional(v.string()),
+      reportStatus: v.optional(v.string()),
+      reportOwner: v.optional(v.string()),
+      reportDate: v.optional(v.string()),
+      accountStatus: v.optional(v.string()),
+      closeDate: v.optional(v.string()),
+      fields: v.optional(v.array(fieldValidator)),
+    }),
+  ),
+};
+
 export const importReportChunk = userMutation({
-  args: {
-    importId: v.id("onboardingImports"),
-    rows: v.array(
-      v.object({
-        customerNumber: v.string(),
-        name: v.optional(v.string()),
-        reportStatus: v.optional(v.string()),
-        reportOwner: v.optional(v.string()),
-        reportDate: v.optional(v.string()),
-        accountStatus: v.optional(v.string()),
-        closeDate: v.optional(v.string()),
-        fields: v.optional(v.array(fieldValidator)),
-      }),
-    ),
-  },
+  args: reportChunkArgs,
   handler: async (ctx, args) => {
     await requireManage(ctx);
-    if (args.rows.length > MAX_CHUNK) throw invalid(`Höchstens ${MAX_CHUNK} Zeilen je Teil.`);
-    const imp = await openImport(ctx, args.importId, "report");
-    const now = Date.now();
-    let created = 0;
-    let updated = 0;
-    for (const r of args.rows) {
-      const key = customerKey(r.customerNumber);
-      if (!key) continue;
-      const report = {
-        reportStatus: r.reportStatus?.trim() || undefined,
-        reportOwner: r.reportOwner?.trim() || undefined,
-        reportDate: r.reportDate?.trim() || undefined,
-        accountStatus: r.accountStatus?.trim() || undefined,
-        closeDate: r.closeDate?.trim() || undefined,
-        reportFields: (r.fields ?? []).slice(0, MAX_REPORT_FIELDS),
-        inReport: true,
-        lastImportId: imp._id,
-        updatedAt: now,
-      };
-      const existing = await ctx.db
-        .query("onboardingCases")
-        .withIndex("by_key", (q) => q.eq("customerKey", key))
-        .first();
-      if (existing) {
-        await ctx.db.patch(existing._id, {
-          ...report,
-          customerNumber: r.customerNumber.trim() || existing.customerNumber,
-          name: r.name?.trim() || existing.name,
-        });
-        updated++;
-      } else {
-        const status = statusFromReport(r.reportStatus);
-        await ctx.db.insert("onboardingCases", {
-          ...report,
-          customerKey: key,
-          customerNumber: r.customerNumber.trim(),
-          name: r.name?.trim() || "",
-          status,
-          milestonesDone: milestonesForStatus(status),
-          ...(isClosedStatus(status) ? { closedAt: now } : {}),
-          // New and not yet worked on: Pre-Pool for three days (13.11.).
-          ...(status === "fresh" ? { prePoolUntil: prePoolRelease(imp.startedAt) } : {}),
-          prio: false,
-          createdAt: now,
-        });
-        created++;
-      }
-    }
-    await ctx.db.patch(imp._id, {
-      rows: imp.rows + args.rows.length,
-      created: imp.created + created,
-      updated: imp.updated + updated,
-    });
-    return { created, updated };
+    return await applyReportChunk(ctx, args);
   },
 });
+
+async function applyReportChunk(
+  ctx: MutationCtx,
+  args: ObjectType<typeof reportChunkArgs>,
+): Promise<{ created: number; updated: number }> {
+  if (args.rows.length > MAX_CHUNK) throw invalid(`Höchstens ${MAX_CHUNK} Zeilen je Teil.`);
+  const imp = await openImport(ctx, args.importId, "report");
+  const now = Date.now();
+  let created = 0;
+  let updated = 0;
+  for (const r of args.rows) {
+    const key = customerKey(r.customerNumber);
+    if (!key) continue;
+    const report = {
+      reportStatus: r.reportStatus?.trim() || undefined,
+      reportOwner: r.reportOwner?.trim() || undefined,
+      reportDate: r.reportDate?.trim() || undefined,
+      accountStatus: r.accountStatus?.trim() || undefined,
+      closeDate: r.closeDate?.trim() || undefined,
+      reportFields: (r.fields ?? []).slice(0, MAX_REPORT_FIELDS),
+      inReport: true,
+      lastImportId: imp._id,
+      updatedAt: now,
+    };
+    const existing = await ctx.db
+      .query("onboardingCases")
+      .withIndex("by_key", (q) => q.eq("customerKey", key))
+      .first();
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        ...report,
+        customerNumber: r.customerNumber.trim() || existing.customerNumber,
+        name: r.name?.trim() || existing.name,
+      });
+      updated++;
+    } else {
+      const status = statusFromReport(r.reportStatus);
+      await ctx.db.insert("onboardingCases", {
+        ...report,
+        customerKey: key,
+        customerNumber: r.customerNumber.trim(),
+        name: r.name?.trim() || "",
+        status,
+        milestonesDone: milestonesForStatus(status),
+        ...(isClosedStatus(status) ? { closedAt: now } : {}),
+        // New and not yet worked on: Pre-Pool for three days (13.11.).
+        ...(status === "fresh" ? { prePoolUntil: prePoolRelease(imp.startedAt) } : {}),
+        prio: false,
+        createdAt: now,
+      });
+      created++;
+    }
+  }
+  await ctx.db.patch(imp._id, {
+    rows: imp.rows + args.rows.length,
+    created: imp.created + created,
+    updated: imp.updated + updated,
+  });
+  return { created, updated };
+}
 
 /** Up to 250 customer numbers from a prio list: matching cases get the
  * prio mark, numbers without a case are counted as missing. */
@@ -1603,32 +1620,62 @@ export const importFinish = userMutation({
   args: { importId: v.id("onboardingImports") },
   handler: async (ctx, args) => {
     await requireManage(ctx);
-    const imp = await ctx.db.get(args.importId);
-    if (!imp || imp.finishedAt !== undefined) {
-      throw invalid("Import nicht gefunden oder schon abgeschlossen.");
-    }
-    let missing = imp.missing;
-    if (imp.kind === "report") {
-      if (imp.rows === 0) throw invalid("Der Report enthielt keine Fälle.");
-      missing = 0;
-      const all = await ctx.db.query("onboardingCases").collect();
-      for (const row of all) {
-        if (row.lastImportId === imp._id || row.archivedAt) continue;
-        // Entered by hand and never in a report: nothing to miss.
-        if (row.manual && !row.lastImportId) continue;
-        if (row.inReport) await ctx.db.patch(row._id, { inReport: false, updatedAt: Date.now() });
-        missing++;
-      }
-    }
-    await ctx.db.patch(imp._id, { finishedAt: Date.now(), missing });
-    const fresh = await ctx.db.get(imp._id);
-    return {
-      kind: imp.kind,
-      rows: fresh!.rows,
-      created: fresh!.created,
-      updated: fresh!.updated,
-      missing,
-      prioHits: fresh!.prioHits,
-    };
+    return await finishImport(ctx, args.importId);
   },
+});
+
+async function finishImport(ctx: MutationCtx, importId: Id<"onboardingImports">) {
+  const imp = await ctx.db.get(importId);
+  if (!imp || imp.finishedAt !== undefined) {
+    throw invalid("Import nicht gefunden oder schon abgeschlossen.");
+  }
+  let missing = imp.missing;
+  if (imp.kind === "report") {
+    if (imp.rows === 0) throw invalid("Der Report enthielt keine Fälle.");
+    missing = 0;
+    const all = await ctx.db.query("onboardingCases").collect();
+    for (const row of all) {
+      if (row.lastImportId === imp._id || row.archivedAt) continue;
+      // Entered by hand and never in a report: nothing to miss.
+      if (row.manual && !row.lastImportId) continue;
+      if (row.inReport) await ctx.db.patch(row._id, { inReport: false, updatedAt: Date.now() });
+      missing++;
+    }
+  }
+  await ctx.db.patch(imp._id, { finishedAt: Date.now(), missing });
+  const fresh = await ctx.db.get(imp._id);
+  return {
+    kind: imp.kind,
+    rows: fresh!.rows,
+    created: fresh!.created,
+    updated: fresh!.updated,
+    missing,
+    prioHits: fresh!.prioHits,
+  };
+}
+
+// The Onboarding report uploaded on the Performance page of the cockpit's
+// dashboard (Jörg, 17.11.): the upload action runs it through these – the
+// same as the cockpit's own import, with the uploader's name.
+
+/** Whether a Performance dashboard is the one linked to the cockpit. */
+export const isCockpitDashboard = internalQuery({
+  args: { companyId: v.id("companies") },
+  handler: async (ctx, { companyId }) => !!(await ctx.db.get(companyId))?.onboardingCockpit,
+});
+
+export const serverImportStart = internalMutation({
+  args: { fileName: v.string(), byName: v.string() },
+  handler: async (ctx, args) =>
+    await startImport(ctx, { name: args.byName }, { kind: "report", fileName: args.fileName }),
+});
+
+export const serverImportChunk = internalMutation({
+  args: reportChunkArgs,
+  handler: async (ctx, args) => await applyReportChunk(ctx, args),
+});
+
+export const serverImportFinish = internalMutation({
+  args: { importId: v.id("onboardingImports") },
+  handler: async (ctx, args) => await finishImport(ctx, args.importId),
 });

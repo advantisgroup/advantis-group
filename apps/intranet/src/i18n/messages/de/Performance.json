@@ -842,5 +842,6 @@
   "settingsCallHistoryHint": "Holt frühere Calls und Interaktionen der Personen aus anderen Dashboards (z. B. Sales) – für alle, die später ins Team gekommen sind. Schon vorhandene Tage bleiben unverändert.",
   "settingsCallHistoryBusy": "Wird übernommen …",
   "settingsCallHistoryDone": "Übernommen: {days} Tage Call-Zahlen, {interactions} Interaktionen.",
-  "settingsCallHistoryError": "Übernahme fehlgeschlagen."
+  "settingsCallHistoryError": "Übernahme fehlgeschlagen.",
+  "uploadKindOnboarding": "Onboarding-Report → Onboarding-Cockpit"
 }

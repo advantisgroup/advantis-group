@@ -60,6 +60,7 @@ import { normalizeZipLocalHeaders } from "./lib/xlsxZip";
 import { toISODate, todayBerlin } from "./lib/workdays";
 import { parseAggregatedTemplate } from "./lib/aggregatedTemplate";
 import { readWallboxExport, summarizeMembers } from "./lib/wallboxImport";
+import { findHeaderRow, guessColumns, reportRows } from "./lib/onboarding";
 
 // Safely under Convex's 8192-element array-argument limit, with headroom
 // for the rest of each row's payload size.
@@ -476,7 +477,8 @@ export type ReportKind =
   | "template"
   | "interactions"
   | "wallbox_members"
-  | "wallbox_opps";
+  | "wallbox_opps"
+  | "onboarding";
 
 export type ImportResult =
   | {
@@ -533,6 +535,56 @@ function wrongDashboard(
     message: `${what} gehört ins ${where}. Bitte oben das passende Dashboard wählen und dort hochladen.`,
   });
 }
+
+/** Sends an Onboarding report into the cockpit (new cases, report fields,
+ * "nicht mehr im Report"), in the same chunks the cockpit's import uses. */
+async function importOnboardingReport(
+  ctx: ActionCtx,
+  rows: SheetRow[],
+  filename: string,
+  uploadedBy: string | undefined,
+): Promise<ImportResult> {
+  const h = findHeaderRow(rows as unknown[][]);
+  const headers = (rows[h] ?? []).map((x, i) => String(x ?? "").trim() || `Spalte ${i + 1}`);
+  const map = guessColumns(headers);
+  if (map.number < 0) {
+    throw new ConvexError({
+      code: "validation",
+      message:
+        "Im Onboarding-Report fehlt die Spalte mit der Kundennummer. Bitte im Onboarding-Cockpit unter „Import“ hochladen und die Spalten dort zuordnen.",
+    });
+  }
+  const parsed = reportRows(headers, (rows as unknown[][]).slice(h + 1), map);
+  if (parsed.rows.length === 0) {
+    return { status: "empty", reportDate: toISODate(todayBerlin()) };
+  }
+  const importId = await runSafely("onboardingImportStart", () =>
+    ctx.runMutation(internal.performance.onboarding.serverImportStart, {
+      fileName: filename,
+      byName: uploadedBy ?? "Performance-Upload",
+    }),
+  );
+  for (let i = 0; i < parsed.rows.length; i += ONBOARDING_CHUNK) {
+    // Customer names stay out of the intranet (27.10.).
+    const chunk = parsed.rows
+      .slice(i, i + ONBOARDING_CHUNK)
+      .map(({ name: _name, ...rest }) => rest);
+    await runSafely("onboardingImportChunk", () =>
+      ctx.runMutation(internal.performance.onboarding.serverImportChunk, { importId, rows: chunk }),
+    );
+  }
+  const result = await runSafely("onboardingImportFinish", () =>
+    ctx.runMutation(internal.performance.onboarding.serverImportFinish, { importId }),
+  );
+  return {
+    status: "ok",
+    rowsImported: result.rows,
+    reportKind: "onboarding",
+    reportDate: toISODate(todayBerlin()),
+  };
+}
+
+const ONBOARDING_CHUNK = 200;
 
 async function processReport(
   ctx: ActionCtx,
@@ -646,6 +698,16 @@ async function processReport(
   }
 
   const sf = readSalesforceExport(rows);
+  // The Onboarding report (KI_Onboarding_all) is a Salesforce export too –
+  // on the cockpit's dashboard it goes into the Onboarding-Cockpit, the
+  // same as its own Import tab (Jörg, 17.11.).
+  if (
+    sf &&
+    kind !== "sales" &&
+    (await ctx.runQuery(internal.performance.onboarding.isCockpitDashboard, { companyId }))
+  ) {
+    return importOnboardingReport(ctx, rows, filename, uploadedBy);
+  }
   if (sf && kind !== "sales") {
     throw wrongDashboard(
       sf.kind === "lead" ? "Der Salesforce-Lead-Report" : "Der Salesforce-Opportunity-Report",

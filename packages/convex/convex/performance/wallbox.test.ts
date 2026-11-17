@@ -288,6 +288,26 @@ describe("wallbox dashboard", () => {
     ).rejects.toThrow("Sales-Dashboard");
   });
 
+  test("the Onboarding report on the cockpit's dashboard goes into the cockpit", async () => {
+    const { t, ids, upload } = await setup();
+    const report =
+      "KI_Onboarding_all\nAs of 2026-11-17 08:40\n" +
+      "Opportunity Owner;Stage;Customer Number;Account Name;Close Date\n" +
+      "Olga;Closed Won;672156;Firma A;21.10.2026\n" +
+      "Olga;Closed Won;672157;Firma B;22.10.2026";
+    // Without the cockpit link it is still a Salesforce report for Sales.
+    await expect(upload(ids.onboarding, "KI_Onboarding_all.csv", report)).rejects.toThrow(
+      "Sales-Dashboard",
+    );
+    await t.run((ctx) => ctx.db.patch(ids.onboarding, { onboardingCockpit: true }));
+    const result = await upload(ids.onboarding, "KI_Onboarding_all-2.csv", report);
+    expect(result).toMatchObject({ status: "ok", reportKind: "onboarding", rowsImported: 2 });
+    const cases = await t.run((ctx) => ctx.db.query("onboardingCases").collect());
+    expect(cases.map((c) => c.customerNumber).sort()).toEqual(["672156", "672157"]);
+    // No customer names in the intranet.
+    expect(cases.every((c) => c.name === "")).toBe(true);
+  });
+
   test("one call report reaches every dashboard whose team has the agent", async () => {
     const { t, ids, upload } = await setup();
     const result = await upload(

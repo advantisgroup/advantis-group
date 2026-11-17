@@ -857,7 +857,8 @@ export const performanceTables = {
   onboardingImports: defineTable({
     kind: v.union(v.literal("report"), v.literal("prio")),
     fileName: v.string(),
-    byUserId: v.id("users"),
+    /** Missing for a report sent via the Performance upload (17.11.). */
+    byUserId: v.optional(v.id("users")),
     byName: v.string(),
     startedAt: v.number(),
     finishedAt: v.optional(v.number()),
