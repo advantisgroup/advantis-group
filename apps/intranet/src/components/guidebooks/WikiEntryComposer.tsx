@@ -39,6 +39,7 @@ import { RichTextSurface } from "@/components/ui/rich-text-editor";
 import { RichTextToolbar } from "@/components/ui/rich-text-toolbar";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useKeyboardInset } from "@/hooks/use-keyboard-inset";
+import { useRichImageUpload } from "@/hooks/use-rich-image-upload";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import {
@@ -197,6 +198,7 @@ export function WikiEntryComposer({ entry }: { entry: WikiEntry | { draftId: Id<
     value: entryForm.erklaerung,
     onChange: entryForm.setErklaerung,
   });
+  const uploadImage = useRichImageUpload();
   const { isEditing, entryKey, draft, readiness } = entryForm;
   const composeHref =
     "draftId" in entry ? `/guidebooks/draft/${entry.draftId}` : `/guidebooks/${entry.slug}/compose`;
@@ -459,6 +461,7 @@ export function WikiEntryComposer({ entry }: { entry: WikiEntry | { draftId: Id<
                     <RichTextToolbar
                       controller={controller}
                       fileLinkCandidates={entryForm.fileLinkCandidates}
+                      onUploadImage={uploadImage}
                       className="min-w-0 flex-1"
                     />
                     <ImportButton
@@ -496,6 +499,7 @@ export function WikiEntryComposer({ entry }: { entry: WikiEntry | { draftId: Id<
                     <RichTextToolbar
                       controller={controller}
                       fileLinkCandidates={entryForm.fileLinkCandidates}
+                      onUploadImage={uploadImage}
                       className="min-w-0 flex-1 flex-nowrap overflow-x-auto"
                     />
                     <ImportButton
