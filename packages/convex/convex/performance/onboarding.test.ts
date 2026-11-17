@@ -883,6 +883,33 @@ describe("onboarding cockpit", () => {
     expect(stats[0]).toMatchObject({ customerNumber: "91", isIt: true, checks: 1 });
     expect(stats[0].closedAt).not.toBeNull();
   });
+  test("closing a case asks for the day – duration counts to that day", async () => {
+    const { as } = await setup();
+    const admin = as("admin");
+    await importReport(admin, [{ customerNumber: "92" }]);
+    const [c] = await admin.query(api.performance.onboarding.list, {});
+    await admin.mutation(api.performance.onboarding.setOutcome, {
+      caseId: c._id,
+      path: ["case", "case.bundle"],
+    });
+    const d = await admin.query(api.performance.onboarding.get, { caseId: c._id });
+    const tk = d.openTickets[0];
+    // A day before the case was opened is clamped to the opening.
+    await admin.mutation(api.performance.onboarding.answerTicket, {
+      ticketId: tk._id,
+      closed: true,
+      closedOn: "2020-01-01",
+    });
+    const [row] = await admin.query(api.performance.onboarding.ticketStats, {});
+    expect(row.closedAt).toBe(row.openedAt);
+    await expect(
+      admin.mutation(api.performance.onboarding.answerTicket, {
+        ticketId: tk._id,
+        closed: true,
+        closedOn: "kaputt",
+      }),
+    ).resolves.toBeNull(); // already closed – ignored
+  });
   test("new uploads wait in the Pre-Pool, hidden from consultants", async () => {
     vi.stubEnv("ONBOARDING_MODE", "live");
     const { as, ids } = await setup();

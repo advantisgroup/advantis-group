@@ -5,12 +5,13 @@ import { useMemo, useState } from "react";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { Check, Clock, LifeBuoy } from "lucide-react";
+import { ArrowLeft, Check, Clock, LifeBuoy } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatDateTime } from "@/lib/format";
@@ -18,6 +19,24 @@ import { cn } from "@/lib/utils";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const days = (from: number, to: number) => Math.max(0, Math.round((to - from) / DAY_MS));
+const isoDay = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+/** Chips for the most recent days; older ones via the date field. */
+const DAY_CHIPS = 14;
+
+/** Every day from the opening up to today, newest first. */
+function daysSince(openedAt: number): Date[] {
+  const out: Date[] = [];
+  const first = new Date(openedAt);
+  first.setHours(0, 0, 0, 0);
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  while (d >= first) {
+    out.push(new Date(d));
+    d.setDate(d.getDate() - 1);
+  }
+  return out;
+}
 
 type OpenTicket = {
   _id: Id<"onboardingTickets">;
@@ -46,13 +65,16 @@ export function TicketCheck({
   const handleError = useErrorHandler();
   const answer = useMutation(api.performance.onboarding.answerTicket);
   const [busy, setBusy] = useState<string | null>(null);
+  /** Ticket whose closing day is being picked (after "Ja, geschlossen"). */
+  const [picking, setPicking] = useState<string | null>(null);
   const pending = tickets.filter((tk) => !answered.has(tk._id));
   if (pending.length === 0) return null;
 
-  const respond = async (id: Id<"onboardingTickets">, closed: boolean) => {
+  const respond = async (id: Id<"onboardingTickets">, closed: boolean, closedOn?: string) => {
     setBusy(id);
     try {
-      await answer({ ticketId: id, closed });
+      await answer({ ticketId: id, closed, closedOn });
+      setPicking(null);
       onAnswered(id);
     } catch (e) {
       handleError(e, t("case.saveError"));
@@ -84,23 +106,111 @@ export function TicketCheck({
                 })}
               </span>
             </span>
-            <Button size="sm" disabled={busy === tk._id} onClick={() => void respond(tk._id, true)}>
-              <Check className="mr-1.5 h-3.5 w-3.5" />
-              {t("tickets.closed")}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={busy === tk._id}
-              onClick={() => void respond(tk._id, false)}
-            >
-              <Clock className="mr-1.5 h-3.5 w-3.5" />
-              {t("tickets.stillOpen")}
-            </Button>
+            {picking === tk._id ? (
+              <ClosedOnPicker
+                openedAt={tk.openedAt}
+                busy={busy === tk._id}
+                onPick={(day) => void respond(tk._id, true, day)}
+                onBack={() => setPicking(null)}
+              />
+            ) : (
+              <>
+                <Button size="sm" disabled={busy === tk._id} onClick={() => setPicking(tk._id)}>
+                  <Check className="mr-1.5 h-3.5 w-3.5" />
+                  {t("tickets.closed")}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={busy === tk._id}
+                  onClick={() => void respond(tk._id, false)}
+                >
+                  <Clock className="mr-1.5 h-3.5 w-3.5" />
+                  {t("tickets.stillOpen")}
+                </Button>
+              </>
+            )}
           </li>
         ))}
       </ul>
     </section>
+  );
+}
+
+/**
+ * "Wann wurde der Case geschlossen?" (17.11.) – one chip per day since the
+ * case was opened (Heute, Gestern, then weekday + date), older days via a
+ * date field. The duration is counted up to the picked day.
+ */
+function ClosedOnPicker({
+  openedAt,
+  busy,
+  onPick,
+  onBack,
+}: {
+  openedAt: number;
+  busy: boolean;
+  onPick: (day: string) => void;
+  onBack: () => void;
+}) {
+  const t = useTranslations("OnboardingCockpit");
+  const locale = useLocale();
+  const all = daysSince(openedAt);
+  const chips = all.slice(0, DAY_CHIPS);
+  const older = all.slice(DAY_CHIPS);
+  const label = (d: Date, i: number) =>
+    i === 0
+      ? t("tickets.today")
+      : i === 1
+        ? t("tickets.yesterday")
+        : d.toLocaleDateString(locale, { weekday: "short", day: "2-digit", month: "2-digit" });
+
+  return (
+    <div className="w-full space-y-2 border-t border-border/60 pt-2">
+      <div className="flex items-center gap-2 text-xs font-medium">
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-7 px-2"
+          disabled={busy}
+          onClick={onBack}
+          aria-label={t("tickets.back")}
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+        </Button>
+        {t("tickets.closedOnTitle")}
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {chips.map((d, i) => (
+          <Button
+            key={isoDay(d)}
+            size="sm"
+            variant="outline"
+            className="h-8"
+            disabled={busy}
+            onClick={() => onPick(isoDay(d))}
+          >
+            {label(d, i)}
+            <span className="ml-1.5 text-[11px] text-muted-foreground">
+              {t("tickets.dayN", { n: all.length - 1 - i })}
+            </span>
+          </Button>
+        ))}
+      </div>
+      {older.length > 0 && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          {t("tickets.olderDay")}
+          <Input
+            type="date"
+            className="h-8 w-[160px]"
+            disabled={busy}
+            min={isoDay(older[older.length - 1])}
+            max={isoDay(older[0])}
+            onChange={(e) => e.target.value && onPick(e.target.value)}
+          />
+        </div>
+      )}
+    </div>
   );
 }
 
