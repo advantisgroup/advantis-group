@@ -295,4 +295,27 @@ describe("commissions.queries.month", () => {
       }),
     ).rejects.toThrow();
   });
+
+  test("Sales-Team steht oben, alle anderen darunter", async () => {
+    const { t } = await setup();
+    await t.run(async (ctx) => {
+      const ben = (await ctx.db.query("users").collect()).find((u) => u.firstName === "Ben")!;
+      const admin = (await ctx.db.query("users").collect()).find((u) => u.firstName === "Ada")!;
+      const teamId = await ctx.db.insert("teams", {
+        name: "Sales",
+        slug: "sales",
+        createdAt: Date.now(),
+        createdBy: admin._id,
+      });
+      await ctx.db.insert("userTeams", { userId: ben._id, teamId });
+    });
+    const res = await t
+      .withIdentity({ subject: "admin" })
+      .query(api.commissions.queries.month, { ym: "2026-10" });
+    // Ben (Sales, 0 €) vor Anna (kein Team, 960 €).
+    expect(res.rows.map((r) => [r.name, r.sales])).toEqual([
+      ["Ben Test", true],
+      ["Anna Test", false],
+    ]);
+  });
 });

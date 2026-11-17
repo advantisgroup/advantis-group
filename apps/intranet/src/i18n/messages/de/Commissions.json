@@ -67,5 +67,13 @@
   "extraRemoved": "Betrag entfernt.",
   "extraRemove": "„{label}“ entfernen",
   "cancel": "Abbrechen",
-  "ruleExtras": "Sonderbeträge (z. B. besondere Vereinbarungen) lassen sich je Mitarbeiter und Monat dazu buchen und kommen in die Summe; ein Minus-Betrag zieht ab."
+  "ruleExtras": "Sonderbeträge (z. B. besondere Vereinbarungen) lassen sich je Mitarbeiter und Monat dazu buchen und kommen in die Summe; ein Minus-Betrag zieht ab.",
+  "colWonShort": "Won",
+  "colWeeksShort": "Wochen",
+  "colMonthShort": "> 60",
+  "colHitrateBonusShort": "HR ≥ 25 %",
+  "colHealthyShort": "Gesund",
+  "colExtrasShort": "Sonder",
+  "groupSales": "Sales-Team",
+  "groupOthers": "Weitere Mitarbeiter"
 }

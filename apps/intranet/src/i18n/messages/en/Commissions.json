@@ -67,5 +67,13 @@
   "extraRemoved": "Amount removed.",
   "extraRemove": "Remove “{label}”",
   "cancel": "Cancel",
-  "ruleExtras": "Extra amounts (e.g. special agreements) can be added per employee and month and go into the total; a negative amount deducts."
+  "ruleExtras": "Extra amounts (e.g. special agreements) can be added per employee and month and go into the total; a negative amount deducts.",
+  "colWonShort": "Won",
+  "colWeeksShort": "Weeks",
+  "colMonthShort": "> 60",
+  "colHitrateBonusShort": "HR ≥ 25 %",
+  "colHealthyShort": "Healthy",
+  "colExtrasShort": "Extras",
+  "groupSales": "Sales team",
+  "groupOthers": "Other employees"
 }

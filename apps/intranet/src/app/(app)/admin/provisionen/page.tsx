@@ -228,26 +228,49 @@ export default function CommissionsPage() {
           <div className="overflow-x-auto rounded-xl border border-border/70 bg-card">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>{t("colEmployee")}</TableHead>
-                  <TableHead className="text-right">{t("colWon")}</TableHead>
-                  <TableHead className="text-right">{t("colHitrate")}</TableHead>
-                  <TableHead className="text-right">{t("colTier")}</TableHead>
-                  <TableHead className="text-right">{t("colWeeks")}</TableHead>
-                  <TableHead className="text-right">{t("colMonth")}</TableHead>
-                  <TableHead className="text-right">{t("colHitrateBonus")}</TableHead>
-                  <TableHead className="text-right">{t("colHealthy")}</TableHead>
-                  <TableHead className="text-right">{t("colExtras")}</TableHead>
-                  <TableHead className="text-right">{t("colTotal")}</TableHead>
+                <TableRow className="[&_th]:whitespace-nowrap [&_th]:text-xs">
+                  <TableHead className="w-[1%]">{t("colEmployee")}</TableHead>
+                  {(
+                    [
+                      ["colWon", "colWonShort"],
+                      ["colHitrate", "colHitrate"],
+                      ["colTier", "colTier"],
+                      ["colWeeks", "colWeeksShort"],
+                      ["colMonth", "colMonthShort"],
+                      ["colHitrateBonus", "colHitrateBonusShort"],
+                      ["colHealthy", "colHealthyShort"],
+                      ["colExtras", "colExtrasShort"],
+                    ] as const
+                  ).map(([full, short]) => (
+                    <TableHead key={full} className="text-right" title={t(full)}>
+                      {t(short)}
+                    </TableHead>
+                  ))}
+                  <TableHead className="bg-muted/40 text-right">{t("colTotal")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map((r) => {
+                {rows.map((r, i) => {
                   const isOpen = open.has(r.employeeId);
+                  const groupStart = i === 0 || rows[i - 1].sales !== r.sales;
+                  const quiet = r.total === 0 && r.won === 0 && !r.healthyDue;
                   return (
                     <Fragment key={r.employeeId}>
-                      <TableRow className="cursor-pointer" onClick={() => toggle(r.employeeId)}>
-                        <TableCell className="font-medium">
+                      {groupStart && rows.some((x) => x.sales) && (
+                        <TableRow className="hover:bg-transparent">
+                          <TableCell
+                            colSpan={10}
+                            className="bg-muted/30 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                          >
+                            {r.sales ? t("groupSales") : t("groupOthers")}
+                          </TableCell>
+                        </TableRow>
+                      )}
+                      <TableRow
+                        className={`cursor-pointer [&_td]:py-2.5 ${quiet ? "text-muted-foreground" : ""}`}
+                        onClick={() => toggle(r.employeeId)}
+                      >
+                        <TableCell className="whitespace-nowrap pr-6 font-medium">
                           <span className="flex items-center gap-1.5">
                             {isOpen ? (
                               <ChevronDown className="size-4 text-muted-foreground" />
@@ -258,7 +281,7 @@ export default function CommissionsPage() {
                             {!r.linked && <Badge variant="warning">{t("notLinked")}</Badge>}
                           </span>
                         </TableCell>
-                        <TableCell className="text-right tabular-nums">
+                        <TableCell className="whitespace-nowrap text-right tabular-nums">
                           <Overridden
                             on={r.wonOverridden}
                             title={t("autoValue", { value: r.autoWon })}
@@ -266,7 +289,7 @@ export default function CommissionsPage() {
                             {r.won}
                           </Overridden>
                         </TableCell>
-                        <TableCell className="text-right tabular-nums">
+                        <TableCell className="whitespace-nowrap text-right tabular-nums">
                           <Overridden
                             on={r.hitrateOverridden}
                             title={t("autoValue", {
@@ -283,7 +306,10 @@ export default function CommissionsPage() {
                         <Money value={r.weeksBonus} euro={euro} />
                         <Money value={r.monthBonus} euro={euro} />
                         <Money value={r.hitrateBonus} euro={euro} />
-                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                        <TableCell
+                          className="whitespace-nowrap text-right"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <HealthyToggle
                             row={r}
                             ym={data.ym}
@@ -291,7 +317,15 @@ export default function CommissionsPage() {
                             euro={euro}
                           />
                         </TableCell>
-                        <TableCell className="text-right font-semibold tabular-nums">
+                        <TableCell
+                          className={`whitespace-nowrap text-right tabular-nums ${r.extrasTotal === 0 ? "text-muted-foreground" : ""}`}
+                          title={r.extras
+                            .map((e) => `${euro.format(e.amount)} ${e.label}`)
+                            .join("\n")}
+                        >
+                          {r.extrasTotal === 0 ? "–" : euro.format(r.extrasTotal)}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap bg-muted/40 text-right font-semibold tabular-nums">
                           {euro.format(r.total)}
                         </TableCell>
                       </TableRow>
@@ -327,7 +361,7 @@ export default function CommissionsPage() {
                   <TableCell colSpan={9} className="font-medium">
                     {t("sum")}
                   </TableCell>
-                  <TableCell className="text-right font-semibold tabular-nums">
+                  <TableCell className="whitespace-nowrap bg-muted/40 text-right font-semibold tabular-nums">
                     {euro.format(total)}
                   </TableCell>
                 </TableRow>
@@ -377,6 +411,7 @@ function HealthyToggle({
         <span className="text-muted-foreground">–</span>
       )}
       <Checkbox
+        className={row.healthyPaid || row.healthyDue ? "" : "border-border"}
         checked={row.healthyPaid}
         aria-label={t("healthyPay", { name: row.name })}
         onCheckedChange={(checked) =>
@@ -619,7 +654,9 @@ function AdjustForm({ row, ym, companyId }: { row: Row; ym: string; companyId: I
 
 function Money({ value, euro }: { value: number; euro: Intl.NumberFormat }) {
   return (
-    <TableCell className={`text-right tabular-nums ${value === 0 ? "text-muted-foreground" : ""}`}>
+    <TableCell
+      className={`whitespace-nowrap text-right tabular-nums ${value === 0 ? "text-muted-foreground" : ""}`}
+    >
       {value === 0 ? "–" : euro.format(value)}
     </TableCell>
   );
