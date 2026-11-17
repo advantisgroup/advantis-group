@@ -80,14 +80,12 @@ function PersonalEmailFlow({ isAdmin }: { isAdmin: boolean }) {
   const handleError = useErrorHandler();
   const create = useAction(api.people.invites.create);
   const departments = useQuery(api.org.structure.listDepartments, {}) ?? [];
-  const teams = useQuery(api.org.structure.listTeams, {}) ?? [];
 
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [role, setRole] = useState<Role>("employee");
   const [departmentId, setDepartmentId] = useState<string>(NONE);
-  const [teamId, setTeamId] = useState<string>(NONE);
   const [jobTitle, setJobTitle] = useState("");
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
@@ -99,7 +97,6 @@ function PersonalEmailFlow({ isAdmin }: { isAdmin: boolean }) {
     setLastName("");
     setRole("employee");
     setDepartmentId(NONE);
-    setTeamId(NONE);
     setJobTitle("");
     setPhone("");
     setSentEmail(null);
@@ -114,7 +111,6 @@ function PersonalEmailFlow({ isAdmin }: { isAdmin: boolean }) {
         email: trimmed,
         role,
         departmentId: departmentId === NONE ? undefined : (departmentId as Id<"departments">),
-        teamIds: teamId === NONE ? undefined : [teamId as Id<"teams">],
         jobTitle: jobTitle.trim() || undefined,
         phone: phone.trim() || undefined,
         firstName: firstName.trim() || undefined,
@@ -153,7 +149,7 @@ function PersonalEmailFlow({ isAdmin }: { isAdmin: boolean }) {
         onLastName={setLastName}
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4">
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground">
             {t("onboardFieldDepartment")}
@@ -167,24 +163,6 @@ function PersonalEmailFlow({ isAdmin }: { isAdmin: boolean }) {
               {departments.map((d) => (
                 <SelectItem key={d._id} value={d._id}>
                   {d.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">
-            {t("onboardFieldTeam")}
-          </label>
-          <Select value={teamId} onValueChange={setTeamId}>
-            <SelectTrigger>
-              <SelectValue placeholder={t("onboardFieldTeamPlaceholder")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={NONE}>{t("onboardFieldNone")}</SelectItem>
-              {teams.map((team) => (
-                <SelectItem key={team._id} value={team._id}>
-                  {team.name}
                 </SelectItem>
               ))}
             </SelectContent>

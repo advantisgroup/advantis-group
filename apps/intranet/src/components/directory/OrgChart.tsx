@@ -33,7 +33,6 @@ import { cn } from "@/lib/utils";
 
 import { OrgPersonMenu, type OrgUnits } from "./OrgPersonMenu";
 import { OrgStructureBar } from "./OrgStructureBar";
-import { OrgStructureBoard } from "./OrgStructureBoard";
 import { type Person, type PersonStatus } from "./person-status";
 import { StatusPill } from "./StatusPill";
 
@@ -72,7 +71,6 @@ function OrgNode({
   const status = statuses.get(person._id);
   const leads = [
     ...(drag?.units?.departments ?? []).filter((d) => d.reportsToUserId === person._id),
-    ...(drag?.units?.teams ?? []).filter((team) => team.reportsToUserId === person._id),
   ].map((unit) => unit.name);
 
   return (
@@ -173,7 +171,6 @@ function OrgNode({
 interface Offer {
   person: Person;
   manager: Person;
-  teams: { _id: Id<"teams">; name: string }[];
   departments: { _id: Id<"departments">; name: string }[];
 }
 
@@ -181,18 +178,12 @@ function MembershipOffer({ offer, onClose }: { offer: Offer | null; onClose: () 
   const t = useTranslations("Directory");
   const tc = useTranslations("Common");
   const handleError = useErrorHandler();
-  const addToTeam = useMutation(api.org.structure.addUserToTeam);
   const setDepartment = useMutation(api.org.structure.setUserDepartment);
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
 
   const options = offer
     ? [
-        ...offer.teams.map((team) => ({
-          key: team._id,
-          label: t("orgOfferTeam", { name: team.name }),
-          apply: () => addToTeam({ userId: offer.person._id, teamId: team._id }),
-        })),
         ...offer.departments.map((department) => ({
           key: department._id,
           label: t("orgOfferDepartment", { name: department.name }),
@@ -281,10 +272,10 @@ export function OrgChart({
   const t = useTranslations("Directory");
   const handleError = useErrorHandler();
   const setManager = useMutation(api.people.users.setManager);
-  const teams = useQuery(api.org.structure.listTeams, {});
   const departments = useQuery(api.org.structure.listDepartments, {});
-  const units: OrgUnits | null =
-    teams && departments ? { teams, departments, canAdmin: canEdit, canSetDepartment } : null;
+  const units: OrgUnits | null = departments
+    ? { departments, canAdmin: canEdit, canSetDepartment }
+    : null;
   const [dragging, setDragging] = useState<Id<"users"> | null>(null);
   const [over, setOver] = useState<string | null>(null);
   const [ghost, setGhost] = useState<{ x: number; y: number } | null>(null);
@@ -384,16 +375,13 @@ export function OrgChart({
             : t("orgMovedTop", { person: person.name }),
         );
         if (!manager) return;
-        const ledTeams = (teams ?? []).filter(
-          (team) => team.reportsToUserId === manager._id && !person.teams.includes(team.slug),
-        );
         const ledDepartments = (departments ?? []).filter(
           (department) =>
             department.reportsToUserId === manager._id &&
             department.name.trim().toLowerCase() !== (person.department ?? "").trim().toLowerCase(),
         );
-        if (ledTeams.length || ledDepartments.length) {
-          setOffer({ person, manager, teams: ledTeams, departments: ledDepartments });
+        if (ledDepartments.length) {
+          setOffer({ person, manager, departments: ledDepartments });
         }
       })
       .catch(handleError);
@@ -430,7 +418,6 @@ export function OrgChart({
             </div>
           </section>
         )}
-        {units && <OrgStructureBoard units={units} people={people} />}
         {canEdit && dragging && (
           <div
             data-org-drop={ROOT}
@@ -445,7 +432,7 @@ export function OrgChart({
         )}
         {canEdit && !dragging && (
           <div className="space-y-2">
-            {units && <OrgStructureBar units={units} />}
+            <OrgStructureBar />
             <p className="text-xs text-muted-foreground">{t("orgDragHint")}</p>
           </div>
         )}

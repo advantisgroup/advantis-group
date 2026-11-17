@@ -10,14 +10,6 @@ import { Link } from "@/components/Link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -30,13 +22,12 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 import { addDaysIso, isoToday } from "@/lib/absences";
 import { useAbsencesCalendar } from "@/lib/time-absences";
 import { formatIsoDate, initials } from "@/lib/format";
-import { TEAMS, teamColor, teamLabel } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { type FunctionReturnType } from "convex/server";
-import { CalendarClock, CheckCircle2, Circle, FolderLock, Hash, Users2 } from "lucide-react";
+import { CalendarClock, CheckCircle2, Circle, FolderLock, Hash } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -107,73 +98,8 @@ export function Expertise({ tags, isSelf }: { tags: string[]; isSelf: boolean })
 /** Sections that load on their own fade in rather than snapping into place. */
 const LATE_SECTION = "animate-in fade-in-0 duration-300";
 
-export function TeamsEditor({ userId, teams }: { userId: Id<"users">; teams: string[] }) {
-  const t = useTranslations("Admin");
-  const tTeams = useTranslations("Teams");
-  const setTeams = useMutation(api.people.users.setTeams);
-  const handleError = useErrorHandler();
-
-  function toggle(id: string) {
-    const next = teams.includes(id) ? teams.filter((x) => x !== id) : [...teams, id];
-    setTeams({ userId, teams: next }).catch(handleError);
-  }
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button size="sm" variant="outline" className="h-9 w-full justify-start">
-          <Users2 className="size-3.5" />
-          <span className="truncate">
-            {teams.length > 0 ? teams.map((id) => teamLabel(tTeams, id)).join(", ") : t("teams")}
-          </span>
-          {teams.length > 0 && (
-            <span className="ml-auto flex shrink-0 items-center gap-1">
-              {teams.map((id) => (
-                <span key={id} className={cn("size-1.5 rounded-full", teamColor(id))} />
-              ))}
-            </span>
-          )}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-60">
-        <DropdownMenuLabel className="flex items-center justify-between">
-          <span>{t("teams")}</span>
-          <span className="text-xs font-normal tabular-nums text-muted-foreground">
-            {teams.length}/{TEAMS.length}
-          </span>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {TEAMS.map((team) => {
-          const checked = teams.includes(team.id);
-          return (
-            <DropdownMenuCheckboxItem
-              key={team.id}
-              checked={checked}
-              onCheckedChange={() => toggle(team.id)}
-              onSelect={(e) => e.preventDefault()}
-              className="gap-2 py-1.5"
-            >
-              <span
-                className={cn(
-                  "size-2 rounded-full transition-opacity",
-                  teamColor(team.id),
-                  checked ? "opacity-100" : "opacity-40",
-                )}
-              />
-              <span className="flex-1">{tTeams(team.labelKey)}</span>
-            </DropdownMenuCheckboxItem>
-          );
-        })}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
 const NOBODY = "nobody";
 
-/** People who manage members place someone in a department; admins can also
- *  pick someone by hand that they report to, on top of their team and
- *  department leads. */
 function OrganisationEditor({
   userId,
   departmentId,
