@@ -38,7 +38,8 @@ export type PerformanceReportKind =
   | "template"
   | "interactions"
   | "wallbox_members"
-  | "wallbox_opps";
+  | "wallbox_opps"
+  | "onboarding";
 
 export interface UploadReportResult {
   ok: boolean;

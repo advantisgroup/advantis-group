@@ -842,5 +842,6 @@
   "settingsCallHistoryHint": "Brings earlier calls and interactions of the people over from other dashboards (e.g. Sales) – for everyone who joined the team later. Days already present stay unchanged.",
   "settingsCallHistoryBusy": "Adopting …",
   "settingsCallHistoryDone": "Adopted: {days} days of call figures, {interactions} interactions.",
-  "settingsCallHistoryError": "Adopting failed."
+  "settingsCallHistoryError": "Adopting failed.",
+  "uploadKindOnboarding": "Onboarding report → onboarding cockpit"
 }

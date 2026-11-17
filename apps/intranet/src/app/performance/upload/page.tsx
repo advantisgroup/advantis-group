@@ -88,6 +88,7 @@ const REPORT_KIND_LABEL_KEY: Record<string, string> = {
   interactions: "uploadKindInteractions",
   wallbox_members: "uploadKindWallboxMembers",
   wallbox_opps: "uploadKindWallboxOpps",
+  onboarding: "uploadKindOnboarding",
 };
 
 type DailyKind = "lead" | "opp" | "wallbox_members" | "wallbox_opps" | "call" | "interactions";
