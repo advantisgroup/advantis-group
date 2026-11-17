@@ -15,7 +15,7 @@ import { userQuery } from "../functions";
 import { berlinDate, berlinInstant } from "../time/lib/berlin";
 import { loadViewer, requireTeamView, requireViewableEmployee } from "./lib/access";
 import { monthBounds, monthCompleted, shiftYm, type Snapshot, sumTeam } from "./lib/kpi";
-import { DEFAULT_STATUS_CONFIG, withBuiltins } from "./lib/onboarding";
+import { DEFAULT_STATUS_CONFIG, LEGACY_OUTCOME_LABELS, withBuiltins } from "./lib/onboarding";
 import { ymOf } from "./lib/onboardingMirror";
 import {
   CALL_KEYS,
@@ -61,7 +61,10 @@ export async function requireCockpitDashboard(
 export async function outcomeKindsByLabel(ctx: Ctx): Promise<Map<string, string>> {
   const row = await ctx.db.query("onboardingStatusConfig").first();
   const config = withBuiltins({ outcomes: row?.outcomes ?? DEFAULT_STATUS_CONFIG.outcomes });
-  return new Map(config.outcomes.map((o) => [o.label, o.kind ?? "other"]));
+  return new Map<string, string>([
+    ...Object.entries(LEGACY_OUTCOME_LABELS),
+    ...config.outcomes.map((o) => [o.label, o.kind ?? "other"] as const),
+  ]);
 }
 
 /** Cockpit log entries of the days `from`–`to` (Berlin). */

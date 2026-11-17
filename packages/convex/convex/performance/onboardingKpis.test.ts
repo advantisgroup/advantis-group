@@ -141,7 +141,7 @@ async function setup() {
     // … October: up to workday 3 (05.10.) one attempt, later ones don't count for VM.
     await log("2026-10-02", "reached", dalia);
     await log("2026-10-20", "reached", dalia);
-    return { companyId, dalia };
+    return { companyId, dalia, caseId };
   });
   return { t, ids, as: (subject: string) => t.withIdentity({ subject }) };
 }
@@ -198,5 +198,60 @@ describe("onboarding tab", () => {
       ym: "2026-11",
     });
     expect(own.cur.attempts).toBe(2);
+  });
+  test("Kunden-Spiegel: case tracking per month, reason and consultant", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-20T10:00:00Z"));
+    const { t, ids, as } = await setup();
+    await as("admin").mutation(api.performance.dashboards.update, {
+      companyId: ids.companyId,
+      name: "Onboarding",
+      teamIds: [],
+      departmentIds: [],
+      onboardingCockpit: true,
+    });
+    await t.run(async (ctx) => {
+      await ctx.db.patch(ids.caseId, { assigneeUserId: ids.dalia });
+      const base = {
+        caseId: ids.caseId,
+        openedByUserId: ids.dalia,
+        openedByName: "Dalia Dohlen",
+        checks: 0,
+      };
+      const day = (d: string) => berlinInstant(d, 10 * 60);
+      // Closed in November after 4 days, IT.
+      await ctx.db.insert("onboardingTickets", {
+        ...base,
+        path: ["case", "case.it"],
+        label: "Case eröffnet › IT",
+        isIt: true,
+        openedAt: day("2026-11-02"),
+        closedAt: day("2026-11-06"),
+      });
+      // Still open since 10.11.
+      await ctx.db.insert("onboardingTickets", {
+        ...base,
+        path: ["case", "case.care"],
+        label: "Case eröffnet › Kundenbetreuung",
+        isIt: false,
+        openedAt: day("2026-11-10"),
+      });
+    });
+    const data = await as("lead").query(api.performance.onboardingMirror.cases, {
+      companyId: ids.companyId,
+      ym: "2026-11",
+    });
+    expect(data).toMatchObject({ total: 2, openNow: 1, itOpen: 0 });
+    expect(data.cur).toMatchObject({ opened: 2, closed: 1 });
+    expect(data.cur.avgDays).toBeCloseTo(4, 1);
+    expect(data.reasons.map((r) => r.label)).toEqual([
+      "Case eröffnet › IT",
+      "Case eröffnet › Kundenbetreuung",
+    ]);
+    expect(data.consultants).toEqual([expect.objectContaining({ name: "Dalia Dohlen", open: 1 })]);
+    expect(data.longest[0]).toMatchObject({ customerNumber: "1", days: 10 });
+    await expect(
+      as("dalia").query(api.performance.onboardingMirror.cases, { companyId: ids.companyId }),
+    ).rejects.toThrow();
   });
 });

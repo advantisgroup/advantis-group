@@ -13,7 +13,7 @@
     "done": "Done",
     "winback": "Winback",
     "refused": "Not willing to talk",
-    "fakeData": "Fake data",
+    "fakeData": "Wrong data",
     "unreachable": "Unreachable",
     "tollOnly": "Toll boxes only"
   },
@@ -289,7 +289,7 @@
     "winback": "Winback",
     "archived": "Archived",
     "refused": "Not willing to talk",
-    "fakeData": "Fake data",
+    "fakeData": "Wrong data",
     "unreachable": "Unreachable",
     "tollOnly": "Toll boxes only"
   },
@@ -298,7 +298,7 @@
   "copyFailed": "Couldn't copy.",
   "winbackIntro": "Cases with “will cancel”: closed, with reason – for winning them back.",
   "editor": {
-    "intro": "Adjust the situations and their reasons here (e.g. case opened › credit problem › deposit). The type decides what happens: “Will cancel”, “Not willing to talk” and “Fake data” close the case into the matching archive list; everything else only changes the situation. The phases (New → In contact → Cards ordered → Fuelled → Done) are fixed. Saved entries can only be hidden, not deleted.",
+    "intro": "Adjust the situations and their reasons here (e.g. case opened › credit problem › deposit). The type decides what happens: “Will cancel”, “Not willing to talk” and “Wrong data” close the case into the matching archive list; everything else only changes the situation. The phases (New → In contact → Cards ordered → Fuelled → Done) are fixed. Saved entries can only be hidden, not deleted.",
     "stage": "Stage",
     "milestone": "Milestone (tick)",
     "milestoneHint": "e.g. cards ordered – empty = none",
@@ -326,7 +326,7 @@
       "cancel": "Will cancel → winback",
       "other": "Other",
       "refused": "Not willing to talk → archive",
-      "fakeData": "Fake data → archive"
+      "fakeData": "Wrong data → archive"
     }
   },
   "phase": {

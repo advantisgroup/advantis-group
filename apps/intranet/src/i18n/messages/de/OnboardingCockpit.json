@@ -13,7 +13,7 @@
     "done": "Abgeschlossen",
     "winback": "Winback",
     "refused": "Nicht gesprächsbereit",
-    "fakeData": "Fake Data",
+    "fakeData": "Wrong Data",
     "unreachable": "Nicht erreichbar",
     "tollOnly": "Nur Mautboxen"
   },
@@ -289,7 +289,7 @@
     "winback": "Winback",
     "archived": "Archiviert",
     "refused": "Nicht gesprächsbereit",
-    "fakeData": "Fake Data",
+    "fakeData": "Wrong Data",
     "unreachable": "Nicht erreichbar",
     "tollOnly": "Nur Mautboxen"
   },
@@ -298,7 +298,7 @@
   "copyFailed": "Kopieren nicht möglich.",
   "winbackIntro": "Fälle mit „will cancel“: geschlossen, mit Grund – für die Rückgewinnung.",
   "editor": {
-    "intro": "Hier passt du die Lagen mit ihren Gründen an (z. B. Case eröffnet › credit problem › Deposit). Die Art bestimmt, was passiert: „Wird kündigen“, „Nicht gesprächsbereit“ und „Fake Data“ schließen den Fall in die passende Archiv-Liste, alle anderen ändern nur die Lage. Die Phasen (Neu → In Kontakt → Karten bestellt → Getankt → Abgeschlossen) sind fest. Gespeicherte Einträge lassen sich nur ausblenden, nicht löschen.",
+    "intro": "Hier passt du die Lagen mit ihren Gründen an (z. B. Case eröffnet › credit problem › Deposit). Die Art bestimmt, was passiert: „Wird kündigen“, „Nicht gesprächsbereit“ und „Wrong Data“ schließen den Fall in die passende Archiv-Liste, alle anderen ändern nur die Lage. Die Phasen (Neu → In Kontakt → Karten bestellt → Getankt → Abgeschlossen) sind fest. Gespeicherte Einträge lassen sich nur ausblenden, nicht löschen.",
     "stage": "Stufe",
     "milestone": "Zwischenstatus (Haken)",
     "milestoneHint": "z. B. Karten bestellt – leer = keiner",
@@ -326,7 +326,7 @@
       "cancel": "Wird kündigen → Winback",
       "other": "Sonstiges",
       "refused": "Nicht gesprächsbereit → Archiv",
-      "fakeData": "Fake Data → Archiv"
+      "fakeData": "Wrong Data → Archiv"
     }
   },
   "phase": {

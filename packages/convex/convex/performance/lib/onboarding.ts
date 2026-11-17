@@ -221,7 +221,7 @@ export const DEFAULT_STATUS_CONFIG: StatusConfig = {
       ],
     },
     { id: "refused", label: "nicht gesprächsbereit", kind: "refused" },
-    { id: "fakeData", label: "Fake Data (Nummer falsch/unbekannt)", kind: "fakeData" },
+    { id: "fakeData", label: "Wrong Data (Nummer falsch/unbekannt)", kind: "fakeData" },
   ],
 };
 
@@ -238,10 +238,21 @@ export const CLOSING_KINDS: Partial<Record<OutcomeKind, ClosedStatus>> = {
  * appended), so new built-ins show up without anyone editing the tree.
  */
 export function withBuiltins(config: StatusConfig): StatusConfig {
-  const ids = new Set(config.outcomes.map((o) => o.id));
+  // "Fake Data" is called "Wrong Data" since 17.11. – also in saved trees.
+  const outcomes = config.outcomes.map((o) =>
+    o.id === "fakeData" && o.label.startsWith("Fake Data")
+      ? { ...o, label: o.label.replace(/^Fake Data/, "Wrong Data") }
+      : o,
+  );
+  const ids = new Set(outcomes.map((o) => o.id));
   const missing = DEFAULT_STATUS_CONFIG.outcomes.filter((o) => !ids.has(o.id));
-  return missing.length ? { outcomes: [...config.outcomes, ...missing] } : config;
+  return { outcomes: [...outcomes, ...missing] };
 }
+
+/** Situation labels of older log entries that were renamed since. */
+export const LEGACY_OUTCOME_LABELS: Record<string, OutcomeKind> = {
+  "Fake Data (Nummer falsch/unbekannt)": "fakeData",
+};
 
 /** Entry of the tree that means "case opened with the IT". */
 export const IT_NODE_ID = "case.it";

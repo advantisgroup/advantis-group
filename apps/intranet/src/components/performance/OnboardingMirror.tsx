@@ -9,6 +9,7 @@ import {
   OnboardingBasisToggle,
   useOnboardingBasis,
 } from "@/components/performance/OnboardingBasis";
+import { OnboardingCaseTracking } from "@/components/performance/OnboardingCaseTracking";
 import { DeltaBadge, fmtNum, fmtYm } from "@/components/performance/PerformanceFormat";
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { usePerformanceYm } from "@/components/performance/PerformanceYmContext";
@@ -356,6 +357,8 @@ export function OnboardingMirror({ companyId }: { companyId: Id<"companies"> }) 
           {t("tempoNote", { since: data.cockpitSince?.split("-").reverse().join(".") ?? "–" })}
         </p>
       </Section>
+
+      <OnboardingCaseTracking companyId={companyId} ym={data.ym} />
     </div>
   );
 }
