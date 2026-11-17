@@ -148,6 +148,29 @@ export const month = userQuery({
       ).map((a) => [a.employeeId, a]),
     );
 
+    // Who counts as Sales: member of a team called "Sales" or in the Sales
+    // department. They are listed first; everyone else follows below.
+    const isSales = (name: string) => name.trim().toLowerCase() === "sales";
+    const salesTeams = new Set(
+      (await ctx.db.query("teams").collect())
+        .filter((team) => !team.archivedAt && isSales(team.name))
+        .map((team) => team._id),
+    );
+    const salesDepartments = new Set(
+      (await ctx.db.query("departments").collect())
+        .filter((dep) => !dep.archivedAt && isSales(dep.name))
+        .map((dep) => dep._id),
+    );
+    const inSales = async (user: Doc<"users"> | null) => {
+      if (!user) return false;
+      if (user.departmentId && salesDepartments.has(user.departmentId)) return true;
+      const memberships = await ctx.db
+        .query("userTeams")
+        .withIndex("by_user", (q) => q.eq("userId", user._id))
+        .collect();
+      return memberships.some((m) => salesTeams.has(m.teamId));
+    };
+
     const rows = [];
     // Everyone counted on the dashboard, also without report rows this
     // month: the sick-free bonus doesn't depend on sales figures.
@@ -188,6 +211,7 @@ export const month = userQuery({
 
       rows.push({
         employeeId,
+        sales: await inSales(user),
         name: user ? displayName(user) : reportName,
         reportName,
         linked: user !== null,
@@ -216,7 +240,10 @@ export const month = userQuery({
         total: tier + weeksTotal + month + hit + healthy + extrasTotal,
       });
     }
-    rows.sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
+    rows.sort(
+      (a, b) =>
+        Number(b.sales) - Number(a.sales) || b.total - a.total || a.name.localeCompare(b.name),
+    );
     return { ...base, asOf: summary.asOf.sales, rows };
   },
 });
