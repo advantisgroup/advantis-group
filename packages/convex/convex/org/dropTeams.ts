@@ -13,6 +13,8 @@ import { displayName } from "../lib/users";
  *   Melina Bagis.
  * - Sales department: every other active person, except Vahan, Kaleb,
  *   Jörg and Andrea Reichl (they keep their department as it is).
+ * - Chrisi (christin.endres) is in no department but leads both Sales and
+ *   Onboarding.
  * - Dashboards lose their team links; "Onboarding" gets the Onboarding
  *   department, "Advantis" keeps/gets Sales.
  * - Every team is archived (archived teams count nowhere), the legacy
@@ -27,6 +29,7 @@ import { displayName } from "../lib/users";
 const ONBOARDING = ["suft", "dohlen", "boateng", "bagis"];
 const UNCHANGED = ["hovhannisyan", "kalebdaniel98", "daniel", "joerg", "joerg.endres", "reichl"];
 const CREATOR = "hovhannisyan";
+const LEAD = "christin.endres";
 
 const localPart = (email: string) => email.trim().toLowerCase().split("@")[0] ?? "";
 const same = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
@@ -75,15 +78,29 @@ export const run = internalMutation({
     };
 
     const left: string[] = [];
+    const lead = active.find((u) => localPart(u.email) === LEAD);
     for (const user of active) {
       const key = localPart(user.email);
-      if (ONBOARDING.includes(key)) await assign(user, "Onboarding");
+      if (key === LEAD) {
+        const from = user.departmentId ? (departments.get(user.departmentId) ?? "?") : null;
+        if (from) plan.push({ name: displayName(user), email: user.email, from, to: "keine" });
+        if (!dryRun && from) {
+          await ctx.db.patch(user._id, { departmentId: undefined, department: undefined });
+        }
+      } else if (ONBOARDING.includes(key)) await assign(user, "Onboarding");
       else if (unchanged.has(key)) left.push(`${displayName(user)} <${user.email}>`);
       else await assign(user, "Sales");
     }
     const missingOnboarding = ONBOARDING.filter(
       (key) => !active.some((u) => localPart(u.email) === key),
     );
+
+    // Chrisi leads both.
+    if (!dryRun && lead) {
+      for (const id of [sales.id, onboarding.id]) {
+        if (id) await ctx.db.patch(id, { reportsToUserId: lead._id });
+      }
+    }
 
     // Dashboards: departments only.
     const dashboards: string[] = [];
@@ -121,6 +138,7 @@ export const run = internalMutation({
 
     return {
       dryRun,
+      leadOfSalesAndOnboarding: lead ? `${displayName(lead)} <${lead.email}>` : "nicht gefunden",
       newDepartments: [
         ...(sales.created ? ["Sales"] : []),
         ...(onboarding.created ? ["Onboarding"] : []),

@@ -25,6 +25,7 @@ async function setup() {
     const philipp = await user("suft", "Philipp");
     const anna = await user("efthymiou", "Alexandra");
     const andrea = await user("reichl", "Andrea", "salespirates.de");
+    const chrisi = await user("christin.endres", "Chrisi");
     const team = await ctx.db.insert("teams", {
       name: "Sales",
       slug: "customer-care",
@@ -41,7 +42,13 @@ async function setup() {
       createdAt: now,
       updatedAt: now,
     });
-    return { vahan, philipp, anna, andrea, team, onboardingDash };
+    const old = await ctx.db.insert("departments", {
+      name: "HR",
+      createdAt: now,
+      createdBy: vahan,
+    });
+    await ctx.db.patch(chrisi, { departmentId: old });
+    return { vahan, philipp, anna, andrea, chrisi, team, onboardingDash };
   });
   return { t, ids };
 }
@@ -51,7 +58,7 @@ describe("drop teams", () => {
     const { t, ids } = await setup();
     const res = await t.mutation(internal.org.dropTeams.run, { dryRun: true });
     expect(res.newDepartments).toEqual(["Sales", "Onboarding"]);
-    expect(res.moves).toHaveLength(2);
+    expect(res.moves).toHaveLength(3);
     expect(res.unchanged).toHaveLength(2);
     const team = await t.run((ctx) => ctx.db.get(ids.team));
     expect(team?.archivedAt).toBeUndefined();
@@ -73,6 +80,10 @@ describe("drop teams", () => {
       expect(dash?.teamIds).toBeUndefined();
       expect(dash?.departmentIds).toEqual([dep("Onboarding")]);
       expect((await ctx.db.get(ids.team))?.archivedAt).toBeDefined();
+      expect((await ctx.db.get(ids.chrisi))?.departmentId).toBeUndefined();
+      for (const name of ["Sales", "Onboarding"]) {
+        expect(deps.find((d) => d.name === name)?.reportsToUserId).toBe(ids.chrisi);
+      }
     });
   });
 });
