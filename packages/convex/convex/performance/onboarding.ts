@@ -51,6 +51,7 @@ import {
   statusFromReport,
   validateStatusConfig,
   withBuiltins,
+  LEGACY_OUTCOME_LABELS,
 } from "./lib/onboarding";
 
 type Ctx = QueryCtx | MutationCtx;
@@ -218,7 +219,7 @@ const STATUS_NAMES: Record<string, string> = {
   done: "Abgeschlossen",
   winback: "Winback",
   refused: "Nicht gesprächsbereit",
-  fakeData: "Fake Data",
+  fakeData: "Wrong Data",
   unreachable: "Nicht erreichbar",
   tollOnly: "Nur Mautboxen",
 };
@@ -377,7 +378,10 @@ function withOutcomeKinds<T extends { kind: string; toValue?: string; outcomeKin
   config: StatusConfig,
   rows: T[],
 ): T[] {
-  const byLabel = new Map(config.outcomes.map((o) => [o.label, o.kind ?? "other"]));
+  const byLabel = new Map<string, string>([
+    ...Object.entries(LEGACY_OUTCOME_LABELS),
+    ...config.outcomes.map((o) => [o.label, o.kind ?? "other"] as const),
+  ]);
   return rows.map((r) =>
     r.kind === "outcome" && !r.outcomeKind
       ? { ...r, outcomeKind: byLabel.get((r.toValue ?? "").split(" › ")[0]) ?? "other" }

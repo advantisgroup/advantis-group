@@ -119,6 +119,7 @@ const CLOSED_NAMES = new Set([
   "Nicht erreichbar",
   "unreachable",
   "Fake Data",
+  "Wrong Data",
   "fakeData",
   "Nur Mautboxen",
   "tollOnly",

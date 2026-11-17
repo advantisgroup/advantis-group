@@ -67,6 +67,7 @@ const CLOSED_BY_NAME: Record<string, CockpitKey> = {
   "Nicht erreichbar": "unreachable",
   unreachable: "unreachable",
   "Fake Data": "fakeData",
+  "Wrong Data": "fakeData",
   fakeData: "fakeData",
   "Nur Mautboxen": "tollOnly",
   tollOnly: "tollOnly",
