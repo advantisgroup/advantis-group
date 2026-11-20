@@ -175,6 +175,9 @@ export interface ActionDraft {
   text: string;
   dueDate?: string;
   done: boolean;
+  /** Reported done by the employee (display only; ticking it confirms). */
+  reported?: boolean;
+  reportNote?: string;
 }
 
 /** Editable list of agreements/measures: text, due date, done. */
@@ -196,6 +199,14 @@ export function ActionListEditor({
     <div className="space-y-2">
       {items.map((item, i) => (
         <div key={item.id ?? `new-${i}`} className="flex flex-wrap items-center gap-2">
+          {item.reported && !item.done && (
+            <span
+              className="inline-flex shrink-0 items-center rounded-full bg-warn/15 px-2 py-0.5 text-xs font-medium text-warn"
+              title={item.reportNote ?? t("reportedHint")}
+            >
+              {t("reportedShort")}
+            </span>
+          )}
           <Checkbox
             checked={item.done}
             onCheckedChange={(v) => update(i, { done: v === true })}

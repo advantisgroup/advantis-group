@@ -14,6 +14,7 @@ import {
   LayoutDashboard,
   Phone,
   Rocket,
+  Target,
   TrendingUp,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -129,15 +130,16 @@ function EmployeeTopSection({
     if (!interactionDays) return null;
     return <LastDayInteractions days={interactionDays} locale={locale} />;
   }
-  if (kind !== "sales" || activeTab === "checks") return null;
+  if (kind !== "sales" || activeTab === "checks" || activeTab === "ziele") return null;
   return <ClosedWonTrendChart days={data.wonTrend.days} avg={data.wonTrend.avg} />;
 }
 
 /** Which tabs an employee page has, by the kind of their dashboard: Wallbox
  * and calls-only people have no Salesforce numbers, checks or badges. The
- * Checks tab replaced "Topics" (10/2026) and is for team leads/admins only. */
+ * Checks tab replaced "Topics" (10/2026) and is for team leads/admins only;
+ * "Meine Ziele" is the employee's own read-only view of them (11/2026). */
 const TABS_BY_KIND: Record<PerformanceDashboardKind, readonly string[]> = {
-  sales: ["ueberblick", "entwicklung", "calls", "checks", "interaktionen"],
+  sales: ["ueberblick", "entwicklung", "calls", "ziele", "checks", "interaktionen"],
   wallbox: ["wallbox", "calls", "interaktionen"],
   calls: ["calls", "interaktionen"],
 };
@@ -176,9 +178,13 @@ function EmployeeChrome({
     me?.dashboards.find((d) => d.companyId === data?.employee.companyId)?.cockpit ??
     dashboard?.cockpit ??
     false;
+  // The employee's own page (also an admin's "Ansicht als" of them).
+  const isSelf = !!me?.dashboards.some((d) => d.employeeId === employeeId);
   const tabsForViewer = [
     ...(cockpit ? ["onboarding"] : []),
-    ...TABS_BY_KIND[kind].filter((tab) => tab !== "checks" || canLead),
+    ...TABS_BY_KIND[kind].filter(
+      (tab) => (tab !== "checks" || canLead) && (tab !== "ziele" || isSelf),
+    ),
   ];
   // Check status in the header, for those who run the checks.
   const checkStatus = useQuery(
@@ -228,6 +234,12 @@ function EmployeeChrome({
       icon: Phone,
     },
     {
+      value: "ziele",
+      href: `/performance/mitarbeiter/${employeeId}/ziele`,
+      label: t("checks.mine.tab"),
+      icon: Target,
+    },
+    {
       value: "checks",
       href: `/performance/mitarbeiter/${employeeId}/checks`,
       label: t("checks.tabChecks"),
@@ -243,7 +255,9 @@ function EmployeeChrome({
   const tabs = allTabs.filter((tab) => tabsForViewer.includes(tab.value));
   // Entwicklung shows every month, Interaktionen pages by day, Wallbox is
   // report snapshots.
-  const usesMonth = !["entwicklung", "interaktionen", "wallbox", "checks"].includes(activeTab);
+  const usesMonth = !["entwicklung", "interaktionen", "wallbox", "checks", "ziele"].includes(
+    activeTab,
+  );
 
   return (
     <div className="min-h-screen bg-muted/20">

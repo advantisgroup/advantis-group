@@ -4,7 +4,7 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { type FunctionReturnType } from "convex/server";
-import { ChevronRight, ClipboardCheck, Users } from "lucide-react";
+import { ChevronRight, ClipboardCheck, Hourglass, Undo2, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
@@ -88,7 +88,28 @@ function ItemRow({
         {item.kpiKey && (
           <span className="ml-1 text-xs text-muted-foreground">({t(`kpi.${item.kpiKey}`)})</span>
         )}
+        {item.reportNote && (
+          <span className="block text-xs text-muted-foreground">„{item.reportNote}“</span>
+        )}
       </span>
+      {!done && item.reportedAt !== null && (
+        <>
+          <Badge variant="warning" className="gap-1" title={t("reportedHint")}>
+            <Hourglass className="h-3 w-3" />
+            {t("reportedByEmployee")}
+          </Badge>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 px-2 text-xs text-muted-foreground"
+            onClick={() => onToggle(item, false)}
+            title={t("sendBackHint")}
+          >
+            <Undo2 className="mr-1 h-3.5 w-3.5" />
+            {t("sendBack")}
+          </Button>
+        </>
+      )}
       <span className="text-xs text-muted-foreground">
         {showPerson && `${item.employeeName ?? t("wholeTeam")} · `}
         {t(`source.${item.source}`)}
@@ -174,6 +195,7 @@ export default function MonitoringPage() {
 
   const count = (s: EmployeeRow["status"]) => data.employees.filter((e) => e.status === s).length;
   const overdueItems = data.open.filter((i) => i.tone === "overdue").length;
+  const reportedItems = data.open.filter((i) => i.reportedAt !== null).length;
   // Open points per person, in the employee list's order; team-wide last.
   const groups = [
     ...data.employees.map((e) => ({
@@ -207,7 +229,14 @@ export default function MonitoringPage() {
         <Kpi
           label={t("openItems")}
           value={data.open.length}
-          hint={overdueItems ? t("overdueCount", { count: overdueItems }) : undefined}
+          hint={
+            [
+              overdueItems ? t("overdueCount", { count: overdueItems }) : null,
+              reportedItems ? t("reportedCount", { count: reportedItems }) : null,
+            ]
+              .filter(Boolean)
+              .join(" · ") || undefined
+          }
           tone={overdueItems ? "critical" : "neutral"}
         />
       </KpiStrip>
