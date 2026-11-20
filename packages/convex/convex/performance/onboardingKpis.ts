@@ -92,6 +92,32 @@ export async function cockpitEvents(ctx: Ctx, from: string, to: string): Promise
     .filter((e) => e.day >= from && e.day <= to);
 }
 
+/**
+ * Cockpit events loaded once per calendar month and request. A dashboard
+ * query asks for the same month several times (current period, chart, trend,
+ * VM inside the trend); every read counts toward Convex's per-function limit
+ * of 32,000 documents, so each month is read from the database only once and
+ * the periods are cut from it in memory.
+ */
+export function cockpitEventsLoader(ctx: Ctx) {
+  const byMonth = new Map<string, Promise<CockpitEvent[]>>();
+  const month = (ym: string) => {
+    let hit = byMonth.get(ym);
+    if (!hit) {
+      const { start, end } = monthBounds(ym);
+      hit = cockpitEvents(ctx, start, end);
+      byMonth.set(ym, hit);
+    }
+    return hit;
+  };
+  return async (from: string, to: string): Promise<CockpitEvent[]> => {
+    const yms: string[] = [];
+    for (let m = from.slice(0, 7); m <= to.slice(0, 7); m = shiftYm(m, 1)) yms.push(m);
+    const all = await Promise.all(yms.map(month));
+    return all.flat().filter((e) => e.day >= from && e.day <= to);
+  };
+}
+
 /** Data basis: every action of the month, or only those on customers won
  * (Close Won) in that same month. */
 export const basisArg = v.optional(v.union(v.literal("all"), v.literal("won")));
@@ -228,13 +254,14 @@ export const team = userQuery({
     await requireCockpitDashboard(ctx, companyId);
     const ym = ymArg && YM.test(ymArg) ? ymArg : currentYm();
     const cache = newQueryCache();
+    const eventsIn = cockpitEventsLoader(ctx);
     const p = await periods(ctx, companyId, ym, cache);
     const persons = await people(ctx, companyId, cache);
     const since = await cockpitSince(ctx);
     const months = basis === "won" ? await closeMonths(ctx) : null;
 
     const valuesFor = async (period: Period) => {
-      const events = forBasis(await cockpitEvents(ctx, period.from, period.to), period.ym, months);
+      const events = forBasis(await eventsIn(period.from, period.to), period.ym, months);
       const counts = cockpitCounts(events, period.from, period.to);
       const has = since !== null && since <= period.to;
       const calls = await Promise.all(
@@ -262,7 +289,7 @@ export const team = userQuery({
     const team = new Set(persons.flatMap((pp) => (pp.userId ? [pp.userId] : [])));
     const bounds = monthBounds(ym);
     const days = contactDays(
-      forBasis(await cockpitEvents(ctx, p.cur.from, p.cur.to), ym, months),
+      forBasis(await eventsIn(p.cur.from, p.cur.to), ym, months),
       p.cur.from,
       p.cur.to,
       team,
@@ -320,13 +347,14 @@ export const employee = userQuery({
     await requireCockpitDashboard(ctx, companyId);
     const ym = ymArg && YM.test(ymArg) ? ymArg : currentYm();
     const cache = newQueryCache();
+    const eventsIn = cockpitEventsLoader(ctx);
     const p = await periods(ctx, companyId, ym, cache);
     const since = await cockpitSince(ctx);
     const userId = employee.userId ?? null;
     const months = basis === "won" ? await closeMonths(ctx) : null;
 
     const valuesFor = async (period: Period) => {
-      const events = forBasis(await cockpitEvents(ctx, period.from, period.to), period.ym, months);
+      const events = forBasis(await eventsIn(period.from, period.to), period.ym, months);
       const counts = cockpitCounts(events, period.from, period.to);
       const own = await personCalls(
         ctx,
