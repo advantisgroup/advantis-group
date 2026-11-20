@@ -110,7 +110,14 @@ export function CheckEditor({
     setAgreements(
       saved.actions
         .filter((a) => !a.kpiKey)
-        .map((a) => ({ id: a.id, text: a.text, dueDate: a.dueDate ?? undefined, done: a.done })),
+        .map((a) => ({
+          id: a.id,
+          text: a.text,
+          dueDate: a.dueDate ?? undefined,
+          done: a.done,
+          reported: a.reportedAt !== null,
+          reportNote: a.reportNote ?? undefined,
+        })),
     );
     setMeasures(
       Object.fromEntries(
@@ -124,6 +131,8 @@ export function CheckEditor({
               text: a.text,
               dueDate: a.dueDate ?? undefined,
               done: a.done,
+              reported: a.reportedAt !== null,
+              reportNote: a.reportNote ?? undefined,
             },
           ]),
       ),
@@ -217,6 +226,24 @@ export function CheckEditor({
         </Link>
         <Badge>{t("typeEmployee")}</Badge>
         <span className="font-medium">{employeeName}</span>
+        {saved &&
+          (saved.check.acknowledgedAt ? (
+            <Badge
+              variant={saved.check.updatedAt > saved.check.acknowledgedAt ? "warning" : "success"}
+              title={
+                saved.check.updatedAt > saved.check.acknowledgedAt ? t("ackChangedHint") : undefined
+              }
+            >
+              {t("ackBy", {
+                name: saved.check.acknowledgedByName ?? "",
+                date: new Date(saved.check.acknowledgedAt).toLocaleDateString("de-DE", {
+                  timeZone: "Europe/Berlin",
+                }),
+              })}
+            </Badge>
+          ) : (
+            <Badge variant="muted">{t("ackMissing")}</Badge>
+          ))}
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">{t("date")}</span>
           <Input
@@ -333,6 +360,15 @@ export function CheckEditor({
                       )}
                       {showMeasure && (
                         <div className="flex items-center gap-2">
+                          {m?.reported && !m.done && (
+                            <Badge
+                              variant="warning"
+                              title={m.reportNote ?? t("reportedHint")}
+                              className="shrink-0"
+                            >
+                              {t("reportedShort")}
+                            </Badge>
+                          )}
                           <Checkbox
                             checked={m?.done ?? false}
                             onCheckedChange={(v) => setMeasure(row.key, { done: v === true })}

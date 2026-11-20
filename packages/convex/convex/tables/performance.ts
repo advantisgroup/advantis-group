@@ -511,6 +511,10 @@ export const performanceTables = {
     tops: v.array(v.string()),
     goFors: v.array(v.string()),
     note: v.optional(v.string()),
+    /** The employee confirmed the agreements in the intranet ("Meine
+     * Ziele") — the digital counterpart of the signature on paper. */
+    acknowledgedAt: v.optional(v.number()),
+    acknowledgedByName: v.optional(v.string()),
     createdBy: v.id("users"),
     createdByName: v.string(),
     createdAt: v.number(),
@@ -540,6 +544,11 @@ export const performanceTables = {
     dueDate: v.optional(v.string()),
     doneAt: v.optional(v.number()),
     doneByName: v.optional(v.string()),
+    /** The employee reported it done; only the lead ticks it off (or
+     * sends it back, which clears these). */
+    reportedAt: v.optional(v.number()),
+    reportedByName: v.optional(v.string()),
+    reportNote: v.optional(v.string()),
     createdAt: v.number(),
     createdByName: v.string(),
   })

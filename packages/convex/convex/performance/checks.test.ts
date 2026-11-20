@@ -226,6 +226,86 @@ describe("checks", () => {
     ).rejects.toThrow();
   });
 
+  test("employee sees own checks, reports done, lead confirms or sends back", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-08T09:00:00Z"));
+    const { t, ids, as } = await setup();
+    const { checkId } = await as("lead").mutation(api.performance.checks.save, {
+      employeeId: ids.annaEmp,
+      date: "2026-10-08",
+      ratings: [{ key: "won", rating: "red", note: "zu wenig" }],
+      tops: ["Pünktlich"],
+      goFors: ["Mehr Abschlüsse"],
+      actions: [
+        { text: "3 Abschlüsse pro Woche", dueDate: "2026-10-09", done: false },
+        { kpiKey: "opps30", text: "Opps aufräumen", dueDate: "2026-10-20", done: false },
+      ],
+    });
+    const notes = await t.run((ctx) => ctx.db.query("notifications").collect());
+    expect(notes.map((n) => n.type)).toEqual(["performance_check"]);
+
+    // Read-only for Anna, nobody else's.
+    await expect(
+      as("lead").query(api.performance.checks.mine, { employeeId: ids.annaEmp }),
+    ).rejects.toThrow("nicht gefunden");
+    const mine = await as("anna").query(api.performance.checks.mine, { employeeId: ids.annaEmp });
+    expect(mine.nextDue).toBe("2026-11-05");
+    expect(mine.checks[0].ratings).toEqual([{ key: "won", rating: "red", note: "zu wenig" }]);
+    expect(mine.open.map((a) => a.text)).toEqual(["3 Abschlüsse pro Woche", "Opps aufräumen"]);
+    await expect(
+      as("anna").mutation(api.performance.checks.setActionDone, {
+        actionId: mine.open[0].id,
+        done: true,
+      }),
+    ).rejects.toThrow();
+
+    await as("anna").mutation(api.performance.checks.acknowledge, { checkId });
+    await as("anna").mutation(api.performance.checks.reportDone, {
+      actionId: mine.open[0].id,
+      reported: true,
+      note: "erledigt seit Montag",
+    });
+    const after = await as("anna").query(api.performance.checks.mine, { employeeId: ids.annaEmp });
+    expect(after.checks[0]).toMatchObject({
+      acknowledgedByName: "Anna Müller",
+      changedSinceAck: false,
+    });
+    expect(after.open[0]).toMatchObject({ reportNote: "erledigt seit Montag", doneAt: null });
+
+    const board = await as("lead").query(api.performance.checks.monitoring, {
+      companyId: ids.companyId,
+    });
+    expect(board.open[0]).toMatchObject({ text: "3 Abschlüsse pro Woche" });
+    expect(board.open[0].reportedAt).not.toBeNull();
+    const leadNotes = await t.run((ctx) =>
+      ctx.db
+        .query("notifications")
+        .filter((q) => q.eq(q.field("type"), "performance_report"))
+        .collect(),
+    );
+    expect(leadNotes).toHaveLength(1);
+
+    // Sent back: open again, report cleared.
+    await as("lead").mutation(api.performance.checks.setActionDone, {
+      actionId: board.open[0].id as never,
+      done: false,
+    });
+    const back = await as("anna").query(api.performance.checks.mine, { employeeId: ids.annaEmp });
+    expect(back.open[0].reportedAt).toBeNull();
+
+    // Confirmed by the lead: done, can't be reported any more.
+    await as("lead").mutation(api.performance.checks.setActionDone, {
+      actionId: board.open[0].id as never,
+      done: true,
+    });
+    await expect(
+      as("anna").mutation(api.performance.checks.reportDone, {
+        actionId: board.open[0].id as never,
+        reported: true,
+      }),
+    ).rejects.toThrow("schon abgehakt");
+  });
+
   test("business review: month table with VM and the review's own measures", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-11-03T09:00:00Z"));

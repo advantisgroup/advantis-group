@@ -176,6 +176,18 @@ export default function CheckPrintPage() {
           ))}
         </div>
       </div>
+      {check.acknowledgedAt && (
+        <p className="mt-3">
+          {t("ackPrint", {
+            name: check.acknowledgedByName ?? employee.name,
+            date: new Date(check.acknowledgedAt).toLocaleString("de-DE", {
+              timeZone: "Europe/Berlin",
+              dateStyle: "medium",
+              timeStyle: "short",
+            }),
+          })}
+        </p>
+      )}
       <div className="mt-6 text-[9px] text-neutral-400">
         {t("by", { name: check.createdByName })}
       </div>

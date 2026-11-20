@@ -1,8 +1,13 @@
 /**
  * Employee checks (monthly, required), KPI checks (optional) and their
- * actions, plus the Monitoring tab — all for team leads and admins only
- * (employees don't see them, decision 10/2026). KPI list and week maths in
- * `lib/checkKpis.ts`.
+ * actions, plus the Monitoring tab — written by team leads and admins. KPI
+ * list and week maths in `lib/checkKpis.ts`.
+ *
+ * Since 11/2026 sales employees see their own checks read-only under "Meine
+ * Ziele" (`mine`): ratings, agreements and measures, never the business
+ * review. They can't tick anything off themselves — they report it done
+ * (`reportDone`) and the lead confirms or sends it back — and they confirm
+ * a check's agreements digitally (`acknowledge`).
  *
  * The old "Topics" are superseded by the agreements here; existing open
  * topics still show up in Monitoring (read from `performanceTopics`) so
@@ -13,6 +18,7 @@ import { ConvexError, v } from "convex/values";
 import { type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "../_generated/server";
 import { userMutation, userQuery } from "../functions";
+import { createNotification, notifyUsers } from "../lib/notify";
 import { type PerformanceViewer, loadViewer, requireTeamView } from "./lib/access";
 import {
   CHECK_INTERVAL_DAYS,
@@ -29,6 +35,7 @@ import {
 } from "./lib/checkKpis";
 import { parseReasons, shiftYm, type Snapshot } from "./lib/kpi";
 import {
+  countsOnDashboard,
   type Cutoff,
   loadRoster,
   monthRows,
@@ -36,7 +43,7 @@ import {
   summarizeMonth,
   teamTotals,
 } from "./lib/reports";
-import { dashboardKind } from "./lib/roster";
+import { cockpitTeam, dashboardKind } from "./lib/roster";
 import { isWorkday, parseISODate, todayBerlin, toISODate } from "./lib/workdays";
 import { cutoffFor, employeeReference } from "./queries";
 
@@ -290,6 +297,9 @@ export const get = userQuery({
           text: a.text,
           dueDate: a.dueDate ?? null,
           done: a.doneAt !== undefined,
+          reportedAt: a.reportedAt ?? null,
+          reportedByName: a.reportedByName ?? null,
+          reportNote: a.reportNote ?? null,
         })),
     };
   },
@@ -423,6 +433,15 @@ export const save = userMutation({
         createdByName: actor,
         createdAt: now,
       });
+      if (employee.userId && employee.userId !== viewer.userId) {
+        await createNotification(ctx, {
+          userId: employee.userId,
+          type: "performance_check",
+          title: "Neuer Mitarbeiter-Check",
+          body: `${actor} hat einen Check vom ${fmtDe(args.date)} angelegt – bitte die Vereinbarungen ansehen und bestätigen.`,
+          link: `/performance/mitarbeiter/${employee._id}/ziele`,
+        });
+      }
     }
 
     const existing = await ctx.db
@@ -466,7 +485,8 @@ export const remove = userMutation({
   },
 });
 
-/** Ticks an action (agreement, KPI measure, review measure) done or open. */
+/** Ticks an action (agreement, KPI measure, review measure) done or open.
+ * Opening it again also sends back the employee's "done" report. */
 export const setActionDone = userMutation({
   args: { actionId: v.id("performanceActions"), done: v.boolean() },
   handler: async (ctx, { actionId, done }): Promise<void> => {
@@ -477,6 +497,7 @@ export const setActionDone = userMutation({
     await ctx.db.patch(actionId, {
       doneAt: done ? Date.now() : undefined,
       doneByName: done ? viewer.name : undefined,
+      ...(done ? {} : { reportedAt: undefined, reportedByName: undefined, reportNote: undefined }),
     });
   },
 });
@@ -510,6 +531,9 @@ export interface OpenItem {
   checkId: Id<"performanceChecks"> | null;
   doneAt: number | null;
   doneByName: string | null;
+  /** Reported done by the employee, waiting for the lead. */
+  reportedAt: number | null;
+  reportNote: string | null;
 }
 
 /** The Monitoring tab: every counted employee with their check status and
@@ -596,6 +620,8 @@ export const monitoring = userQuery({
             checkId: a.checkId ?? null,
             doneAt: a.doneAt ?? null,
             doneByName: a.doneByName ?? null,
+            reportedAt: a.doneAt ? null : (a.reportedAt ?? null),
+            reportNote: a.doneAt ? null : (a.reportNote ?? null),
           }),
         ),
       ...topics.map(
@@ -612,6 +638,8 @@ export const monitoring = userQuery({
           checkId: null,
           doneAt: t.status === "offen" ? null : t.updatedAt,
           doneByName: null,
+          reportedAt: null,
+          reportNote: null,
         }),
       ),
     ];
@@ -624,5 +652,161 @@ export const monitoring = userQuery({
       .slice(0, 100);
 
     return { today: now, employees, open, done };
+  },
+});
+
+// ------------------------------------------------------- employee's own view
+
+function fmtDe(iso: string): string {
+  const [y, m, d] = iso.split("-");
+  return `${d}.${m}.${y}`;
+}
+
+/** The viewer's own employee row on a sales dashboard. Admins previewing
+ * with "Ansicht als" read as the person; writes (`ownRights`) never pass. */
+async function requireOwnEmployee(
+  ctx: Ctx,
+  viewer: PerformanceViewer,
+  employeeId: Id<"performanceEmployees">,
+): Promise<Doc<"performanceEmployees">> {
+  const employee = await ctx.db.get(employeeId);
+  if (!employee?.companyId || employee.userId !== viewer.userId || !countsOnDashboard(employee)) {
+    throw notFound("Mitarbeiter nicht gefunden.");
+  }
+  if (!viewer.dashboards.some((d) => d.companyId === employee.companyId && d.kind === "sales")) {
+    throw notFound("Mitarbeiter nicht gefunden.");
+  }
+  return employee;
+}
+
+/** Who leads a dashboard: the heads of its linked departments and, for a
+ * cockpit dashboard, the cockpit's leads. */
+async function dashboardLeadUserIds(
+  ctx: MutationCtx,
+  companyId: Id<"companies">,
+): Promise<Id<"users">[]> {
+  const company = await ctx.db.get(companyId);
+  if (!company) return [];
+  const ids = new Set<Id<"users">>();
+  for (const depId of company.departmentIds ?? []) {
+    const dep = await ctx.db.get(depId);
+    if (dep && !dep.archivedAt && dep.reportsToUserId) ids.add(dep.reportsToUserId);
+  }
+  if (company.onboardingCockpit) for (const id of (await cockpitTeam(ctx)).leads) ids.add(id);
+  return [...ids];
+}
+
+/** "Meine Ziele": the employee's own checks with ratings, agreements and
+ * measures (read-only), newest first. Business reviews stay with the leads. */
+export const mine = userQuery({
+  args: { employeeId: v.id("performanceEmployees") },
+  handler: async (ctx, { employeeId }) => {
+    const viewer = await loadViewer(ctx, ctx.caller);
+    const employee = await requireOwnEmployee(ctx, viewer, employeeId);
+    const now = today();
+    const [checks, actions] = await Promise.all([
+      ctx.db
+        .query("performanceChecks")
+        .withIndex("by_employee_date", (q) => q.eq("employeeId", employee._id))
+        .order("desc")
+        .take(24),
+      ctx.db
+        .query("performanceActions")
+        .withIndex("by_employee", (q) => q.eq("employeeId", employee._id))
+        .collect(),
+    ]);
+    const last = checks[0];
+    const nextDue = last ? addDays(last.date, CHECK_INTERVAL_DAYS) : null;
+    const toItem = (a: Doc<"performanceActions">) => ({
+      id: a._id,
+      checkId: a.checkId ?? null,
+      kpiKey: a.kpiKey ?? null,
+      source: a.source,
+      text: a.text,
+      dueDate: a.dueDate ?? null,
+      tone: a.doneAt ? ("none" as const) : dueTone(a.dueDate, now),
+      doneAt: a.doneAt ?? null,
+      doneByName: a.doneByName ?? null,
+      reportedAt: a.doneAt ? null : (a.reportedAt ?? null),
+      reportNote: a.doneAt ? null : (a.reportNote ?? null),
+    });
+    const own = actions.filter((a) => a.checkId && a.source !== "review").map(toItem);
+    return {
+      today: now,
+      lastCheck: last?.date ?? null,
+      nextDue,
+      open: own
+        .filter((a) => a.doneAt === null)
+        .sort((a, b) => (a.dueDate ?? "9999").localeCompare(b.dueDate ?? "9999")),
+      checks: checks.map((c) => ({
+        id: c._id,
+        date: c.date,
+        createdByName: c.createdByName,
+        kpis: c.kpis,
+        ratings: c.ratings,
+        tops: c.tops,
+        goFors: c.goFors,
+        note: c.note ?? null,
+        acknowledgedAt: c.acknowledgedAt ?? null,
+        acknowledgedByName: c.acknowledgedByName ?? null,
+        changedSinceAck: c.acknowledgedAt !== undefined && c.updatedAt > c.acknowledgedAt,
+        actions: own.filter((a) => a.checkId === c._id),
+      })),
+    };
+  },
+});
+
+/** The employee reports an agreement or measure done (or takes the report
+ * back). Ticking it off stays with the lead, who gets a notification. */
+export const reportDone = userMutation({
+  args: {
+    actionId: v.id("performanceActions"),
+    reported: v.boolean(),
+    note: v.optional(v.string()),
+  },
+  handler: async (ctx, { actionId, reported, note }): Promise<void> => {
+    const viewer = await loadViewer(ctx, ctx.caller, { ownRights: true });
+    const action = await ctx.db.get(actionId);
+    if (!action?.employeeId || !action.checkId || action.source === "review") {
+      throw notFound("Aufgabe nicht gefunden.");
+    }
+    const employee = await requireOwnEmployee(ctx, viewer, action.employeeId);
+    if (action.doneAt) throw invalid("Die Aufgabe ist schon abgehakt.");
+    if (!reported) {
+      await ctx.db.patch(actionId, {
+        reportedAt: undefined,
+        reportedByName: undefined,
+        reportNote: undefined,
+      });
+      return;
+    }
+    await ctx.db.patch(actionId, {
+      reportedAt: Date.now(),
+      reportedByName: viewer.name,
+      reportNote: note?.trim().slice(0, 500) || undefined,
+    });
+    const leads = (await dashboardLeadUserIds(ctx, action.companyId)).filter(
+      (id) => id !== viewer.userId,
+    );
+    await notifyUsers(ctx, leads, {
+      type: "performance_report",
+      title: `${employee.name} meldet: erledigt`,
+      body: action.text,
+      link: `/performance/mitarbeiter/${employee._id}/checks/${action.checkId}`,
+    });
+  },
+});
+
+/** The employee confirms a check's agreements ("gelesen und einverstanden"). */
+export const acknowledge = userMutation({
+  args: { checkId: v.id("performanceChecks") },
+  handler: async (ctx, { checkId }): Promise<void> => {
+    const viewer = await loadViewer(ctx, ctx.caller, { ownRights: true });
+    const check = await ctx.db.get(checkId);
+    if (!check) throw notFound("Check nicht gefunden.");
+    await requireOwnEmployee(ctx, viewer, check.employeeId);
+    // Confirming again after the lead changed the check renews the stamp.
+    if (check.acknowledgedAt !== undefined && check.updatedAt <= check.acknowledgedAt) return;
+    await ctx.db.patch(checkId, { acknowledgedAt: Date.now(), acknowledgedByName: viewer.name });
   },
 });
