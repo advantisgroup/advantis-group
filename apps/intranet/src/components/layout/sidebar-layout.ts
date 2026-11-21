@@ -44,11 +44,17 @@ export function resolveSidebarSections(
   });
 
   for (const def of defaults) {
-    for (const href of def.items) {
-      if (seen.has(href)) continue;
+    def.items.forEach((href, index) => {
+      if (seen.has(href)) return;
+      seen.add(href);
       const target = sections.find((s) => s.id === def.id) ?? sections[sections.length - 1];
-      target.items.push(href);
-    }
+      // Neuer Eintrag landet direkt hinter seinem Vorgänger aus dem Standard
+      // (z. B. KI-Assistent hinter Wiki), sonst am Ende.
+      const before = def.items[index - 1];
+      const at = before ? target.items.indexOf(before) : -1;
+      if (at >= 0) target.items.splice(at + 1, 0, href);
+      else target.items.push(href);
+    });
   }
   return sections;
 }
