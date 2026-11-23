@@ -4,6 +4,16 @@ import { parseLocaleNumber, readCallCsv, readCallExport } from "./callImport";
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 
+describe("call report detection", () => {
+  test("an Interaktionen export is never taken for a call report", () => {
+    const csv = [
+      '"Vollständiger Export abgeschlossen","Benutzer","Datum","Dauer","Konversations-ID:","Gespräch (gesamt)"',
+      '"JA","MÜLLER Anna (Consulting For Edenred)","20.11.26 08:00","120000","c1","110000"',
+    ].join("\n");
+    expect(readCallCsv(csv)).toBeNull();
+  });
+});
+
 describe("call report durations", () => {
   test("a short millisecond average is read as ms once the file proves the unit", () => {
     const report = readCallCsv(
