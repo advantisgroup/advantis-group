@@ -233,6 +233,7 @@
   "wonTrendAvgLabel": "Ø {value}",
   "wonTrendFootnote": "Werktage der letzten 3 Monate. Tage über dem Schnitt grün, Tage darunter rot markiert.",
   "interactionsTitle": "Interaktionen",
+  "callsInteractionsHint": "Erste und letzte Interaktion, Anzahl und Dauer je Tag aus dem Genesys-Interaktionen-Export. Zeile anklicken für die einzelnen Gespräche.",
   "interactionsEmpty": "Keine Interaktionen in diesem Monat.",
   "lastDayInteractionsTitle": "Interaktionen am {date}",
   "periodFilterDay": "Tag",

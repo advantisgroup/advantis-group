@@ -18,9 +18,9 @@ const DashboardDataContext = createContext<DashboardDataCtx | null>(null);
  * performanceQueries.ts's `allBadgesMap`) ran once per mounted tab instead of
  * once for the whole layout subtree. Convex dedupes identical live
  * subscriptions, so this wasn't a double network cost, but it's needless
- * duplicate query wiring. `interaktionen`'s own page keeps its own
- * `interactionsMonth` query — it filters by an independent period range, not
- * the layout's `ym`, so it's a genuinely different query, not a duplicate. */
+ * duplicate query wiring. The Calls tab's Interaktionen section
+ * (`CallInteractions`) runs its own `interactionsMonth` query — a different
+ * table, so not a duplicate. */
 export function PerformanceDashboardDataProvider({
   data,
   children,

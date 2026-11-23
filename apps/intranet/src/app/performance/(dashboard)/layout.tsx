@@ -8,7 +8,6 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useQuery } from "convex/react";
 import {
-  Activity,
   ClipboardList,
   Download,
   LayoutDashboard,
@@ -24,10 +23,6 @@ import { FilterableBarChart } from "@/components/charts/FilterableBarChart";
 import { CHART } from "@/components/charts/theme";
 import { RouteTabs, type RouteTab } from "@/components/layout/RouteTabs";
 import { ClosedWonTrendChart } from "@/components/performance/ClosedWonTrendChart";
-import {
-  LastDayInteractions,
-  type LastDayInteractionRow,
-} from "@/components/performance/LastDayInteractions";
 import {
   dashboardHome,
   type PerformanceDashboard,
@@ -62,17 +57,10 @@ import {
 } from "@/components/ui/select";
 import { usePerformanceApi } from "@/lib/performance";
 
-const CALLS_ONLY_TABS = new Set(["calls", "team", "interaktionen"]);
+const CALLS_ONLY_TABS = new Set(["calls", "team"]);
 /** A calls dashboard linked to the Onboarding-Cockpit is laid out like
  * Sales: Überblick and Entwicklung from the cockpit, plus the call tabs. */
-const COCKPIT_TABS = new Set([
-  "ueberblick",
-  "kunden-spiegel",
-  "calls",
-  "team",
-  "interaktionen",
-  "entwicklung",
-]);
+const COCKPIT_TABS = new Set(["ueberblick", "kunden-spiegel", "calls", "team", "entwicklung"]);
 
 function tabAllowed(dashboard: PerformanceDashboard | null, tab: string): boolean {
   if (tab === "onboarding") return false; // folded into Überblick
@@ -97,7 +85,6 @@ interface DashboardTopData {
  * unconditionally here. */
 function DashboardTopSection({
   data,
-  interactionDays,
   activeTab,
   kind,
   cockpit,
@@ -108,7 +95,6 @@ function DashboardTopSection({
   data: DashboardTopData;
   cockpit: boolean;
   companyId: Id<"companies">;
-  interactionDays: LastDayInteractionRow[] | undefined;
   activeTab: string;
   kind: PerformanceDashboardKind;
   t: ReturnType<typeof useTranslations>;
@@ -140,10 +126,6 @@ function DashboardTopSection({
         </CardContent>
       </Card>
     );
-  }
-  if (activeTab === "interaktionen") {
-    if (!interactionDays) return null;
-    return <LastDayInteractions days={interactionDays} locale={locale} />;
   }
   if (activeTab === "team") {
     const chartData = data.loggedIn.map((d) => ({
@@ -249,12 +231,6 @@ function DashboardChrome({
   const data = useQuery(api.performance.queries.teamDashboard, { companyId, ym });
 
   const activeTab = pathname.split("/").filter(Boolean)[1] ?? "ueberblick";
-  // A whole month of single interactions is heavy — only load it on the tab
-  // that shows it.
-  const interactions = useQuery(
-    api.performance.queries.interactionsMonth,
-    activeTab === "interaktionen" ? { companyId, ym } : "skip",
-  );
 
   const kind = dashboard.kind;
   const allTabs: RouteTab[] = [
@@ -288,12 +264,6 @@ function DashboardChrome({
       count: data?.snaps.length,
     },
     {
-      value: "interaktionen",
-      href: "/performance/interaktionen",
-      label: t("tabInteractions"),
-      icon: Activity,
-    },
-    {
       value: "entwicklung",
       href: "/performance/entwicklung",
       label: t("tabDevelopment"),
@@ -319,12 +289,12 @@ function DashboardChrome({
   }
   const tabs = allTabs.filter((tab) => tabAllowed(dashboard, tab.value));
 
-  // Entwicklung always shows the last 3 months and Interaktionen has its own
-  // period filter — a month picker there would only mislead. Wallbox's
+  // Entwicklung always shows the last 3 months — a month picker there would
+  // only mislead. Wallbox's
   // Überblick and Entwicklung are report snapshots, not months.
   const usesMonth =
     kind === "sales"
-      ? !["entwicklung", "interaktionen", "monitoring", "business-review"].includes(activeTab)
+      ? !["entwicklung", "monitoring", "business-review"].includes(activeTab)
       : activeTab === "calls" ||
         activeTab === "team" ||
         (dashboard.cockpit === true &&
@@ -382,7 +352,6 @@ function DashboardChrome({
         {data && (
           <DashboardTopSection
             data={data}
-            interactionDays={interactions?.days}
             activeTab={activeTab}
             kind={kind}
             cockpit={dashboard.cockpit === true}

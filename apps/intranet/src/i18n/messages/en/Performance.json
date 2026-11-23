@@ -233,6 +233,7 @@
   "wonTrendAvgLabel": "avg {value}",
   "wonTrendFootnote": "Workdays over the last 3 months. Days above the average are marked green, days below red.",
   "interactionsTitle": "Interactions",
+  "callsInteractionsHint": "First and last interaction, count and duration per day from the Genesys interactions export. Click a row for the single calls.",
   "interactionsEmpty": "No interactions this month.",
   "lastDayInteractionsTitle": "Interactions on {date}",
   "periodFilterDay": "Day",
