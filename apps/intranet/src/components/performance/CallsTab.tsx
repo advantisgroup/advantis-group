@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { type ReactNode, useMemo } from "react";
 
 import { useLocale, useTranslations } from "next-intl";
 
@@ -60,15 +60,19 @@ function CallStatCard({
 
 /** The "Calls" tab body, shared by the team dashboard and one employee's page.
  * The answered/outbound chart isn't here — each layout promotes it to the top
- * of the page for this tab, so it isn't shown twice. */
+ * of the page for this tab, so it isn't shown twice. `interactions` (the
+ * Interaktionen export's section) goes right below the month's tiles, and is
+ * shown even when the month has no call report. */
 export function CallsTab({
   data,
   totals,
   statsGridClassName,
+  interactions,
 }: {
   data: CallsData | null | undefined;
   totals: CallMetrics | undefined;
   statsGridClassName: string;
+  interactions?: ReactNode;
 }) {
   const t = useTranslations("Performance");
   const locale = useLocale();
@@ -87,11 +91,14 @@ export function CallsTab({
 
   if (!data.hasCalls) {
     return (
-      <Card>
-        <CardContent className="p-6 text-center text-sm text-muted-foreground">
-          {t("dashboardEmptyBody")}
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="p-6 text-center text-sm text-muted-foreground">
+            {t("dashboardEmptyBody")}
+          </CardContent>
+        </Card>
+        {interactions}
+      </div>
     );
   }
 
@@ -146,6 +153,8 @@ export function CallsTab({
         />
         <CallStatCard label={t("callsLoginPerDayLabel")} value={fmtDuration(loginPerDay)} />
       </div>
+
+      {interactions}
 
       <Card>
         <CardHeader>

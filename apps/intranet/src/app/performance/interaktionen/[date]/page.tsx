@@ -45,7 +45,7 @@ export default function DashboardInteractionDayPage() {
 
       <main className="mx-auto max-w-6xl space-y-6 p-4 pb-24 md:p-6">
         <div>
-          <PerformanceBackLink href="/performance/interaktionen" />
+          <PerformanceBackLink href="/performance/calls" />
           <h1 className="text-xl font-semibold">{formatIsoDate(params.date, locale)}</h1>
           <p className="text-sm text-muted-foreground">{t("interactionsTitle")}</p>
         </div>

@@ -8,7 +8,6 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useQuery } from "convex/react";
 import {
-  Activity,
   BatteryCharging,
   ClipboardCheck,
   LayoutDashboard,
@@ -23,10 +22,6 @@ import { FilterableBarChart } from "@/components/charts/FilterableBarChart";
 import { CHART } from "@/components/charts/theme";
 import { RouteTabs, type RouteTab } from "@/components/layout/RouteTabs";
 import { ClosedWonTrendChart } from "@/components/performance/ClosedWonTrendChart";
-import {
-  LastDayInteractions,
-  type LastDayInteractionRow,
-} from "@/components/performance/LastDayInteractions";
 import {
   employeeHome,
   type PerformanceDashboardKind,
@@ -86,14 +81,12 @@ interface EmployeeTopData {
  * (see `calls/page.tsx`, which no longer renders it in the page body). */
 function EmployeeTopSection({
   data,
-  interactionDays,
   activeTab,
   kind,
   t,
   locale,
 }: {
   data: EmployeeTopData;
-  interactionDays: LastDayInteractionRow[] | undefined;
   activeTab: string;
   kind: PerformanceDashboardKind;
   t: ReturnType<typeof useTranslations>;
@@ -126,10 +119,6 @@ function EmployeeTopSection({
       </Card>
     );
   }
-  if (activeTab === "interaktionen") {
-    if (!interactionDays) return null;
-    return <LastDayInteractions days={interactionDays} locale={locale} />;
-  }
   if (kind !== "sales" || activeTab === "checks" || activeTab === "ziele") return null;
   return <ClosedWonTrendChart days={data.wonTrend.days} avg={data.wonTrend.avg} />;
 }
@@ -139,9 +128,9 @@ function EmployeeTopSection({
  * Checks tab replaced "Topics" (10/2026) and is for team leads/admins only;
  * "Meine Ziele" is the employee's own read-only view of them (11/2026). */
 const TABS_BY_KIND: Record<PerformanceDashboardKind, readonly string[]> = {
-  sales: ["ueberblick", "entwicklung", "calls", "ziele", "checks", "interaktionen"],
-  wallbox: ["wallbox", "calls", "interaktionen"],
-  calls: ["calls", "interaktionen"],
+  sales: ["ueberblick", "entwicklung", "calls", "ziele", "checks"],
+  wallbox: ["wallbox", "calls"],
+  calls: ["calls"],
 };
 
 function EmployeeChrome({
@@ -196,11 +185,6 @@ function EmployeeChrome({
   useEffect(() => {
     if (data && offTab) router.replace(employeeHome(employeeId, data.employee.kind, cockpit));
   }, [data, offTab, employeeId, router, cockpit]);
-  // Only the Interaktionen tab shows the month's single interactions.
-  const interactions = useQuery(
-    api.performance.queries.interactionsMonth,
-    activeTab === "interaktionen" ? { ym, employeeId } : "skip",
-  );
 
   const allTabs: RouteTab[] = [
     {
@@ -245,19 +229,10 @@ function EmployeeChrome({
       label: t("checks.tabChecks"),
       icon: ClipboardCheck,
     },
-    {
-      value: "interaktionen",
-      href: `/performance/mitarbeiter/${employeeId}/interaktionen`,
-      label: t("tabInteractions"),
-      icon: Activity,
-    },
   ];
   const tabs = allTabs.filter((tab) => tabsForViewer.includes(tab.value));
-  // Entwicklung shows every month, Interaktionen pages by day, Wallbox is
-  // report snapshots.
-  const usesMonth = !["entwicklung", "interaktionen", "wallbox", "checks", "ziele"].includes(
-    activeTab,
-  );
+  // Entwicklung shows every month, Wallbox is report snapshots.
+  const usesMonth = !["entwicklung", "wallbox", "checks", "ziele"].includes(activeTab);
 
   return (
     <div className="min-h-screen bg-muted/20">
@@ -335,14 +310,7 @@ function EmployeeChrome({
         </Card>
 
         {data && (
-          <EmployeeTopSection
-            data={data}
-            interactionDays={interactions?.days}
-            activeTab={activeTab}
-            kind={kind}
-            t={t}
-            locale={locale}
-          />
+          <EmployeeTopSection data={data} activeTab={activeTab} kind={kind} t={t} locale={locale} />
         )}
 
         <PerformanceEmployeeDetailProvider data={data}>
