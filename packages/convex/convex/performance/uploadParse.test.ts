@@ -323,6 +323,36 @@ describe("interactions import", () => {
       skippedNames: ["Fremd, Fritz"],
     });
   });
+
+  test("a full-column Genesys export is read as interactions, not as a call report", async () => {
+    // The real export (all columns, comma-separated, ms durations) also has
+    // "Benutzer" and "Gespräch (gesamt)" — on their own enough to look like
+    // a call report's agent + talk-time header.
+    const { t, ids, upload } = await setup();
+    const csv = [
+      '"Vollständiger Export abgeschlossen","Benutzer","Datum","Dauer","Richtung","Konversations-ID:","Gespräch (gesamt)","Bearbeitet gesamt"',
+      '"JA","MÜLLER Anna (Consulting For Edenred)","20.11.26 08:00","120000","Outbound","c1","110000","1"',
+      '"JA","MÜLLER Anna (Consulting For Edenred)","20.11.26 09:00","60000","Outbound","c2","55000","1"',
+      '"JA","","20.11.26 09:30","13452","Inbound","c3","",""',
+    ].join("\n");
+    const result = await upload("2026-11-20_Interaktionen.csv", csv);
+    expect(result).toMatchObject({
+      status: "ok",
+      reportKind: "interactions",
+      reportDate: "2026-11-20",
+      rowsImported: 2,
+    });
+
+    const interactions = await t.run((ctx) =>
+      ctx.db
+        .query("performanceInteractions")
+        .withIndex("by_company_date", (q) => q.eq("companyId", ids.companyId))
+        .collect(),
+    );
+    expect(interactions.map((r) => r.durationSec).sort()).toEqual([120, 60].sort());
+    const callRows = await t.run((ctx) => ctx.db.query("performanceReports").collect());
+    expect(callRows).toEqual([]);
+  });
 });
 
 describe("Salesforce account handover", () => {

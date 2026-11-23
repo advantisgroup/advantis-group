@@ -105,6 +105,12 @@ for (const [field, aliases] of Object.entries(CALL_ALIASES)) {
 
 const SUMMARY_NAMES = new Set(["summe", "total", "gesamt", "durchschnitt", "average"]);
 
+// Columns only the per-interaction "Interaktionen" export has. A full export
+// of it also carries "Benutzer" and "Gespräch (gesamt)", which alone would
+// pass as a call report's agent + talk-time header — so a header with one of
+// these is never a call report (`interactionImport.ts` reads it instead).
+const INTERACTION_ONLY_HEADERS = new Set(["vollstaendigerexportabgeschlossen", "konversationsid"]);
+
 // ------------------------------------------------------------ duration parsing
 
 // A duration cell here is always either a single interaction or a single
@@ -477,6 +483,7 @@ function readCallTable(table: SheetRow[], minCallColumns: number): CallReport | 
 
   for (let i = 0; i < Math.min(table.length, 40); i++) {
     const row = table[i] ?? [];
+    if (row.some((c) => INTERACTION_ONLY_HEADERS.has(normHeader(c)))) return null;
     const found: Partial<Record<CallField, number>> = {};
     const foundMs = new Set<CallField>();
     row.forEach((c, idx) => {
