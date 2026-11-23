@@ -43,6 +43,7 @@ import {
   type DatedCounts,
   type ExactCounts,
 } from "./lib/referenceFix";
+import { addDays, berlinInstant, berlinParts } from "../time/lib/berlin";
 import { dashboardKind } from "./lib/roster";
 import { type MetricFields } from "./lib/types";
 import { isWorkday, parseISODate, todayBerlin, toISODate, workdaysElapsed } from "./lib/workdays";
@@ -994,6 +995,37 @@ export const latestInteractionDay = userQuery({
  * `interactionsMonth` day row. Team-wide (admin) when `employeeId` is
  * omitted, one employee's own interactions otherwise — same
  * admin-or-self visibility rule as `employeeDetail`. */
+/** Berlin wall-clock digits as a UTC timestamp — how interaction times are
+ * stored (`interactionImport.ts`), so the client formats both the same way. */
+function wallClockMs(instant: number): number {
+  const p = berlinParts(instant);
+  return Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute);
+}
+
+/** First clock-in and last clock-out (Zeiterfassung, approved work
+ * segments only) on a Berlin day. `clockOut` is null while still clocked in. */
+async function clockInOut(
+  ctx: QueryCtx,
+  userId: Id<"users">,
+  date: string,
+): Promise<{ clockIn: number; clockOut: number | null } | null> {
+  const entries = await ctx.db
+    .query("timeEntries")
+    .withIndex("by_user_start", (q) =>
+      q
+        .eq("userId", userId)
+        .gte("start", berlinInstant(date))
+        .lt("start", berlinInstant(addDays(date, 1))),
+    )
+    .collect();
+  const work = entries.filter((e) => e.kind === "work" && e.status === "active");
+  if (work.length === 0) return null;
+  const start = Math.min(...work.map((e) => e.start));
+  const open = work.some((e) => e.end === undefined);
+  const end = open ? null : Math.max(...work.map((e) => e.end!));
+  return { clockIn: wallClockMs(start), clockOut: end === null ? null : wallClockMs(end) };
+}
+
 export const interactionsDayDetail = userQuery({
   args: {
     date: v.string(),
@@ -1002,9 +1034,10 @@ export const interactionsDayDetail = userQuery({
   },
   handler: async (ctx, { date, employeeId, companyId: companyIdArg }) => {
     const viewer = await loadViewer(ctx, ctx.caller);
-    const companyId: Id<"companies"> = employeeId
-      ? (await requireViewableEmployee(ctx, viewer, employeeId)).companyId
-      : requireTeamView(viewer, companyIdArg);
+    const employee = employeeId
+      ? (await requireViewableEmployee(ctx, viewer, employeeId)).employee
+      : null;
+    const companyId: Id<"companies"> = employee?.companyId ?? requireTeamView(viewer, companyIdArg);
 
     const rows = employeeId
       ? await ctx.db
@@ -1035,6 +1068,18 @@ export const interactionsDayDetail = userQuery({
     return {
       date,
       records,
+      workday: employee
+        ? {
+            firstCall: records[0]?.startedAt ?? null,
+            lastCall: records.at(-1)?.startedAt ?? null,
+            // Clock times are the person's own time data: only for admins
+            // and the person themselves, not for team leads.
+            clock:
+              employee.userId && (viewer.isAdmin || employee.userId === viewer.userId)
+                ? await clockInOut(ctx, employee.userId, date)
+                : null,
+          }
+        : null,
       total: {
         count,
         totalDurationSec,

@@ -342,3 +342,64 @@ describe("teamDashboard", () => {
     ).rejects.toThrow("nicht gefunden");
   });
 });
+
+describe("interactionsDayDetail workday", () => {
+  test("first/last call from the interactions, clock in/out from the time tracking", async () => {
+    const { t, ids, admin } = await setup();
+    const annaUser = await t.run(async (ctx) => (await ctx.db.get(ids.anna))!.userId!);
+    await t.run(async (ctx) => {
+      // Interactions keep Berlin wall-clock digits as UTC.
+      for (const [h, m] of [
+        [16, 45],
+        [8, 12],
+        [11, 0],
+      ]) {
+        await ctx.db.insert("performanceInteractions", {
+          employeeId: ids.anna,
+          companyId: ids.companyId,
+          date: "2026-11-20",
+          startedAt: Date.UTC(2026, 10, 20, h, m),
+          durationSec: 60,
+          sourceFile: "x.csv",
+          uploadedAt: 0,
+        });
+      }
+      const entry = (start: string, end: string | undefined, status = "active" as const) =>
+        ctx.db.insert("timeEntries", {
+          userId: annaUser,
+          kind: "work",
+          start: Date.parse(start),
+          end: end ? Date.parse(end) : undefined,
+          source: "clock",
+          status,
+          updatedAt: 0,
+        });
+      // November is CET (UTC+1): 06:58Z = 07:58 Berlin.
+      await entry("2026-11-20T06:58:00Z", "2026-11-20T11:00:00Z");
+      await entry("2026-11-20T11:30:00Z", "2026-11-20T16:05:00Z");
+      // A rejected correction never counts.
+      await ctx.db.insert("timeEntries", {
+        userId: annaUser,
+        kind: "work",
+        start: Date.parse("2026-11-20T05:00:00Z"),
+        end: Date.parse("2026-11-20T19:00:00Z"),
+        source: "manual",
+        status: "rejected",
+        updatedAt: 0,
+      });
+    });
+
+    const day = await admin.query(api.performance.queries.interactionsDayDetail, {
+      date: "2026-11-20",
+      employeeId: ids.anna,
+    });
+    expect(day.workday).toEqual({
+      firstCall: Date.UTC(2026, 10, 20, 8, 12),
+      lastCall: Date.UTC(2026, 10, 20, 16, 45),
+      clock: {
+        clockIn: Date.UTC(2026, 10, 20, 7, 58),
+        clockOut: Date.UTC(2026, 10, 20, 17, 5),
+      },
+    });
+  });
+});

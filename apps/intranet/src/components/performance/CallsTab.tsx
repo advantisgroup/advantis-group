@@ -61,7 +61,7 @@ function CallStatCard({
 /** The "Calls" tab body, shared by the team dashboard and one employee's page.
  * The answered/outbound chart isn't here — each layout promotes it to the top
  * of the page for this tab, so it isn't shown twice. `interactions` (the
- * Interaktionen export's section) goes right below the month's tiles, and is
+ * Interaktionen export's section) goes below the talk/login chart, and is
  * shown even when the month has no call report. */
 export function CallsTab({
   data,
@@ -154,8 +154,6 @@ export function CallsTab({
         <CallStatCard label={t("callsLoginPerDayLabel")} value={fmtDuration(loginPerDay)} />
       </div>
 
-      {interactions}
-
       <Card>
         <CardHeader>
           <CardTitle className="text-base">
@@ -184,6 +182,8 @@ export function CallsTab({
           />
         </CardContent>
       </Card>
+
+      {interactions}
 
       <p className="text-xs text-muted-foreground">{t("callsFootnote")}</p>
     </div>
