@@ -9,6 +9,7 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { usePerformanceAccess } from "@/components/performance/PerformanceAccess";
 import { InteractionRecordsTable } from "@/components/performance/InteractionRecordsTable";
+import { fmtTimeOfDay } from "@/components/performance/PerformanceFormat";
 import { PerformanceBackLink } from "@/components/performance/PerformanceBackLink";
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
 import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
@@ -58,6 +59,7 @@ export default function EmployeeInteractionDayPage() {
           <PerformanceBackLink href={`/performance/mitarbeiter/${employeeId}/calls`} />
           <h1 className="text-xl font-semibold">{formatIsoDate(params.date, locale)}</h1>
           <p className="text-sm text-muted-foreground">{t("interactionsTitle")}</p>
+          {data?.workday && <WorkdayTimes workday={data.workday} />}
         </div>
 
         {!data ? (
@@ -72,6 +74,51 @@ export default function EmployeeInteractionDayPage() {
         )}
       </main>
       <PerformanceBottomTabs />
+    </div>
+  );
+}
+
+/** At a glance: first and last call of the day, and — small below, for
+ * admins and the person themselves — when they clocked in and out. */
+function WorkdayTimes({
+  workday,
+}: {
+  workday: {
+    firstCall: number | null;
+    lastCall: number | null;
+    clock: { clockIn: number; clockOut: number | null } | null;
+  };
+}) {
+  const t = useTranslations("Performance");
+  const time = (ms: number | null) => (ms === null ? "–" : fmtTimeOfDay(ms));
+  return (
+    <div className="mt-3 space-y-1">
+      <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
+        <span>
+          <span className="text-muted-foreground">{t("workdayFirstCall")}</span>{" "}
+          <span className="font-semibold tabular-nums">{time(workday.firstCall)}</span>
+        </span>
+        <span>
+          <span className="text-muted-foreground">{t("workdayLastCall")}</span>{" "}
+          <span className="font-semibold tabular-nums">{time(workday.lastCall)}</span>
+        </span>
+      </div>
+      {workday.clock && (
+        <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted-foreground">
+          <span>
+            {t("workdayClockIn")}{" "}
+            <span className="tabular-nums text-foreground">{time(workday.clock.clockIn)}</span>
+          </span>
+          <span>
+            {t("workdayClockOut")}{" "}
+            <span className="tabular-nums text-foreground">
+              {workday.clock.clockOut === null
+                ? t("workdayStillClockedIn")
+                : time(workday.clock.clockOut)}
+            </span>
+          </span>
+        </div>
+      )}
     </div>
   );
 }
