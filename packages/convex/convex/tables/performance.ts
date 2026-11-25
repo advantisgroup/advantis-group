@@ -400,6 +400,18 @@ export const performanceTables = {
     updatedAt: v.number(),
   }).index("by_employee_ym", ["employeeId", "ym"]),
 
+  // "Interne Notizen" on an employee's Performance page: free-text notes by
+  // admins about that person. Admins only — the employee never sees them,
+  // and neither does a team lead who isn't an admin.
+  performanceNotes: defineTable({
+    employeeId: v.id("performanceEmployees"),
+    text: v.string(),
+    authorUserId: v.id("users"),
+    authorName: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+  }).index("by_employee", ["employeeId"]),
+
   performanceUploadLog: defineTable({
     companyId: v.optional(v.id("companies")),
     // Raw original filename — never a composed/decorated label, so the UI

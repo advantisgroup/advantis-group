@@ -11,6 +11,7 @@ import {
   BatteryCharging,
   ClipboardCheck,
   LayoutDashboard,
+  NotebookPen,
   Phone,
   Rocket,
   Target,
@@ -119,7 +120,13 @@ function EmployeeTopSection({
       </Card>
     );
   }
-  if (kind !== "sales" || activeTab === "checks" || activeTab === "ziele") return null;
+  if (
+    kind !== "sales" ||
+    activeTab === "checks" ||
+    activeTab === "ziele" ||
+    activeTab === "notizen"
+  )
+    return null;
   return <ClosedWonTrendChart days={data.wonTrend.days} avg={data.wonTrend.avg} />;
 }
 
@@ -174,6 +181,9 @@ function EmployeeChrome({
     ...TABS_BY_KIND[kind].filter(
       (tab) => (tab !== "checks" || canLead) && (tab !== "ziele" || isSelf),
     ),
+    // "Interne Notizen": admins only, on every kind of dashboard. Hidden in
+    // an admin's "Ansicht als" (`me.isAdmin` is the previewed person's then).
+    ...(me?.isAdmin ? ["notizen"] : []),
   ];
   // Check status in the header, for those who run the checks.
   const checkStatus = useQuery(
@@ -229,10 +239,16 @@ function EmployeeChrome({
       label: t("checks.tabChecks"),
       icon: ClipboardCheck,
     },
+    {
+      value: "notizen",
+      href: `/performance/mitarbeiter/${employeeId}/notizen`,
+      label: t("notes.tab"),
+      icon: NotebookPen,
+    },
   ];
   const tabs = allTabs.filter((tab) => tabsForViewer.includes(tab.value));
   // Entwicklung shows every month, Wallbox is report snapshots.
-  const usesMonth = !["entwicklung", "wallbox", "checks", "ziele"].includes(activeTab);
+  const usesMonth = !["entwicklung", "wallbox", "checks", "ziele", "notizen"].includes(activeTab);
 
   return (
     <div className="min-h-screen bg-muted/20">

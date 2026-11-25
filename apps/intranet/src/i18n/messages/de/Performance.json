@@ -880,5 +880,23 @@
   "settingsCallHistoryError": "Übernahme fehlgeschlagen.",
   "uploadKindOnboarding": "Onboarding-Report → Onboarding-Cockpit",
   "uploadRetryOk": "Upload nachgeholt – die Datei ist jetzt importiert.",
-  "uploadRetryNoFile": "Die Datei ist zu diesem Upload nicht gespeichert – bitte erneut hochladen."
+  "uploadRetryNoFile": "Die Datei ist zu diesem Upload nicht gespeichert – bitte erneut hochladen.",
+  "notes": {
+    "tab": "Interne Notizen",
+    "title": "Interne Notizen",
+    "hint": "Nur für Admins sichtbar – {name} sieht diese Notizen nicht.",
+    "placeholder": "Notiz schreiben …",
+    "add": "Notiz speichern",
+    "added": "Notiz gespeichert",
+    "empty": "Noch keine Notizen.",
+    "edit": "Bearbeiten",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "saved": "Notiz aktualisiert",
+    "delete": "Löschen",
+    "deleteConfirm": "Notiz löschen?",
+    "deleteHint": "Das kann nicht rückgängig gemacht werden.",
+    "deleted": "Notiz gelöscht",
+    "edited": "bearbeitet {date}"
+  }
 }
