@@ -880,5 +880,23 @@
   "settingsCallHistoryError": "Adopting failed.",
   "uploadKindOnboarding": "Onboarding report → onboarding cockpit",
   "uploadRetryOk": "Upload retried – the file is imported now.",
-  "uploadRetryNoFile": "The file of this upload isn't stored – please upload it again."
+  "uploadRetryNoFile": "The file of this upload isn't stored – please upload it again.",
+  "notes": {
+    "tab": "Internal notes",
+    "title": "Internal notes",
+    "hint": "Visible to admins only – {name} can't see these notes.",
+    "placeholder": "Write a note …",
+    "add": "Save note",
+    "added": "Note saved",
+    "empty": "No notes yet.",
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saved": "Note updated",
+    "delete": "Delete",
+    "deleteConfirm": "Delete note?",
+    "deleteHint": "This can't be undone.",
+    "deleted": "Note deleted",
+    "edited": "edited {date}"
+  }
 }

@@ -225,6 +225,7 @@ import type * as performance_lib_types from "../performance/lib/types.js";
 import type * as performance_lib_wallboxImport from "../performance/lib/wallboxImport.js";
 import type * as performance_lib_workdays from "../performance/lib/workdays.js";
 import type * as performance_lib_xlsxZip from "../performance/lib/xlsxZip.js";
+import type * as performance_notes from "../performance/notes.js";
 import type * as performance_onboarding from "../performance/onboarding.js";
 import type * as performance_onboardingKpis from "../performance/onboardingKpis.js";
 import type * as performance_onboardingMirror from "../performance/onboardingMirror.js";
@@ -554,6 +555,7 @@ declare const fullApi: ApiFromModules<{
   "performance/lib/wallboxImport": typeof performance_lib_wallboxImport;
   "performance/lib/workdays": typeof performance_lib_workdays;
   "performance/lib/xlsxZip": typeof performance_lib_xlsxZip;
+  "performance/notes": typeof performance_notes;
   "performance/onboarding": typeof performance_onboarding;
   "performance/onboardingKpis": typeof performance_onboardingKpis;
   "performance/onboardingMirror": typeof performance_onboardingMirror;
